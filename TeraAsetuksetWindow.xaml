@@ -1,0 +1,19 @@
+<Window x:Class="SahanOhjausGUI.TeraAsetuksetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Teräasetukset"
+        Height="620" Width="900"
+        MinHeight="500" MinWidth="750"
+        Background="#141414"
+        Foreground="White"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="24">
+            <StackPanel x:Name="TeraPanel"
+                        Orientation="Vertical"/>
+        </ScrollViewer>
+    </Grid>
+</Window>
