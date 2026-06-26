@@ -826,8 +826,8 @@ namespace SahanOhjausGUI
         private static double LaskeKeskilinja3(List<double> paksuudet, double rako1, double rako2) =>
             (paksuudet.Sum() + rako1 + rako2) / 2.0;
 
-        private static double LaskeKeskilinja4(List<double> paksuudet, double rako1, double rako2, double rako3) =>
-            (paksuudet.Sum() + (paksuudet.Count - 1) * rako1) / 2.0;
+        private static double LaskeKeskilinja4(List<double> paksuudet, double rako) =>
+            (paksuudet.Sum() + (paksuudet.Count - 1) * rako) / 2.0;
 
         private static (double rako1_kl, double rako2_kl) LaskeRaonKeskilinjaOffsetit(
             List<double> paksuudet, double rako)
