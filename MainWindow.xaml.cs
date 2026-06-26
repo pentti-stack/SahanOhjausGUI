@@ -912,7 +912,7 @@ namespace SahanOhjausGUI
                 if (tera6 != null)
                 {
                     double offset6 = tera6.LaskeOffset();
-                    double kl = (paksuudet.Sum() + 3 * tera6.Rako) / 2.0;
+                    double kl = LaskeKeskilinja4(paksuudet, tera6.Rako);
                     double rako3_abs = paksuudet[0] + tera6.Rako + paksuudet[1] + tera6.Rako + paksuudet[2] + tera6.Rako / 2.0;
                     double rako3_kl = rako3_abs - kl;
                     plc_T6 = Vaisto_Ulkoterä + rako3_kl + offset6;
@@ -995,7 +995,7 @@ namespace SahanOhjausGUI
                 if (tera5 != null)
                 {
                     double offset5 = tera5.LaskeOffset();
-                    double kl = (paksuudet.Sum() + 3 * tera5.Rako) / 2.0;
+                    double kl = LaskeKeskilinja4(paksuudet, tera5.Rako);
                     double rako3_abs = paksuudet[0] + tera5.Rako + paksuudet[1] + tera5.Rako + paksuudet[2] + tera5.Rako / 2.0;
                     double rako3_kl = rako3_abs - kl;
                     plc_T5 = Vaisto_Ulkoterä + offset5 - rako3_kl;
