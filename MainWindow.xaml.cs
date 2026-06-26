@@ -662,8 +662,8 @@ namespace SahanOhjausGUI
                 // ── T1-T2 turvaetäisyys yhdistetyssä tilassa ──────────────────
                 if (yhdistetty)
                 {
-                    double t1Abs = plc_T4 + plc_T1; // absoluuttinen sijainti
-                    double t2Abs = plc_T4 + plc_T2;
+                    double t1Abs = plc_T3 + plc_T1; // absoluuttinen sijainti (T3+T1)
+                    double t2Abs = plc_T4 + plc_T2; // absoluuttinen sijainti (T4+T2)
                     double vali = t2Abs - t1Abs;
                     if (vali < turvaEtaisyys)
                         rajaVaroitukset.Add(
@@ -707,115 +707,48 @@ namespace SahanOhjausGUI
         {
             int n = paksuudet.Count;
 
-            double RakoT(int num) =>
-                teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
-
-            double VaistoT(int num) =>
-                teraRajat.TryGetValue(num, out var r) ? r.Vaisto :
-                (num <= 2 ? -140.0 : 140.0);
-
             double OffsetT(int num)
             {
                 if (!teraParametrit.TryGetValue(num, out var t)) return 1.5;
-                return t.OnkoVasenKatinen
-                    ? t.Laippa - t.Runko / 2.0
-                    : t.Runko / 2.0;
+                return t.Laippa - t.Runko / 2.0;
             }
 
-            double r1 = RakoT(1), r2 = RakoT(2), r3 = RakoT(3);
-            double r4 = RakoT(4), r5 = RakoT(5), r6 = RakoT(6);
+            double VaistoT(int num) =>
+                teraRajat.TryGetValue(num, out var r) ? Math.Abs(r.Vaisto) : 140.0;
 
-            // Keskilinja koko nippuun
-            // 3kpl: K1|T1|K2|T2|K3
-            // 4kpl: K1|T1|K2|T2|K3|T4|K4
-            // 5kpl: K1|T3|K2|T1|K3|T2|K4|T4|K5
-            // 6kpl: K1|T3|K2|T1|K3|T2|K4|T4|K5|T6|K6
-            // 7kpl: K1|T5|K2|T3|K3|T1|K4|T2|K5|T4|K6|T6|K7
-            double kl = n switch
-            {
-                3 => (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2]) / 2.0,
-                4 => (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 + paksuudet[3]) / 2.0,
-                5 => (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4]) / 2.0,
-                6 => (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4] + r6 + paksuudet[5]) / 2.0,
-                7 => (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0,
-                _ => 0
-            };
+            double rako1 = teraParametrit.TryGetValue(1, out var tp1) ? tp1.Rako : 4.0;
+            double rako2 = teraParametrit.TryGetValue(2, out var tp2) ? tp2.Rako : 4.0;
 
-            // T4 — oikean sahan pääterä (absoluuttinen)
-            plc_T4 = n switch
-            {
-                3 => VaistoT(4),
-                4 => paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 / 2.0 + OffsetT(4) - kl,
-                5 => paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0 + OffsetT(4) - kl,
-                6 => paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0 + OffsetT(4) - kl,
-                7 => paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0 + OffsetT(4) - kl,
-                _ => VaistoT(4)
-            };
-
-            // T2 — suhteessa T4:ään (negatiivinen = vasemmalle T4:stä)
-            plc_T2 = n switch
-            {
-                3 => -(paksuudet[2] + r2 / 2.0 + OffsetT(2) - kl + kl - plc_T4 + paksuudet[2]),
-                4 => -(paksuudet[2] + r2 / 2.0 + OffsetT(2) + OffsetT(4) - r4 / 2.0),
-                5 => -(paksuudet[3] + r2 / 2.0 + OffsetT(2) + OffsetT(4) - r4 / 2.0),
-                6 => -(paksuudet[3] + r2 / 2.0 + OffsetT(2) + OffsetT(4) - r4 / 2.0),
-                7 => -(paksuudet[4] + r2 / 2.0 + OffsetT(2) + OffsetT(4) - r4 / 2.0),
-                _ => VaistoT(2)
-            };
-
-            // 3kpl T2 erikoistapaus — T4 väistössä, lasketaan absoluuttisesti
             if (n == 3)
             {
-                double t2Abs = paksuudet[0] + r1 + paksuudet[1] + r2 / 2.0 + OffsetT(2) - kl;
-                plc_T2 = t2Abs - plc_T4; // relatiivinen T4:stä (joka on väistössä)
+                // K1 | T1 | K2 | T2 | K3
+                // T3 ja T4 siirtyvät niin että T1 ja T2 osuvat rakoihin
+                double kl = (paksuudet[0] + rako1 + paksuudet[1] + rako2 + paksuudet[2]) / 2.0;
+
+                double rako1_kl = (paksuudet[0] + rako1 / 2.0) - kl;
+                double rako2_kl = (paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0) - kl;
+
+                double vaistoT1 = VaistoT(1);
+                double vaistoT2 = VaistoT(2);
+
+                plc_T3 = vaistoT1 + OffsetT(1) - rako1_kl;
+                plc_T4 = vaistoT2 + rako2_kl + OffsetT(2);
+                // T1 ja T2 väistöasennossa (negatiivinen = vedetty pois tieltä)
+                plc_T1 = -vaistoT1;
+                plc_T2 = -vaistoT2;
+                plc_T5 = VaistoT(5);
+                plc_T6 = VaistoT(6);
             }
-
-            // T1 — suhteessa T4:ään
-            plc_T1 = n switch
+            // TODO: 4-7 kpl lisätään myöhemmin, käytetään toistaiseksi lepopaikat
+            else
             {
-                3 => VaistoT(1) - plc_T4, // väistö relatiivisena
-                4 => -(paksuudet[2] + r2 + paksuudet[1] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
-                5 => -(paksuudet[3] + r2 + paksuudet[2] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
-                6 => -(paksuudet[3] + r2 + paksuudet[2] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
-                7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
-                _ => VaistoT(1)
-            };
-
-            // 3kpl T1 erikoistapaus
-            if (n == 3)
-            {
-                double t1Abs = paksuudet[0] + r1 / 2.0 + OffsetT(1) - kl;
-                plc_T1 = t1Abs - plc_T4;
+                plc_T1 = teraRajat.TryGetValue(1, out var r1) ? r1.Lepopaikka : -25.0;
+                plc_T2 = teraRajat.TryGetValue(2, out var r2) ? r2.Lepopaikka : -25.0;
+                plc_T3 = teraRajat.TryGetValue(3, out var r3) ? r3.Lepopaikka : 340.0;
+                plc_T4 = teraRajat.TryGetValue(4, out var r4) ? r4.Lepopaikka : 340.0;
+                plc_T5 = teraRajat.TryGetValue(5, out var r5) ? r5.Lepopaikka : 25.0;
+                plc_T6 = teraRajat.TryGetValue(6, out var r6) ? r6.Lepopaikka : 25.0;
             }
-
-            // T3 — suhteessa T4:ään
-            plc_T3 = n switch
-            {
-                3 => VaistoT(3) - plc_T4,
-                4 => VaistoT(3) - plc_T4,
-                5 => -(paksuudet[3] + r2 + paksuudet[2] + r1 + paksuudet[1] + r3 / 2.0 + OffsetT(3) + OffsetT(4) - r4 / 2.0),
-                6 => -(paksuudet[3] + r2 + paksuudet[2] + r1 + paksuudet[1] + r3 / 2.0 + OffsetT(3) + OffsetT(4) - r4 / 2.0),
-                7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 + paksuudet[2] + r3 / 2.0 + OffsetT(3) + OffsetT(4) - r4 / 2.0),
-                _ => VaistoT(3)
-            };
-
-            // T6 — suhteessa T4:ään (positiivinen = oikealle T4:stä)
-            plc_T6 = n switch
-            {
-                3 => VaistoT(6) - plc_T4,
-                4 => VaistoT(6) - plc_T4,
-                5 => VaistoT(6) - plc_T4,
-                6 => paksuudet[4] + r6 / 2.0 + OffsetT(6) - OffsetT(4) + r4 / 2.0,
-                7 => paksuudet[5] + r6 / 2.0 + OffsetT(6) - OffsetT(4) + r4 / 2.0,
-                _ => VaistoT(6)
-            };
-
-            // T5 — suhteessa T4:ään
-            plc_T5 = n switch
-            {
-                7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 + paksuudet[2] + r3 + paksuudet[1] + r5 / 2.0 + OffsetT(5) + OffsetT(4) - r4 / 2.0),
-                _ => VaistoT(5) - plc_T4
-            };
         }
 
         // ── Laskenta erillinen ────────────────────────────────────────────────
@@ -1320,26 +1253,31 @@ namespace SahanOhjausGUI
 
             // ── Terä-viivat ───────────────────────────────────────────────────
             Color normC = Color.FromRgb(255, 217, 61);
+            Color dimC = Color.FromRgb(120, 120, 120);
 
+            // T1 ja T2 absoluuttiset leikkaussijainnit (T3+T1, T4+T2)
+            double t3X = centerX + plc_T3 * pixelsPerMm;
             double t4X = centerX + plc_T4 * pixelsPerMm;
-            double t2X = t4X + plc_T2 * pixelsPerMm;
-            double t1X = t4X + plc_T1 * pixelsPerMm;
-            double t3X = t4X + plc_T3 * pixelsPerMm;
-            double t6X = t4X + plc_T6 * pixelsPerMm;
-            double t5X = t4X + plc_T5 * pixelsPerMm;
+            double t1X = centerX + (plc_T3 + plc_T1) * pixelsPerMm;
+            double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
+            double t5X = centerX + plc_T5 * pixelsPerMm;
+            double t6X = centerX + plc_T6 * pixelsPerMm;
 
-            if (n >= 4) PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4, 4, normC), $"T4\n{plc_T4:F1}", true);
+            // T1 ja T2 viivat absoluuttisissa leikkauspaikoissa (kirkkaat)
+            PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T3 + plc_T1, 1, normC), $"T1\n{plc_T3 + plc_T1:F1}", true);
             PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T2, 2, normC), $"T2\n{plc_T4 + plc_T2:F1}", false);
-            PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T1, 1, normC), $"T1\n{plc_T4 + plc_T1:F1}", true);
-            if (n >= 5) PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T3, 3, normC), $"T3\n{plc_T4 + plc_T3:F1}", false);
-            if (n >= 6) PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T6, 6, normC), $"T6\n{plc_T4 + plc_T6:F1}", true);
-            if (n >= 7) PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T5, 5, normC), $"T5\n{plc_T4 + plc_T5:F1}", false);
+            // T3 ja T4 lepopaikoissa (harmaat)
+            PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, new SolidColorBrush(dimC), $"T3\n{plc_T3:F1}", false);
+            PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, new SolidColorBrush(dimC), $"T4\n{plc_T4:F1}", true);
+            // T5 ja T6 väistöasennossa
+            PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T5, 5, normC), $"T5\n{plc_T5:F1}", false);
+            PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T6, 6, normC), $"T6\n{plc_T6:F1}", true);
 
             // T1-T2 turvaväli visualisointi
-            double t1AbsX = t4X + plc_T1 * pixelsPerMm;
-            double t2AbsX = t4X + plc_T2 * pixelsPerMm;
+            double t1AbsX = t1X;
+            double t2AbsX = t2X;
             double valiPx = t2AbsX - t1AbsX;
-            double turvaVari_mm = t2AbsX / pixelsPerMm - t1AbsX / pixelsPerMm;
+            double turvaVari_mm = (plc_T4 + plc_T2) - (plc_T3 + plc_T1);
 
             var turvaRect = new Rectangle
             {
