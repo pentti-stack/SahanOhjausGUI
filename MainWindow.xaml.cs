@@ -826,8 +826,17 @@ namespace SahanOhjausGUI
         private static double LaskeKeskilinja3(List<double> paksuudet, double rako1, double rako2) =>
             (paksuudet.Sum() + rako1 + rako2) / 2.0;
 
-        private static double LaskeKeskilinja4(List<double> paksuudet, double rako1, double rako2, double rako3) =>
-            (paksuudet.Sum() + rako1 + rako2 + rako3) / 2.0;
+        private static double LaskeKeskilinja4(List<double> paksuudet, double rako) =>
+            (paksuudet.Sum() + (paksuudet.Count - 1) * rako) / 2.0;
+
+        private static (double rako1_kl, double rako2_kl) LaskeRaonKeskilinjaOffsetit(
+            List<double> paksuudet, double rako)
+        {
+            double kl = (paksuudet.Sum() + (paksuudet.Count - 1) * rako) / 2.0;
+            double rako1_abs = paksuudet[0] + rako / 2.0;
+            double rako2_abs = paksuudet[0] + rako + paksuudet[1] + rako / 2.0;
+            return (rako1_abs - kl, rako2_abs - kl);
+        }
 
         private void LaskeOikeaPuoli(List<double> paksuudet, int halkaisuTera,
             ref double plc_T4, ref double plc_T2, ref double plc_T6)
@@ -870,50 +879,17 @@ namespace SahanOhjausGUI
             {
                 teraParametrit.TryGetValue(4, out var tera4);
                 teraParametrit.TryGetValue(2, out var tera2);
+                if (tera4 == null) return;
 
-                double rako1 = tera2?.Rako ?? 4.0;
-                double rako2 = tera4?.Rako ?? 4.0;
-                double kl = LaskeKeskilinja3(paksuudet, rako1, rako2);
+                double offset4 = tera4.LaskeOffset();
+                double offset2 = tera2 != null ? tera2.LaskeOffset() : 0;
 
-                if (tera4 != null)
-                    plc_T4 = tera4.OnkoVasenKatinen
-                        ? paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + (tera4.Laippa - tera4.Runko / 2.0) - kl
-                        : paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + tera4.Runko / 2.0 - kl;
+                var (rako1_kl, rako2_kl) = LaskeRaonKeskilinjaOffsetit(paksuudet, tera4.Rako);
 
-                if (tera2 != null && tera4 != null)
-                {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            double vasenT2Offset = tera2.Laippa + (tera2.Rako / 2.0 - tera2.Runko / 2.0);
-                            plc_T2 = -(paksuudet[1] - vasenT4Offset + vasenT2Offset);
-                        }
-                        else
-                        {
-                            double vasenT4Offset = tera4.Laippa + (tera4.Rako / 2.0 - tera4.Runko / 2.0);
-                            double oikeaT2Offset = tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            plc_T2 = -(paksuudet[1] + vasenT4Offset + oikeaT2Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa - tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 + tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + paksuudet[1] - vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            double oikeaT2Offset = tera2.Runko / 2.0 + tera2.Rako / 2.0;
-                            plc_T2 = -(oikeaT4Offset + paksuudet[1] + oikeaT2Offset);
-                        }
-                    }
-                }
-                plc_T6 = vaistoUlko;
+                plc_T4 = Vaisto_Ulkoterä + rako1_kl + offset4;
+                if (tera2 != null)
+                    plc_T2 = -(Vaisto_Ulkoterä + rako2_kl + offset2);
+                plc_T6 = Vaisto_Ulkoterä;
             }
             else if (paksuudet.Count == 4)
             {
@@ -922,81 +898,24 @@ namespace SahanOhjausGUI
                 teraParametrit.TryGetValue(6, out var tera6);
                 if (tera4 == null) return;
 
-                double k1 = paksuudet[0], k2 = paksuudet[1], k3 = paksuudet[2];
-                double rako1 = tera2?.Rako ?? 4.0;
-                double rako2 = tera4.Rako;
-                double rako3 = tera6?.Rako ?? 4.0;
-                double kl = LaskeKeskilinja4(paksuudet, rako1, rako2, rako3);
+                double offset4 = tera4.LaskeOffset();
+                var (rako1_kl, rako2_kl) = LaskeRaonKeskilinjaOffsetit(paksuudet, tera4.Rako);
 
-                plc_T4 = tera4.OnkoVasenKatinen
-                    ? k1 + rako1 + k2 + rako2 / 2.0 + (tera4.Laippa - tera4.Runko / 2.0) - kl
-                    : k1 + rako1 + k2 + rako2 / 2.0 + tera4.Runko / 2.0 - kl;
+                plc_T4 = Vaisto_Ulkoterä + rako2_kl + offset4;
 
                 if (tera2 != null)
                 {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa + tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T2 = -(k2 - vasenT4Offset + vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT2Offset = tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa + (tera4.Rako / 2.0 - tera4.Runko / 2.0);
-                            plc_T2 = -(k2 + vasenT4Offset + oikeaT2Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa - tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 + tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + k2 - vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT2Offset = tera2.Runko / 2.0 + tera2.Rako / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + k2 + oikeaT2Offset);
-                        }
-                    }
+                    double offset2 = tera2.LaskeOffset();
+                    plc_T2 = -(Vaisto_Ulkoterä + rako1_kl + offset2);
                 }
+
                 if (tera6 != null)
                 {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera6.OnkoVasenKatinen)
-                        {
-                            double vasenT6Offset = tera6.Laippa + tera6.Rako / 2.0 - tera6.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T6 = k3 - vasenT4Offset + vasenT6Offset;
-                        }
-                        else
-                        {
-                            double oikeaT6Offset = tera6.Runko / 2.0 + tera6.Rako / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T6 = k3 - vasenT4Offset + oikeaT6Offset;
-                        }
-                    }
-                    else
-                    {
-                        if (tera6.OnkoVasenKatinen)
-                        {
-                            double vasenT6Offset = tera6.Laippa + tera6.Rako / 2.0 - tera6.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T6 = oikeaT4Offset + k3 + vasenT6Offset;
-                        }
-                        else
-                        {
-                            double oikeaT6Offset = tera6.Runko / 2.0 + tera6.Rako / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T6 = oikeaT4Offset + k3 + oikeaT6Offset;
-                        }
-                    }
+                    double offset6 = tera6.LaskeOffset();
+                    double kl = LaskeKeskilinja4(paksuudet, tera6.Rako);
+                    double rako3_abs = paksuudet[0] + tera6.Rako + paksuudet[1] + tera6.Rako + paksuudet[2] + tera6.Rako / 2.0;
+                    double rako3_kl = rako3_abs - kl;
+                    plc_T6 = Vaisto_Ulkoterä + rako3_kl + offset6;
                 }
             }
         }
@@ -1042,50 +961,18 @@ namespace SahanOhjausGUI
             {
                 teraParametrit.TryGetValue(3, out var tera3);
                 teraParametrit.TryGetValue(1, out var tera1);
+                if (tera3 == null) return;
 
-                double rako1 = tera1?.Rako ?? 4.0;
-                double rako2 = tera3?.Rako ?? 4.0;
-                double kl = LaskeKeskilinja3(paksuudet, rako1, rako2);
+                double offset3 = tera3.LaskeOffset();
+                var (rako1_kl, rako2_kl) = LaskeRaonKeskilinjaOffsetit(paksuudet, tera3.Rako);
 
-                if (tera3 != null)
-                    plc_T3 = tera3.OnkoVasenKatinen
-                        ? paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + (tera3.Laippa - tera3.Runko / 2.0) - kl
-                        : paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + tera3.Runko / 2.0 - kl;
-
-                if (tera1 != null && tera3 != null)
+                plc_T3 = Vaisto_Ulkoterä + offset3 - rako1_kl;
+                if (tera1 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            double vasenT1Offset = tera1.Laippa + (tera1.Rako / 2.0 - tera1.Runko / 2.0);
-                            plc_T1 = -(paksuudet[1] - vasenT3Offset + vasenT1Offset);
-                        }
-                        else
-                        {
-                            double vasenT3Offset = tera3.Laippa + (tera3.Rako / 2.0 - tera3.Runko / 2.0);
-                            double oikeaT1Offset = tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            plc_T1 = -(paksuudet[1] + vasenT3Offset + oikeaT1Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa - tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 + tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + paksuudet[1] - vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            double oikeaT1Offset = tera1.Runko / 2.0 + tera1.Rako / 2.0;
-                            plc_T1 = -(oikeaT3Offset + paksuudet[1] + oikeaT1Offset);
-                        }
-                    }
+                    double offset1 = tera1.LaskeOffset();
+                    plc_T1 = -(Vaisto_Ulkoterä + offset1 - rako2_kl);
                 }
-                plc_T5 = vaistoUlko;
+                plc_T5 = Vaisto_Ulkoterä;
             }
             else if (paksuudet.Count == 4)
             {
@@ -1094,81 +981,24 @@ namespace SahanOhjausGUI
                 teraParametrit.TryGetValue(5, out var tera5);
                 if (tera3 == null) return;
 
-                double k1 = paksuudet[0], k2 = paksuudet[1], k3 = paksuudet[2];
-                double rako1 = tera1?.Rako ?? 4.0;
-                double rako2 = tera3.Rako;
-                double rako3 = tera5?.Rako ?? 4.0;
-                double kl = LaskeKeskilinja4(paksuudet, rako1, rako2, rako3);
+                double offset3 = tera3.LaskeOffset();
+                var (rako1_kl, rako2_kl) = LaskeRaonKeskilinjaOffsetit(paksuudet, tera3.Rako);
 
-                plc_T3 = tera3.OnkoVasenKatinen
-                    ? k1 + rako1 + k2 + rako2 / 2.0 + (tera3.Laippa - tera3.Runko / 2.0) - kl
-                    : k1 + rako1 + k2 + rako2 / 2.0 + tera3.Runko / 2.0 - kl;
+                plc_T3 = Vaisto_Ulkoterä + offset3 - rako2_kl;
 
                 if (tera1 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa + tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T1 = -(k2 - vasenT3Offset + vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT1Offset = tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa + (tera3.Rako / 2.0 - tera3.Runko / 2.0);
-                            plc_T1 = -(k2 + vasenT3Offset + oikeaT1Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa - tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 + tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + k2 - vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT1Offset = tera1.Runko / 2.0 + tera1.Rako / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + k2 + oikeaT1Offset);
-                        }
-                    }
+                    double offset1 = tera1.LaskeOffset();
+                    plc_T1 = -(Vaisto_Ulkoterä + offset1 - rako1_kl);
                 }
+
                 if (tera5 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera5.OnkoVasenKatinen)
-                        {
-                            double vasenT5Offset = tera5.Laippa + tera5.Rako / 2.0 - tera5.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T5 = k3 - vasenT3Offset + vasenT5Offset;
-                        }
-                        else
-                        {
-                            double oikeaT5Offset = tera5.Runko / 2.0 + tera5.Rako / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T5 = k3 - vasenT3Offset + oikeaT5Offset;
-                        }
-                    }
-                    else
-                    {
-                        if (tera5.OnkoVasenKatinen)
-                        {
-                            double vasenT5Offset = tera5.Laippa + tera5.Rako / 2.0 - tera5.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T5 = oikeaT3Offset + k3 + vasenT5Offset;
-                        }
-                        else
-                        {
-                            double oikeaT5Offset = tera5.Runko / 2.0 + tera5.Rako / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T5 = oikeaT3Offset + k3 + oikeaT5Offset;
-                        }
-                    }
+                    double offset5 = tera5.LaskeOffset();
+                    double kl = LaskeKeskilinja4(paksuudet, tera5.Rako);
+                    double rako3_abs = paksuudet[0] + tera5.Rako + paksuudet[1] + tera5.Rako + paksuudet[2] + tera5.Rako / 2.0;
+                    double rako3_kl = rako3_abs - kl;
+                    plc_T5 = Vaisto_Ulkoterä + offset5 - rako3_kl;
                 }
             }
         }
