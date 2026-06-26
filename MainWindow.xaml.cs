@@ -733,6 +733,7 @@ namespace SahanOhjausGUI
 
                 plc_T3 = vaistoT1 + OffsetT(1) - rako1_kl;
                 plc_T4 = vaistoT2 + rako2_kl + OffsetT(2);
+                // T1 ja T2 väistöasennossa (negatiivinen = vedetty pois tieltä)
                 plc_T1 = -vaistoT1;
                 plc_T2 = -vaistoT2;
                 plc_T5 = VaistoT(5);
