@@ -94,7 +94,7 @@ namespace SahanOhjausGUI
 
             UpdateKappaleInfo();
             PaivitaNakymat();
-            LuoParametriKontrollit();
+          
             PiirraVisual();
             SetStatus("Valmis", Colors.LightGray);
         }
@@ -140,7 +140,6 @@ namespace SahanOhjausGUI
             }
             catch { }
         }
-
         private void LataaTallennus()
         {
             try
@@ -148,6 +147,7 @@ namespace SahanOhjausGUI
                 if (!IO.File.Exists(TallennusPolku)) return;
                 var data = JsonSerializer.Deserialize<TallennusData>(IO.File.ReadAllText(TallennusPolku));
                 if (data == null) return;
+
                 foreach (var kvp in data.TeraParametrit)
                 {
                     if (!teraParametrit.ContainsKey(kvp.Key)) continue;
@@ -164,7 +164,17 @@ namespace SahanOhjausGUI
                     teraRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
                     teraRajat[kvp.Key].Vaisto = kvp.Value.Vaisto;
                 }
+
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
+
+                // ── Irrotetaan eventit latauksen ajaksi ──
+                KappaleCombo.SelectionChanged -= Kappale_Changed;
+                YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
+                VasenSahaCheck.Checked -= SahaValinta_Changed;
+                VasenSahaCheck.Unchecked -= SahaValinta_Changed;
+                OikeaSahaCheck.Checked -= SahaValinta_Changed;
+                OikeaSahaCheck.Unchecked -= SahaValinta_Changed;
+
                 int idx = data.KappaleCount switch { 2 => 0, 3 => 1, _ => 2 };
                 if (KappaleCombo != null) KappaleCombo.SelectedIndex = idx;
                 int yIdx = data.YhdistettyCount switch { 3 => 0, 4 => 1, 5 => 2, 6 => 3, _ => 4 };
@@ -172,8 +182,18 @@ namespace SahanOhjausGUI
                 if (KuivausTextBox != null) KuivausTextBox.Text = data.Kuivaus;
                 if (VasenSahaCheck != null) VasenSahaCheck.IsChecked = data.VasenOn;
                 if (OikeaSahaCheck != null) OikeaSahaCheck.IsChecked = data.OikeaOn;
+
+                // ── Palautetaan eventit ──
+                KappaleCombo.SelectionChanged += Kappale_Changed;
+                YhdistettyCombo.SelectionChanged += YhdistettyKappale_Changed;
+                VasenSahaCheck.Checked += SahaValinta_Changed;
+                VasenSahaCheck.Unchecked += SahaValinta_Changed;
+                OikeaSahaCheck.Checked += SahaValinta_Changed;
+                OikeaSahaCheck.Unchecked += SahaValinta_Changed;
+
                 PaivitaNakymat();
                 LuoParametriKontrollit();
+
                 Dispatcher.InvokeAsync(() =>
                 {
                     foreach (var kvp in data.PaksuudetVasen)
@@ -183,10 +203,12 @@ namespace SahanOhjausGUI
                     foreach (var kvp in data.PaksuudetYhdistetty)
                         if (paksuusTextBoxesYhdistetty.TryGetValue(kvp.Key, out var tb)) tb.Text = kvp.Value;
                 }, System.Windows.Threading.DispatcherPriority.Loaded);
+
                 SetStatus("✓  Asetukset ladattu", Colors.LightGreen);
             }
             catch { }
         }
+
 
         // ── Parametrikontrollit ──────────────────────────────────────────────
 
@@ -198,6 +220,11 @@ namespace SahanOhjausGUI
             paksuusTextBoxesVasen.Clear();
             paksuusTextBoxesOikea.Clear();
             paksuusTextBoxesYhdistetty.Clear();
+
+            bool vasenOn = VasenSahaCheck?.IsChecked == true;
+            bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
+            if (!vasenOn && !oikeaOn) return;
+
             if (OnYhdistettyTila()) LuoYhdistettyKontrollit();
             else LuoErillisetKontrollit();
         }
