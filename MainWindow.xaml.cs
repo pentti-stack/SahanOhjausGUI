@@ -99,8 +99,6 @@ namespace SahanOhjausGUI
             SetStatus("Valmis", Colors.LightGray);
         }
 
-        // ── Näkymien hallinta ────────────────────────────────────────────────
-
         private bool OnYhdistettyTila()
         {
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
@@ -117,7 +115,7 @@ namespace SahanOhjausGUI
                 YhdistettyPanel.Visibility = yhdistetty ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // ── Tallennus ─────────────────────────────────────────────────────────
+        // ── Tallennus ────────────────────────────────────────────────────────
 
         private void TallennaTallennus()
         {
@@ -125,38 +123,18 @@ namespace SahanOhjausGUI
             {
                 var data = new TallennusData
                 {
-                    TeraParametrit = teraParametrit.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => new TeraParametritDto
-                        {
-                            OnkoVasenKatinen = kvp.Value.OnkoVasenKatinen,
-                            Rako = kvp.Value.Rako,
-                            Runko = kvp.Value.Runko,
-                            Laippa = kvp.Value.Laippa
-                        }),
-                    PaksuudetVasen = paksuusTextBoxesVasen.ToDictionary(
-                        kvp => kvp.Key, kvp => kvp.Value.Text),
-                    PaksuudetOikea = paksuusTextBoxesOikea.ToDictionary(
-                        kvp => kvp.Key, kvp => kvp.Value.Text),
-                    PaksuudetYhdistetty = paksuusTextBoxesYhdistetty.ToDictionary(
-                        kvp => kvp.Key, kvp => kvp.Value.Text),
+                    TeraParametrit = teraParametrit.ToDictionary(kvp => kvp.Key, kvp => new TeraParametritDto { OnkoVasenKatinen = kvp.Value.OnkoVasenKatinen, Rako = kvp.Value.Rako, Runko = kvp.Value.Runko, Laippa = kvp.Value.Laippa }),
+                    PaksuudetVasen = paksuusTextBoxesVasen.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Text),
+                    PaksuudetOikea = paksuusTextBoxesOikea.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Text),
+                    PaksuudetYhdistetty = paksuusTextBoxesYhdistetty.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Text),
                     KappaleCount = GetSelectedPieceCount(),
                     YhdistettyCount = GetSelectedYhdistettyCount(),
                     Kuivaus = KuivausTextBox?.Text ?? "0",
                     VasenOn = VasenSahaCheck?.IsChecked == true,
                     OikeaOn = OikeaSahaCheck?.IsChecked == true,
                     TurvaEtaisyys = turvaEtaisyys,
-                    TeraRajat = teraRajat.ToDictionary(
-                        kvp => kvp.Key,
-                        kvp => new TeraRajatDto
-                        {
-                            Min = kvp.Value.Min,
-                            Max = kvp.Value.Max,
-                            Lepopaikka = kvp.Value.Lepopaikka,
-                            Vaisto = kvp.Value.Vaisto
-                        })
+                    TeraRajat = teraRajat.ToDictionary(kvp => kvp.Key, kvp => new TeraRajatDto { Min = kvp.Value.Min, Max = kvp.Value.Max, Lepopaikka = kvp.Value.Lepopaikka, Vaisto = kvp.Value.Vaisto })
                 };
-
                 IO.Directory.CreateDirectory(IO.Path.GetDirectoryName(TallennusPolku)!);
                 IO.File.WriteAllText(TallennusPolku, JsonSerializer.Serialize(data, _jsonOptions));
             }
@@ -168,11 +146,8 @@ namespace SahanOhjausGUI
             try
             {
                 if (!IO.File.Exists(TallennusPolku)) return;
-
-                var data = JsonSerializer.Deserialize<TallennusData>(
-                    IO.File.ReadAllText(TallennusPolku));
+                var data = JsonSerializer.Deserialize<TallennusData>(IO.File.ReadAllText(TallennusPolku));
                 if (data == null) return;
-
                 foreach (var kvp in data.TeraParametrit)
                 {
                     if (!teraParametrit.ContainsKey(kvp.Key)) continue;
@@ -181,7 +156,6 @@ namespace SahanOhjausGUI
                     teraParametrit[kvp.Key].Runko = kvp.Value.Runko;
                     teraParametrit[kvp.Key].Laippa = kvp.Value.Laippa;
                 }
-
                 foreach (var kvp in data.TeraRajat)
                 {
                     if (!teraRajat.ContainsKey(kvp.Key)) continue;
@@ -190,91 +164,82 @@ namespace SahanOhjausGUI
                     teraRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
                     teraRajat[kvp.Key].Vaisto = kvp.Value.Vaisto;
                 }
-
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
-
                 int idx = data.KappaleCount switch { 2 => 0, 3 => 1, _ => 2 };
                 if (KappaleCombo != null) KappaleCombo.SelectedIndex = idx;
-
                 int yIdx = data.YhdistettyCount switch { 3 => 0, 4 => 1, 5 => 2, 6 => 3, _ => 4 };
                 if (YhdistettyCombo != null) YhdistettyCombo.SelectedIndex = yIdx;
-
                 if (KuivausTextBox != null) KuivausTextBox.Text = data.Kuivaus;
                 if (VasenSahaCheck != null) VasenSahaCheck.IsChecked = data.VasenOn;
                 if (OikeaSahaCheck != null) OikeaSahaCheck.IsChecked = data.OikeaOn;
-
                 PaivitaNakymat();
                 LuoParametriKontrollit();
-
                 Dispatcher.InvokeAsync(() =>
                 {
                     foreach (var kvp in data.PaksuudetVasen)
-                        if (paksuusTextBoxesVasen.TryGetValue(kvp.Key, out var tb))
-                            tb.Text = kvp.Value;
+                        if (paksuusTextBoxesVasen.TryGetValue(kvp.Key, out var tb)) tb.Text = kvp.Value;
                     foreach (var kvp in data.PaksuudetOikea)
-                        if (paksuusTextBoxesOikea.TryGetValue(kvp.Key, out var tb))
-                            tb.Text = kvp.Value;
+                        if (paksuusTextBoxesOikea.TryGetValue(kvp.Key, out var tb)) tb.Text = kvp.Value;
                     foreach (var kvp in data.PaksuudetYhdistetty)
-                        if (paksuusTextBoxesYhdistetty.TryGetValue(kvp.Key, out var tb))
-                            tb.Text = kvp.Value;
+                        if (paksuusTextBoxesYhdistetty.TryGetValue(kvp.Key, out var tb)) tb.Text = kvp.Value;
                 }, System.Windows.Threading.DispatcherPriority.Loaded);
-
                 SetStatus("✓  Asetukset ladattu", Colors.LightGreen);
             }
             catch { }
         }
 
-        // ── Parametrikontrollit ───────────────────────────────────────────────
+        // ── Parametrikontrollit ──────────────────────────────────────────────
 
         private void LuoParametriKontrollit()
         {
             if (PaksuusPanel == null) return;
-
             while (PaksuusPanel.Children.Count > 4)
                 PaksuusPanel.Children.RemoveAt(PaksuusPanel.Children.Count - 1);
-
             paksuusTextBoxesVasen.Clear();
             paksuusTextBoxesOikea.Clear();
             paksuusTextBoxesYhdistetty.Clear();
-
-            if (OnYhdistettyTila())
-                LuoYhdistettyKontrollit();
-            else
-                LuoErillisetKontrollit();
+            if (OnYhdistettyTila()) LuoYhdistettyKontrollit();
+            else LuoErillisetKontrollit();
         }
 
         private void LuoErillisetKontrollit()
         {
             int count = GetSelectedPieceCount();
+            bool vasenOn = VasenSahaCheck?.IsChecked == true;
+            bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
             var root = new StackPanel { Orientation = Orientation.Vertical };
 
-            root.Children.Add(LuoSahaOtsikkoTeksti(
-                $"🔴 Vasen: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i}"))}",
-                Color.FromRgb(255, 107, 107)));
-
-            var vasenStack = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
-            for (int i = 1; i <= count; i++)
+            if (vasenOn)
             {
-                var card = LuoPaksuusKorttiKapea($"K{i}", i);
-                vasenStack.Children.Add(card);
-                var tb = EtsiKortinTextBox(card);
-                if (tb != null) paksuusTextBoxesVasen[i] = tb;
+                root.Children.Add(LuoSahaOtsikkoTeksti(
+                    $"🔴 Vasen: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i}"))}",
+                    Color.FromRgb(255, 107, 107)));
+                var vasenStack = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
+                for (int i = 1; i <= count; i++)
+                {
+                    var card = LuoPaksuusKorttiKapea($"K{i}", i);
+                    vasenStack.Children.Add(card);
+                    var tb = EtsiKortinTextBox(card);
+                    if (tb != null) paksuusTextBoxesVasen[i] = tb;
+                }
+                root.Children.Add(vasenStack);
             }
-            root.Children.Add(vasenStack);
 
-            root.Children.Add(LuoSahaOtsikkoTeksti(
-                $"🟢 Oikea: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i + 4}"))}",
-                Color.FromRgb(107, 203, 119)));
-
-            var oikeaStack = new StackPanel();
-            for (int i = 5; i < 5 + count; i++)
+            if (oikeaOn)
             {
-                var card = LuoPaksuusKorttiKapea($"K{i}", i);
-                oikeaStack.Children.Add(card);
-                var tb = EtsiKortinTextBox(card);
-                if (tb != null) paksuusTextBoxesOikea[i] = tb;
+                root.Children.Add(LuoSahaOtsikkoTeksti(
+                    $"🟢 Oikea: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i + 4}"))}",
+                    Color.FromRgb(107, 203, 119)));
+                var oikeaStack = new StackPanel();
+                for (int i = 5; i < 5 + count; i++)
+                {
+                    var card = LuoPaksuusKorttiKapea($"K{i}", i);
+                    oikeaStack.Children.Add(card);
+                    var tb = EtsiKortinTextBox(card);
+                    if (tb != null) paksuusTextBoxesOikea[i] = tb;
+                }
+                root.Children.Add(oikeaStack);
             }
-            root.Children.Add(oikeaStack);
 
             PaksuusPanel.Children.Add(root);
         }
@@ -283,8 +248,6 @@ namespace SahanOhjausGUI
         {
             int count = GetSelectedYhdistettyCount();
             var root = new StackPanel { Orientation = Orientation.Vertical };
-
-            // Terät käytössä per kappalemäärä
             string teratInfo = count switch
             {
                 3 => "T1, T2",
@@ -294,11 +257,7 @@ namespace SahanOhjausGUI
                 7 => "T1, T2, T3, T4, T5, T6",
                 _ => ""
             };
-
-            root.Children.Add(LuoSahaOtsikkoTeksti(
-                $"🔀 Yhdistetty: {count} kpl  ({teratInfo})",
-                Color.FromRgb(255, 217, 61)));
-
+            root.Children.Add(LuoSahaOtsikkoTeksti($"🔀 Yhdistetty: {count} kpl  ({teratInfo})", Color.FromRgb(255, 217, 61)));
             for (int i = 1; i <= count; i++)
             {
                 var card = LuoPaksuusKorttiKapea($"K{i}", i);
@@ -306,146 +265,46 @@ namespace SahanOhjausGUI
                 var tb = EtsiKortinTextBox(card);
                 if (tb != null) paksuusTextBoxesYhdistetty[i] = tb;
             }
-
-            // Turvaetäisyys näyttö
-            var turvaPanel = new Border
-            {
-                Margin = new Thickness(0, 8, 0, 0),
-                Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8, 6, 8, 6)
-            };
+            var turvaPanel = new Border { Margin = new Thickness(0, 8, 0, 0), Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 8, 6) };
             var turvaStack = new StackPanel();
-            turvaStack.Children.Add(new TextBlock
-            {
-                Text = "T1-T2 turvaetäisyys:",
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180))
-            });
+            turvaStack.Children.Add(new TextBlock { Text = "T1-T2 turvaetäisyys:", FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)) });
             var turvaGrid = new Grid();
             turvaGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             turvaGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-            var turvaTb = new TextBox
-            {
-                Height = 28,
-                Text = turvaEtaisyys.ToString("F1", CultureInfo.InvariantCulture),
-                Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(6, 0, 6, 0),
-                VerticalContentAlignment = VerticalAlignment.Center,
-                FontSize = 12,
-                Margin = new Thickness(0, 4, 4, 0)
-            };
-            turvaTb.TextChanged += (s, e) =>
-            {
-                if (double.TryParse(turvaTb.Text.Replace(",", "."),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0)
-                {
-                    turvaEtaisyys = v;
-                    PiirraVisual();
-                }
-            };
-            var turvaMm = new TextBlock
-            {
-                Text = "mm",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-            Grid.SetColumn(turvaTb, 0);
-            Grid.SetColumn(turvaMm, 1);
-            turvaGrid.Children.Add(turvaTb);
-            turvaGrid.Children.Add(turvaMm);
+            var turvaTb = new TextBox { Height = 28, Text = turvaEtaisyys.ToString("F1", CultureInfo.InvariantCulture), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)), BorderThickness = new Thickness(1), Padding = new Thickness(6, 0, 6, 0), VerticalContentAlignment = VerticalAlignment.Center, FontSize = 12, Margin = new Thickness(0, 4, 4, 0) };
+            turvaTb.TextChanged += (s, e) => { if (double.TryParse(turvaTb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) { turvaEtaisyys = v; PiirraVisual(); } };
+            var turvaMm = new TextBlock { Text = "mm", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            Grid.SetColumn(turvaTb, 0); Grid.SetColumn(turvaMm, 1);
+            turvaGrid.Children.Add(turvaTb); turvaGrid.Children.Add(turvaMm);
             turvaStack.Children.Add(turvaGrid);
             turvaPanel.Child = turvaStack;
             root.Children.Add(turvaPanel);
-
             PaksuusPanel.Children.Add(root);
         }
 
         private static TextBlock LuoSahaOtsikkoTeksti(string teksti, Color vari) =>
-            new TextBlock
-            {
-                Text = teksti,
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(vari),
-                Margin = new Thickness(0, 0, 0, 6),
-                TextWrapping = TextWrapping.Wrap
-            };
+            new TextBlock { Text = teksti, FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(vari), Margin = new Thickness(0, 0, 0, 6), TextWrapping = TextWrapping.Wrap };
 
         private Border LuoPaksuusKorttiKapea(string otsikko, int tagId)
         {
-            var border = new Border
-            {
-                Margin = new Thickness(0, 0, 0, 4),
-                Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8, 6, 8, 6)
-            };
-
+            var border = new Border { Margin = new Thickness(0, 0, 0, 4), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 8, 6) };
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(24) });
-
-            var lbl = new TextBlock
-            {
-                Text = otsikko,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)),
-                VerticalAlignment = VerticalAlignment.Center,
-                FontSize = 12
-            };
-
-            var textBox = new TextBox
-            {
-                Height = 28,
-                Padding = new Thickness(6, 0, 6, 0),
-                Text = "30",
-                Tag = tagId,
-                FontSize = 12,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                BorderThickness = new Thickness(1),
-                Margin = new Thickness(4, 0, 4, 0)
-            };
-
-            var mm = new TextBlock
-            {
-                Text = "mm",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-
+            var lbl = new TextBlock { Text = otsikko, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)), VerticalAlignment = VerticalAlignment.Center, FontSize = 12 };
+            var textBox = new TextBox { Height = 28, Padding = new Thickness(6, 0, 6, 0), Text = "30", Tag = tagId, FontSize = 12, VerticalContentAlignment = VerticalAlignment.Center, Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)), BorderThickness = new Thickness(1), Margin = new Thickness(4, 0, 4, 0) };
+            var mm = new TextBlock { Text = "mm", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
             textBox.TextChanged += (s, e) =>
             {
-                bool valid = double.TryParse(textBox.Text.Replace(",", "."),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0;
-                textBox.BorderBrush = valid
-                    ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
-                    : new SolidColorBrush(Color.FromRgb(220, 83, 83));
-                if (!valid)
-                    SetStatus("⚠  Paksuuden täytyy olla positiivinen luku", Colors.Orange);
-                else
-                    SetStatus("Valmis", Colors.LightGray);
+                bool valid = double.TryParse(textBox.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0;
+                textBox.BorderBrush = valid ? new SolidColorBrush(Color.FromRgb(100, 100, 100)) : new SolidColorBrush(Color.FromRgb(220, 83, 83));
+                if (!valid) SetStatus("⚠  Paksuuden täytyy olla positiivinen luku", Colors.Orange);
+                else SetStatus("Valmis", Colors.LightGray);
             };
             textBox.TextChanged += PaksuusTextBox_Changed;
-
-            Grid.SetColumn(lbl, 0);
-            Grid.SetColumn(textBox, 1);
-            Grid.SetColumn(mm, 2);
-            grid.Children.Add(lbl);
-            grid.Children.Add(textBox);
-            grid.Children.Add(mm);
-
+            Grid.SetColumn(lbl, 0); Grid.SetColumn(textBox, 1); Grid.SetColumn(mm, 2);
+            grid.Children.Add(lbl); grid.Children.Add(textBox); grid.Children.Add(mm);
             border.Child = grid;
             return border;
         }
@@ -460,31 +319,19 @@ namespace SahanOhjausGUI
 
         // ── Event-handlerit ──────────────────────────────────────────────────
 
-        private int GetHalkaisuTeraOikea() =>
-            HalkaisuOikeaCombo?.SelectedIndex == 1 ? 2 : 4;
-
-        private int GetHalkaisuTeraVasen() =>
-            HalkaisuVasenCombo?.SelectedIndex == 1 ? 1 : 3;
-
+        private int GetHalkaisuTeraOikea() => HalkaisuOikeaCombo?.SelectedIndex == 1 ? 2 : 4;
+        private int GetHalkaisuTeraVasen() => HalkaisuVasenCombo?.SelectedIndex == 1 ? 1 : 3;
         private void PaksuusTextBox_Changed(object sender, TextChangedEventArgs e) => PiirraVisual();
-        private void SahaValinta_Changed(object sender, RoutedEventArgs e)
-        {
-            PaivitaNakymat();
-            LuoParametriKontrollit();
-            PiirraVisual();
-        }
+        private void SahaValinta_Changed(object sender, RoutedEventArgs e) { PaivitaNakymat(); LuoParametriKontrollit(); PiirraVisual(); }
         private void Halkaisu_Changed(object sender, SelectionChangedEventArgs e) => PiirraVisual();
-
         private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e) => PiirraVisual();
 
         private void Kuivaus_Changed(object sender, TextChangedEventArgs e)
         {
             string text = KuivausTextBox?.Text ?? "0";
-            if (!double.TryParse(text.Replace(",", "."), NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out double val) || val < 0)
+            if (!double.TryParse(text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double val) || val < 0)
                 SetStatus("⚠  Kuivausprosentin täytyy olla positiivinen numero", Colors.Orange);
-            else
-                SetStatus("Valmis", Colors.LightGray);
+            else SetStatus("Valmis", Colors.LightGray);
             PiirraVisual();
         }
 
@@ -492,43 +339,31 @@ namespace SahanOhjausGUI
         {
             UpdateKappaleInfo();
             if (HalkaisuPanel != null)
-                HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2
-                    ? Visibility.Visible : Visibility.Collapsed;
+                HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2 ? Visibility.Visible : Visibility.Collapsed;
             LuoParametriKontrollit();
             PiirraVisual();
         }
 
         private void YhdistettyKappale_Changed(object sender, SelectionChangedEventArgs e)
         {
-            if (YhdistettyInfo != null)
-                YhdistettyInfo.Text = $"{GetSelectedYhdistettyCount()} kpl";
+            if (YhdistettyInfo != null) YhdistettyInfo.Text = $"{GetSelectedYhdistettyCount()} kpl";
             LuoParametriKontrollit();
             PiirraVisual();
         }
 
         private void Laheta_Click(object sender, RoutedEventArgs e)
         {
-            // Tarkista onko rajaVaroituksia — jos on, ei lähetetä
             if (StatusTextBlock?.Text.StartsWith("⚠") == true)
             {
-                MessageBox.Show(
-                    "Rajoja on ylitetty — arvoja ei lähetetä logiikkaan!\n\n" +
-                    StatusTextBlock.Text,
-                    "Lähetys estetty", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Rajoja on ylitetty — arvoja ei lähetetä logiikkaan!\n\n" + StatusTextBlock.Text, "Lähetys estetty", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            // TODO: PLC-lähetys tähän
             SetStatus("✓  Lähetetty logiikkaan", Colors.LightGreen);
         }
 
         private void AvaaTerapAsetukset_Click(object sender, RoutedEventArgs e)
         {
-            if (teraParametrit == null || teraParametrit.Count == 0)
-            {
-                MessageBox.Show("Teräparametrit ei ole alustettu!", "Virhe",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            if (teraParametrit == null || teraParametrit.Count == 0) { MessageBox.Show("Teräparametrit ei ole alustettu!", "Virhe", MessageBoxButton.OK, MessageBoxImage.Error); return; }
             try
             {
                 var teraWindow = new TeraAsetuksetWindow(teraParametrit) { Owner = this };
@@ -548,11 +383,7 @@ namespace SahanOhjausGUI
                 teraWindow.ShowDialog();
                 PiirraVisual();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Teräasetusikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}",
-                    "Virhe", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch (Exception ex) { MessageBox.Show($"Teräasetusikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}", "Virhe", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         private void AvaaRajatAsetukset_Click(object sender, RoutedEventArgs e)
@@ -575,11 +406,7 @@ namespace SahanOhjausGUI
                 };
                 rajatWindow.ShowDialog();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Rajoitusikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}",
-                    "Virhe", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            catch (Exception ex) { MessageBox.Show($"Rajoitusikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}", "Virhe", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         // ── Piirrä ───────────────────────────────────────────────────────────
@@ -588,20 +415,13 @@ namespace SahanOhjausGUI
         {
             if (_isPiirraVisualRunning) return;
             _isPiirraVisualRunning = true;
-
             try
             {
                 if (KuivausTextBox == null) return;
-
-                if (!double.TryParse(KuivausTextBox.Text.Replace(",", "."),
-                        NumberStyles.Float, CultureInfo.InvariantCulture, out double kuivausProsentti)
-                    || kuivausProsentti < 0)
+                if (!double.TryParse(KuivausTextBox.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double kuivausProsentti) || kuivausProsentti < 0)
                     kuivausProsentti = 0;
-
                 double kuivausKerroin = 1.0 + (kuivausProsentti / 100.0);
-
-                if (KuivausValue != null)
-                    KuivausValue.Text = $"{kuivausProsentti:F0} %";
+                if (KuivausValue != null) KuivausValue.Text = $"{kuivausProsentti:F0} %";
 
                 bool vasenOn = VasenSahaCheck?.IsChecked == true;
                 bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
@@ -620,60 +440,41 @@ namespace SahanOhjausGUI
 
                 if (yhdistetty)
                 {
-                    paksuudetYhd = GetThicknessValuesYhdistetty()
-                        .Select(p => p * kuivausKerroin).ToList();
+                    paksuudetYhd = GetThicknessValuesYhdistetty().Select(p => p * kuivausKerroin).ToList();
                     if (paksuudetYhd.Count > 0)
-                        LaskeYhdistetty(paksuudetYhd,
-                            ref plc_T1, ref plc_T2, ref plc_T3,
-                            ref plc_T4, ref plc_T5, ref plc_T6);
+                        LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6);
                 }
                 else
                 {
-                    paksuudetVasen = GetThicknessValuesVasen()
-                        .Select(p => p * kuivausKerroin).ToList();
-                    paksuudetOikea = GetThicknessValuesOikea()
-                        .Select(p => p * kuivausKerroin).ToList();
-
+                    paksuudetVasen = GetThicknessValuesVasen().Select(p => p * kuivausKerroin).ToList();
+                    paksuudetOikea = GetThicknessValuesOikea().Select(p => p * kuivausKerroin).ToList();
                     if (oikeaOn && paksuudetOikea.Count > 0)
-                        LaskeOikeaPuoli(paksuudetOikea, GetHalkaisuTeraOikea(),
-                            ref plc_T4, ref plc_T2, ref plc_T6);
+                        LaskeOikeaPuoli(paksuudetOikea, GetHalkaisuTeraOikea(), ref plc_T4, ref plc_T2, ref plc_T6);
                     if (vasenOn && paksuudetVasen.Count > 0)
-                        LaskeVasenPuoli(paksuudetVasen, GetHalkaisuTeraVasen(),
-                            ref plc_T3, ref plc_T1, ref plc_T5);
+                        LaskeVasenPuoli(paksuudetVasen, GetHalkaisuTeraVasen(), ref plc_T3, ref plc_T1, ref plc_T5);
                 }
 
-                // ── Rajojen tarkistus ──────────────────────────────────────────
                 var rajaVaroitukset = new List<string>();
-
                 void TarkistaRaja(string nimi, double arvo, int teraNumero)
                 {
                     if (!teraRajat.TryGetValue(teraNumero, out var raja)) return;
                     if (arvo < raja.Min || arvo > raja.Max)
                         rajaVaroitukset.Add($"{nimi}: {arvo:F1} (raja {raja.Min:F1}…{raja.Max:F1})");
                 }
+                TarkistaRaja("T4", plc_T4, 4); TarkistaRaja("T2", plc_T2, 2); TarkistaRaja("T6", plc_T6, 6);
+                TarkistaRaja("T3", plc_T3, 3); TarkistaRaja("T1", plc_T1, 1); TarkistaRaja("T5", plc_T5, 5);
 
-                TarkistaRaja("T4", plc_T4, 4);
-                TarkistaRaja("T2", plc_T2, 2);
-                TarkistaRaja("T6", plc_T6, 6);
-                TarkistaRaja("T3", plc_T3, 3);
-                TarkistaRaja("T1", plc_T1, 1);
-                TarkistaRaja("T5", plc_T5, 5);
-
-                // ── T1-T2 turvaetäisyys yhdistetyssä tilassa ──────────────────
                 if (yhdistetty)
                 {
-                    double t1Abs = plc_T4 + plc_T1; // absoluuttinen sijainti
+                    double t1Abs = plc_T4 + plc_T1;
                     double t2Abs = plc_T4 + plc_T2;
                     double vali = t2Abs - t1Abs;
                     if (vali < turvaEtaisyys)
-                        rajaVaroitukset.Add(
-                            $"T1-T2 väli liian pieni: {vali:F1} mm (min {turvaEtaisyys:F1} mm)");
+                        rajaVaroitukset.Add($"T1-T2 väli liian pieni: {vali:F1} mm (min {turvaEtaisyys:F1} mm)");
                 }
 
-                if (rajaVaroitukset.Count > 0)
-                    SetStatus($"⚠  Raja ylitetty: {string.Join("  |  ", rajaVaroitukset)}", Colors.OrangeRed);
-                else
-                    SetStatus("Valmis", Colors.LightGray);
+                if (rajaVaroitukset.Count > 0) SetStatus($"⚠  Raja ylitetty: {string.Join("  |  ", rajaVaroitukset)}", Colors.OrangeRed);
+                else SetStatus("Valmis", Colors.LightGray);
 
                 if (Tera4_Value != null) Tera4_Value.Text = $"T4: {plc_T4:F1}";
                 if (Tera2_Value != null) Tera2_Value.Text = $"T2: {plc_T2:F1}";
@@ -685,52 +486,30 @@ namespace SahanOhjausGUI
                 if (YhteisCanvas != null)
                 {
                     if (yhdistetty)
-                        PiirraYhteisCanvasYhdistetty(YhteisCanvas, paksuudetYhd,
-                            plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6);
+                        PiirraYhteisCanvasYhdistetty(YhteisCanvas, paksuudetYhd, plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6);
                     else
-                        PiirraYhteisCanvas(YhteisCanvas,
-                            paksuudetVasen, paksuudetOikea, vasenOn, oikeaOn,
-                            plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
+                        PiirraYhteisCanvas(YhteisCanvas, paksuudetVasen, paksuudetOikea, vasenOn, oikeaOn, plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
                 }
             }
-            finally
-            {
-                _isPiirraVisualRunning = false;
-            }
+            finally { _isPiirraVisualRunning = false; }
         }
 
-        // ── Yhdistetty laskenta ───────────────────────────────────────────────
+        // ── Yhdistetty laskenta ──────────────────────────────────────────────
 
         private void LaskeYhdistetty(List<double> paksuudet,
             ref double plc_T1, ref double plc_T2, ref double plc_T3,
             ref double plc_T4, ref double plc_T5, ref double plc_T6)
         {
             int n = paksuudet.Count;
-
-            double RakoT(int num) =>
-                teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
-
-            double VaistoT(int num) =>
-                teraRajat.TryGetValue(num, out var r) ? r.Vaisto :
-                (num <= 2 ? -140.0 : 140.0);
-
+            double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
+            double VaistoT(int num) => teraRajat.TryGetValue(num, out var r) ? r.Vaisto : (num <= 2 ? -140.0 : 140.0);
             double OffsetT(int num)
             {
                 if (!teraParametrit.TryGetValue(num, out var t)) return 1.5;
-                return t.OnkoVasenKatinen
-                    ? t.Laippa - t.Runko / 2.0
-                    : t.Runko / 2.0;
+                return t.OnkoVasenKatinen ? t.Laippa - t.Runko / 2.0 : t.Runko / 2.0;
             }
-
             double r1 = RakoT(1), r2 = RakoT(2), r3 = RakoT(3);
             double r4 = RakoT(4), r5 = RakoT(5), r6 = RakoT(6);
-
-            // Keskilinja koko nippuun
-            // 3kpl: K1|T1|K2|T2|K3
-            // 4kpl: K1|T1|K2|T2|K3|T4|K4
-            // 5kpl: K1|T3|K2|T1|K3|T2|K4|T4|K5
-            // 6kpl: K1|T3|K2|T1|K3|T2|K4|T4|K5|T6|K6
-            // 7kpl: K1|T5|K2|T3|K3|T1|K4|T2|K5|T4|K6|T6|K7
             double kl = n switch
             {
                 3 => (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2]) / 2.0,
@@ -740,8 +519,6 @@ namespace SahanOhjausGUI
                 7 => (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0,
                 _ => 0
             };
-
-            // T4 — oikean sahan pääterä (absoluuttinen)
             plc_T4 = n switch
             {
                 3 => VaistoT(4),
@@ -751,8 +528,6 @@ namespace SahanOhjausGUI
                 7 => paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0 + OffsetT(4) - kl,
                 _ => VaistoT(4)
             };
-
-            // T2 — suhteessa T4:ään (negatiivinen = vasemmalle T4:stä)
             plc_T2 = n switch
             {
                 3 => -(paksuudet[2] + r2 / 2.0 + OffsetT(2) - kl + kl - plc_T4 + paksuudet[2]),
@@ -762,33 +537,25 @@ namespace SahanOhjausGUI
                 7 => -(paksuudet[4] + r2 / 2.0 + OffsetT(2) + OffsetT(4) - r4 / 2.0),
                 _ => VaistoT(2)
             };
-
-            // 3kpl T2 erikoistapaus — T4 väistössä, lasketaan absoluuttisesti
             if (n == 3)
             {
                 double t2Abs = paksuudet[0] + r1 + paksuudet[1] + r2 / 2.0 + OffsetT(2) - kl;
-                plc_T2 = t2Abs - plc_T4; // relatiivinen T4:stä (joka on väistössä)
+                plc_T2 = t2Abs - plc_T4;
             }
-
-            // T1 — suhteessa T4:ään
             plc_T1 = n switch
             {
-                3 => VaistoT(1) - plc_T4, // väistö relatiivisena
+                3 => VaistoT(1) - plc_T4,
                 4 => -(paksuudet[2] + r2 + paksuudet[1] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
                 5 => -(paksuudet[3] + r2 + paksuudet[2] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
                 6 => -(paksuudet[3] + r2 + paksuudet[2] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
                 7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 / 2.0 + OffsetT(1) + OffsetT(4) - r4 / 2.0),
                 _ => VaistoT(1)
             };
-
-            // 3kpl T1 erikoistapaus
             if (n == 3)
             {
                 double t1Abs = paksuudet[0] + r1 / 2.0 + OffsetT(1) - kl;
                 plc_T1 = t1Abs - plc_T4;
             }
-
-            // T3 — suhteessa T4:ään
             plc_T3 = n switch
             {
                 3 => VaistoT(3) - plc_T4,
@@ -798,8 +565,6 @@ namespace SahanOhjausGUI
                 7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 + paksuudet[2] + r3 / 2.0 + OffsetT(3) + OffsetT(4) - r4 / 2.0),
                 _ => VaistoT(3)
             };
-
-            // T6 — suhteessa T4:ään (positiivinen = oikealle T4:stä)
             plc_T6 = n switch
             {
                 3 => VaistoT(6) - plc_T4,
@@ -809,8 +574,6 @@ namespace SahanOhjausGUI
                 7 => paksuudet[5] + r6 / 2.0 + OffsetT(6) - OffsetT(4) + r4 / 2.0,
                 _ => VaistoT(6)
             };
-
-            // T5 — suhteessa T4:ään
             plc_T5 = n switch
             {
                 7 => -(paksuudet[4] + r2 + paksuudet[3] + r1 + paksuudet[2] + r3 + paksuudet[1] + r5 / 2.0 + OffsetT(5) + OffsetT(4) - r4 / 2.0),
@@ -818,7 +581,7 @@ namespace SahanOhjausGUI
             };
         }
 
-        // ── Laskenta erillinen ────────────────────────────────────────────────
+        // ── Laskenta erillinen ───────────────────────────────────────────────
 
         private static double LaskeKeskilinja2(List<double> paksuudet, double rako1) =>
             (paksuudet.Sum() + rako1) / 2.0;
@@ -828,6 +591,19 @@ namespace SahanOhjausGUI
 
         private static double LaskeKeskilinja4(List<double> paksuudet, double rako1, double rako2, double rako3) =>
             (paksuudet.Sum() + rako1 + rako2 + rako3) / 2.0;
+
+        private static double LaskeOffset(bool vasenKatinen, double laippa, double runko) =>
+            vasenKatinen ? laippa - runko / 2.0 : runko / 2.0;
+
+        private static double LaskeSivuTeraPlc(
+            double kappale, double rakoSivu, double rakoPaa,
+            double offsetSivu, double offsetPaa) =>
+            -((rakoSivu / 2.0 + kappale + rakoPaa / 2.0) - offsetSivu + offsetPaa);
+
+        private static double LaskeUlkoTeraPlc(
+            double kappale, double rakoUlko, double rakoPaa,
+            double offsetUlko, double offsetPaa) =>
+            (rakoUlko / 2.0 + kappale + rakoPaa / 2.0) - offsetPaa + offsetUlko;
 
         private void LaskeOikeaPuoli(List<double> paksuudet, int halkaisuTera,
             ref double plc_T4, ref double plc_T2, ref double plc_T6)
@@ -845,9 +621,8 @@ namespace SahanOhjausGUI
                     {
                         double rako1 = tera4.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
-                        plc_T4 = tera4.OnkoVasenKatinen
-                            ? paksuudet[0] + rako1 / 2.0 + (tera4.Laippa - tera4.Runko / 2.0) - kl
-                            : paksuudet[0] + rako1 / 2.0 + tera4.Runko / 2.0 - kl;
+                        double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
+                        plc_T4 = paksuudet[0] + rako1 / 2.0 + off4 - kl;
                         plc_T2 = vaistoSisa;
                         plc_T6 = vaistoUlko;
                     }
@@ -858,9 +633,8 @@ namespace SahanOhjausGUI
                     {
                         double rako1 = tera2.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
-                        plc_T2 = tera2.OnkoVasenKatinen
-                            ? -(paksuudet[0] + rako1 / 2.0 + (tera2.Laippa - tera2.Runko / 2.0) - kl)
-                            : -(paksuudet[0] + rako1 / 2.0 + tera2.Runko / 2.0 - kl);
+                        double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
+                        plc_T2 = -(paksuudet[0] + rako1 / 2.0 + off2 - kl);
                         plc_T4 = vaistoUlko;
                         plc_T6 = vaistoUlko;
                     }
@@ -876,43 +650,18 @@ namespace SahanOhjausGUI
                 double kl = LaskeKeskilinja3(paksuudet, rako1, rako2);
 
                 if (tera4 != null)
-                    plc_T4 = tera4.OnkoVasenKatinen
-                        ? paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + (tera4.Laippa - tera4.Runko / 2.0) - kl
-                        : paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + tera4.Runko / 2.0 - kl;
+                {
+                    double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
+                    plc_T4 = paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + off4 - kl;
+                }
 
                 if (tera2 != null && tera4 != null)
                 {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            double vasenT2Offset = tera2.Laippa + (tera2.Rako / 2.0 - tera2.Runko / 2.0);
-                            plc_T2 = -(paksuudet[1] - vasenT4Offset + vasenT2Offset);
-                        }
-                        else
-                        {
-                            double vasenT4Offset = tera4.Laippa + (tera4.Rako / 2.0 - tera4.Runko / 2.0);
-                            double oikeaT2Offset = tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            plc_T2 = -(paksuudet[1] + vasenT4Offset + oikeaT2Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa - tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 + tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + paksuudet[1] - vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            double oikeaT2Offset = tera2.Runko / 2.0 + tera2.Rako / 2.0;
-                            plc_T2 = -(oikeaT4Offset + paksuudet[1] + oikeaT2Offset);
-                        }
-                    }
+                    double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
+                    double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
+                    plc_T2 = LaskeSivuTeraPlc(paksuudet[1], rako1, rako2, off2, off4);
                 }
+
                 plc_T6 = vaistoUlko;
             }
             else if (paksuudet.Count == 4)
@@ -928,75 +677,19 @@ namespace SahanOhjausGUI
                 double rako3 = tera6?.Rako ?? 4.0;
                 double kl = LaskeKeskilinja4(paksuudet, rako1, rako2, rako3);
 
-                plc_T4 = tera4.OnkoVasenKatinen
-                    ? k1 + rako1 + k2 + rako2 / 2.0 + (tera4.Laippa - tera4.Runko / 2.0) - kl
-                    : k1 + rako1 + k2 + rako2 / 2.0 + tera4.Runko / 2.0 - kl;
+                double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
+                plc_T4 = k1 + rako1 + k2 + rako2 / 2.0 + off4 - kl;
 
                 if (tera2 != null)
                 {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa + tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T2 = -(k2 - vasenT4Offset + vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT2Offset = tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa + (tera4.Rako / 2.0 - tera4.Runko / 2.0);
-                            plc_T2 = -(k2 + vasenT4Offset + oikeaT2Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera2.OnkoVasenKatinen)
-                        {
-                            double vasenT2Offset = tera2.Laippa - tera2.Rako / 2.0 - tera2.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 + tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + k2 - vasenT2Offset);
-                        }
-                        else
-                        {
-                            double oikeaT2Offset = tera2.Runko / 2.0 + tera2.Rako / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T2 = -(oikeaT4Offset + k2 + oikeaT2Offset);
-                        }
-                    }
+                    double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
+                    plc_T2 = LaskeSivuTeraPlc(k2, rako1, rako2, off2, off4);
                 }
+
                 if (tera6 != null)
                 {
-                    if (tera4.OnkoVasenKatinen)
-                    {
-                        if (tera6.OnkoVasenKatinen)
-                        {
-                            double vasenT6Offset = tera6.Laippa + tera6.Rako / 2.0 - tera6.Runko / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T6 = k3 - vasenT4Offset + vasenT6Offset;
-                        }
-                        else
-                        {
-                            double oikeaT6Offset = tera6.Runko / 2.0 + tera6.Rako / 2.0;
-                            double vasenT4Offset = tera4.Laippa - (tera4.Runko / 2.0 + tera4.Rako / 2.0);
-                            plc_T6 = k3 - vasenT4Offset + oikeaT6Offset;
-                        }
-                    }
-                    else
-                    {
-                        if (tera6.OnkoVasenKatinen)
-                        {
-                            double vasenT6Offset = tera6.Laippa + tera6.Rako / 2.0 - tera6.Runko / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T6 = oikeaT4Offset + k3 + vasenT6Offset;
-                        }
-                        else
-                        {
-                            double oikeaT6Offset = tera6.Runko / 2.0 + tera6.Rako / 2.0;
-                            double oikeaT4Offset = tera4.Rako / 2.0 - tera4.Runko / 2.0;
-                            plc_T6 = oikeaT4Offset + k3 + oikeaT6Offset;
-                        }
-                    }
+                    double off6 = LaskeOffset(tera6.OnkoVasenKatinen, tera6.Laippa, tera6.Runko);
+                    plc_T6 = LaskeUlkoTeraPlc(k3, rako3, rako2, off6, off4);
                 }
             }
         }
@@ -1017,9 +710,8 @@ namespace SahanOhjausGUI
                     {
                         double rako1 = tera3.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
-                        plc_T3 = tera3.OnkoVasenKatinen
-                            ? paksuudet[0] + rako1 / 2.0 + (tera3.Laippa - tera3.Runko / 2.0) - kl
-                            : paksuudet[0] + rako1 / 2.0 + tera3.Runko / 2.0 - kl;
+                        double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
+                        plc_T3 = paksuudet[0] + rako1 / 2.0 + off3 - kl;
                         plc_T1 = vaistoSisa;
                         plc_T5 = vaistoUlko;
                     }
@@ -1030,10 +722,9 @@ namespace SahanOhjausGUI
                     {
                         double rako1 = tera1.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
-                        plc_T3 = tera1.OnkoVasenKatinen
-                            ? paksuudet[0] + rako1 / 2.0 + (tera1.Laippa - tera1.Runko / 2.0) - kl - vaistoSisa
-                            : paksuudet[0] + rako1 / 2.0 + tera1.Runko / 2.0 - kl - vaistoSisa;
-                        plc_T1 = vaistoSisa;
+                        double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
+                        plc_T1 = -(paksuudet[0] + rako1 / 2.0 + off1 - kl);
+                        plc_T3 = vaistoSisa;
                         plc_T5 = vaistoUlko;
                     }
                 }
@@ -1048,43 +739,18 @@ namespace SahanOhjausGUI
                 double kl = LaskeKeskilinja3(paksuudet, rako1, rako2);
 
                 if (tera3 != null)
-                    plc_T3 = tera3.OnkoVasenKatinen
-                        ? paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + (tera3.Laippa - tera3.Runko / 2.0) - kl
-                        : paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + tera3.Runko / 2.0 - kl;
+                {
+                    double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
+                    plc_T3 = paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + off3 - kl;
+                }
 
                 if (tera1 != null && tera3 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            double vasenT1Offset = tera1.Laippa + (tera1.Rako / 2.0 - tera1.Runko / 2.0);
-                            plc_T1 = -(paksuudet[1] - vasenT3Offset + vasenT1Offset);
-                        }
-                        else
-                        {
-                            double vasenT3Offset = tera3.Laippa + (tera3.Rako / 2.0 - tera3.Runko / 2.0);
-                            double oikeaT1Offset = tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            plc_T1 = -(paksuudet[1] + vasenT3Offset + oikeaT1Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa - tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 + tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + paksuudet[1] - vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            double oikeaT1Offset = tera1.Runko / 2.0 + tera1.Rako / 2.0;
-                            plc_T1 = -(oikeaT3Offset + paksuudet[1] + oikeaT1Offset);
-                        }
-                    }
+                    double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
+                    double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
+                    plc_T1 = LaskeSivuTeraPlc(paksuudet[1], rako1, rako2, off1, off3);
                 }
+
                 plc_T5 = vaistoUlko;
             }
             else if (paksuudet.Count == 4)
@@ -1100,80 +766,24 @@ namespace SahanOhjausGUI
                 double rako3 = tera5?.Rako ?? 4.0;
                 double kl = LaskeKeskilinja4(paksuudet, rako1, rako2, rako3);
 
-                plc_T3 = tera3.OnkoVasenKatinen
-                    ? k1 + rako1 + k2 + rako2 / 2.0 + (tera3.Laippa - tera3.Runko / 2.0) - kl
-                    : k1 + rako1 + k2 + rako2 / 2.0 + tera3.Runko / 2.0 - kl;
+                double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
+                plc_T3 = k1 + rako1 + k2 + rako2 / 2.0 + off3 - kl;
 
                 if (tera1 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa + tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T1 = -(k2 - vasenT3Offset + vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT1Offset = tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa + (tera3.Rako / 2.0 - tera3.Runko / 2.0);
-                            plc_T1 = -(k2 + vasenT3Offset + oikeaT1Offset);
-                        }
-                    }
-                    else
-                    {
-                        if (tera1.OnkoVasenKatinen)
-                        {
-                            double vasenT1Offset = tera1.Laippa - tera1.Rako / 2.0 - tera1.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 + tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + k2 - vasenT1Offset);
-                        }
-                        else
-                        {
-                            double oikeaT1Offset = tera1.Runko / 2.0 + tera1.Rako / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T1 = -(oikeaT3Offset + k2 + oikeaT1Offset);
-                        }
-                    }
+                    double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
+                    plc_T1 = LaskeSivuTeraPlc(k2, rako1, rako2, off1, off3);
                 }
+
                 if (tera5 != null)
                 {
-                    if (tera3.OnkoVasenKatinen)
-                    {
-                        if (tera5.OnkoVasenKatinen)
-                        {
-                            double vasenT5Offset = tera5.Laippa + tera5.Rako / 2.0 - tera5.Runko / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T5 = k3 - vasenT3Offset + vasenT5Offset;
-                        }
-                        else
-                        {
-                            double oikeaT5Offset = tera5.Runko / 2.0 + tera5.Rako / 2.0;
-                            double vasenT3Offset = tera3.Laippa - (tera3.Runko / 2.0 + tera3.Rako / 2.0);
-                            plc_T5 = k3 - vasenT3Offset + oikeaT5Offset;
-                        }
-                    }
-                    else
-                    {
-                        if (tera5.OnkoVasenKatinen)
-                        {
-                            double vasenT5Offset = tera5.Laippa + tera5.Rako / 2.0 - tera5.Runko / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T5 = oikeaT3Offset + k3 + vasenT5Offset;
-                        }
-                        else
-                        {
-                            double oikeaT5Offset = tera5.Runko / 2.0 + tera5.Rako / 2.0;
-                            double oikeaT3Offset = tera3.Rako / 2.0 - tera3.Runko / 2.0;
-                            plc_T5 = oikeaT3Offset + k3 + oikeaT5Offset;
-                        }
-                    }
+                    double off5 = LaskeOffset(tera5.OnkoVasenKatinen, tera5.Laippa, tera5.Runko);
+                    plc_T5 = LaskeUlkoTeraPlc(k3, rako3, rako2, off5, off3);
                 }
             }
         }
 
-        // ── Canvas ────────────────────────────────────────────────────────────
+        // ── Canvas ───────────────────────────────────────────────────────────
 
         private Brush TeraViivaBrush(double arvo, int teraNumero, Color normaali)
         {
@@ -1190,7 +800,6 @@ namespace SahanOhjausGUI
         {
             canvas.Children.Clear();
             int n = paksuudet.Count;
-
             double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
             double centerY = canvasHeight / 2.0;
@@ -1199,36 +808,10 @@ namespace SahanOhjausGUI
             double rectHeight = canvasHeight * 0.45;
             double rectY = centerY - rectHeight / 2.0;
 
-            canvas.Children.Add(new Rectangle
-            {
-                Width = canvasWidth,
-                Height = canvasHeight,
-                Fill = new SolidColorBrush(Color.FromRgb(13, 13, 13))
-            });
-
+            canvas.Children.Add(new Rectangle { Width = canvasWidth, Height = canvasHeight, Fill = new SolidColorBrush(Color.FromRgb(13, 13, 13)) });
             PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
+            canvas.Children.Add(new Line { X1 = centerX, Y1 = 20, X2 = centerX, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)), StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 } });
 
-            // Keskilinja
-            canvas.Children.Add(new Line
-            {
-                X1 = centerX,
-                Y1 = 20,
-                X2 = centerX,
-                Y2 = canvasHeight - 30,
-                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
-                StrokeThickness = 1.5,
-                StrokeDashArray = new DoubleCollection { 4, 3 }
-            });
-
-            // Terät käytössä per kappalemäärä
-            // Järjestys vasemmalta oikealle:
-            // 3: K1,T1,K2,T2,K3
-            // 4: K1,T1,K2,T2,K3,T4,K4
-            // 5: K1,T3,K2,T1,K3,T2,K4,T4,K5
-            // 6: K1,T3,K2,T1,K3,T2,K4,T4,K5,T6,K6
-            // 7: K1,T5,K2,T3,K3,T1,K4,T2,K5,T4,K6,T6,K7
-
-            // Terä-järjestys vasemmalta oikealle
             var teraJarjestys = n switch
             {
                 3 => new[] { 1, 2 },
@@ -1239,23 +822,18 @@ namespace SahanOhjausGUI
                 _ => Array.Empty<int>()
             };
 
-            double RakoT(int num) =>
-                teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
+            double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
 
-            // Piirrä kappaleet
             var pieceColors = new[]
             {
-                Color.FromRgb(76, 175, 80),   Color.FromRgb(33, 150, 243),
-                Color.FromRgb(233, 30, 99),   Color.FromRgb(255, 193, 7),
-                Color.FromRgb(156, 39, 176),  Color.FromRgb(0, 188, 212),
-                Color.FromRgb(255, 87, 34)
-            };
+        Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
+        Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7),
+        Color.FromRgb(156, 39, 176), Color.FromRgb(0, 188, 212),
+        Color.FromRgb(255, 87, 34)
+    };
 
-            // Laske kokonaisleveys
-            double kokonaisLeveys = paksuudet.Sum() +
-                teraJarjestys.Select(t => RakoT(t)).Sum();
-            double startMm = -kokonaisLeveys / 2.0;
-            double curMm = startMm;
+            double kokonaisLeveys = paksuudet.Sum() + teraJarjestys.Select(t => RakoT(t)).Sum();
+            double curMm = -kokonaisLeveys / 2.0;
 
             for (int i = 0; i < n; i++)
             {
@@ -1276,8 +854,7 @@ namespace SahanOhjausGUI
                     RadiusX = 3,
                     RadiusY = 3
                 };
-                Canvas.SetLeft(piece, pieceX);
-                Canvas.SetTop(piece, rectY);
+                Canvas.SetLeft(piece, pieceX); Canvas.SetTop(piece, rectY);
                 canvas.Children.Add(piece);
 
                 var tl = new TextBlock
@@ -1295,14 +872,12 @@ namespace SahanOhjausGUI
 
                 curMm += paksuus;
 
-                // Rako terän kohdalla
                 if (i < teraJarjestys.Length)
                 {
                     double rako = RakoT(teraJarjestys[i]);
                     double gapX = centerX + curMm * pixelsPerMm;
                     double gapW = rako * pixelsPerMm;
-
-                    canvas.Children.Add(new Rectangle
+                    var gap = new Rectangle
                     {
                         Width = gapW,
                         Height = rectHeight,
@@ -1310,15 +885,13 @@ namespace SahanOhjausGUI
                         Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
                         StrokeThickness = 1,
                         StrokeDashArray = new DoubleCollection { 3, 2 }
-                    });
-                    Canvas.SetLeft(canvas.Children[canvas.Children.Count - 1] as UIElement ?? new UIElement(), gapX);
-                    Canvas.SetTop(canvas.Children[canvas.Children.Count - 1] as UIElement ?? new UIElement(), rectY);
-
+                    };
+                    Canvas.SetLeft(gap, gapX); Canvas.SetTop(gap, rectY);
+                    canvas.Children.Add(gap);
                     curMm += rako;
                 }
             }
 
-            // ── Terä-viivat ───────────────────────────────────────────────────
             Color normC = Color.FromRgb(255, 217, 61);
 
             double t4X = centerX + plc_T4 * pixelsPerMm;
@@ -1335,36 +908,31 @@ namespace SahanOhjausGUI
             if (n >= 6) PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T6, 6, normC), $"T6\n{plc_T4 + plc_T6:F1}", true);
             if (n >= 7) PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T4 + plc_T5, 5, normC), $"T5\n{plc_T4 + plc_T5:F1}", false);
 
-            // T1-T2 turvaväli visualisointi
             double t1AbsX = t4X + plc_T1 * pixelsPerMm;
             double t2AbsX = t4X + plc_T2 * pixelsPerMm;
             double valiPx = t2AbsX - t1AbsX;
-            double turvaVari_mm = t2AbsX / pixelsPerMm - t1AbsX / pixelsPerMm;
+            double turvaVali_mm = Math.Abs(valiPx) / pixelsPerMm;
 
             var turvaRect = new Rectangle
             {
                 Width = Math.Abs(valiPx),
                 Height = 6,
-                Fill = new SolidColorBrush(
-                    turvaVari_mm < turvaEtaisyys
-                        ? Color.FromArgb(180, 255, 50, 50)
-                        : Color.FromArgb(100, 50, 255, 50))
+                Fill = new SolidColorBrush(turvaVali_mm < turvaEtaisyys
+                    ? Color.FromArgb(180, 255, 50, 50)
+                    : Color.FromArgb(100, 50, 255, 50))
             };
-            Canvas.SetLeft(turvaRect, Math.Min(t1AbsX, t2AbsX));
-            Canvas.SetTop(turvaRect, rectY - 10);
+            Canvas.SetLeft(turvaRect, Math.Min(t1AbsX, t2AbsX)); Canvas.SetTop(turvaRect, rectY - 10);
             canvas.Children.Add(turvaRect);
 
             var turvaLbl = new TextBlock
             {
-                Text = $"{Math.Abs((t2AbsX - t1AbsX) / pixelsPerMm):F1} mm",
+                Text = $"{turvaVali_mm:F1} mm",
                 FontSize = 9,
-                Foreground = new SolidColorBrush(turvaVari_mm < turvaEtaisyys ? Colors.OrangeRed : Colors.LightGreen)
+                Foreground = new SolidColorBrush(turvaVali_mm < turvaEtaisyys ? Colors.OrangeRed : Colors.LightGreen)
             };
-            Canvas.SetLeft(turvaLbl, Math.Min(t1AbsX, t2AbsX));
-            Canvas.SetTop(turvaLbl, rectY - 22);
+            Canvas.SetLeft(turvaLbl, Math.Min(t1AbsX, t2AbsX)); Canvas.SetTop(turvaLbl, rectY - 22);
             canvas.Children.Add(turvaLbl);
 
-            // Otsikko
             var otsikko = new TextBlock
             {
                 Text = $"🔀 Yhdistetty sahaus — {n} kpl",
@@ -1372,8 +940,7 @@ namespace SahanOhjausGUI
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61))
             };
-            Canvas.SetLeft(otsikko, centerX - 100);
-            Canvas.SetTop(otsikko, 6);
+            Canvas.SetLeft(otsikko, centerX - 100); Canvas.SetTop(otsikko, 6);
             canvas.Children.Add(otsikko);
         }
 
@@ -1384,7 +951,6 @@ namespace SahanOhjausGUI
             double plc_T4, double plc_T2, double plc_T6)
         {
             canvas.Children.Clear();
-
             double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : canvas.Width > 0 ? canvas.Width : 900;
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : canvas.Height > 0 ? canvas.Height : 400;
             double centerY = canvasHeight / 2.0;
@@ -1393,50 +959,28 @@ namespace SahanOhjausGUI
             double rectHeight = canvasHeight * 0.45;
             double rectY = centerY - rectHeight / 2.0;
 
-            canvas.Children.Add(new Rectangle
-            {
-                Width = canvasWidth,
-                Height = canvasHeight,
-                Fill = new SolidColorBrush(Color.FromRgb(13, 13, 13))
-            });
-
+            canvas.Children.Add(new Rectangle { Width = canvasWidth, Height = canvasHeight, Fill = new SolidColorBrush(Color.FromRgb(13, 13, 13)) });
             PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
+            canvas.Children.Add(new Line { X1 = centerX, Y1 = 20, X2 = centerX, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)), StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 } });
 
-            canvas.Children.Add(new Line
-            {
-                X1 = centerX,
-                Y1 = 20,
-                X2 = centerX,
-                Y2 = canvasHeight - 30,
-                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
-                StrokeThickness = 1.5,
-                StrokeDashArray = new DoubleCollection { 4, 3 }
-            });
-            var cLbl = new TextBlock
-            {
-                Text = "0",
-                FontSize = 10,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(79, 195, 247))
-            };
-            Canvas.SetLeft(cLbl, centerX + 3);
-            Canvas.SetTop(cLbl, 4);
+            var cLbl = new TextBlock { Text = "0", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(79, 195, 247)) };
+            Canvas.SetLeft(cLbl, centerX + 3); Canvas.SetTop(cLbl, 4);
             canvas.Children.Add(cLbl);
 
             var pieceColors = new[]
             {
-                Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
-                Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7)
-            };
+        Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
+        Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7)
+    };
 
             if (oikeaOn && paksuudetOikea.Count > 0)
             {
                 var raotOikea = new[]
                 {
-                    teraParametrit.TryGetValue(2, out var t2r) ? t2r.Rako : 4.0,
-                    teraParametrit.TryGetValue(4, out var t4r) ? t4r.Rako : 4.0,
-                    teraParametrit.TryGetValue(6, out var t6r) ? t6r.Rako : 4.0,
-                };
+            teraParametrit.TryGetValue(2, out var t2r) ? t2r.Rako : 4.0,
+            teraParametrit.TryGetValue(4, out var t4r) ? t4r.Rako : 4.0,
+            teraParametrit.TryGetValue(6, out var t6r) ? t6r.Rako : 4.0
+        };
                 double totalMm = paksuudetOikea.Sum() + raotOikea.Take(paksuudetOikea.Count - 1).Sum();
                 PiirraPuoliRaot(canvas, paksuudetOikea, raotOikea, -(totalMm / 2.0),
                     centerX, rectY, rectHeight, centerY, pixelsPerMm,
@@ -1447,10 +991,10 @@ namespace SahanOhjausGUI
             {
                 var raotVasen = new[]
                 {
-                    teraParametrit.TryGetValue(1, out var t1r) ? t1r.Rako : 4.0,
-                    teraParametrit.TryGetValue(3, out var t3r) ? t3r.Rako : 4.0,
-                    teraParametrit.TryGetValue(5, out var t5r) ? t5r.Rako : 4.0,
-                };
+            teraParametrit.TryGetValue(1, out var t1r) ? t1r.Rako : 4.0,
+            teraParametrit.TryGetValue(3, out var t3r) ? t3r.Rako : 4.0,
+            teraParametrit.TryGetValue(5, out var t5r) ? t5r.Rako : 4.0
+        };
                 double totalMm = paksuudetVasen.Sum() + raotVasen.Take(paksuudetVasen.Count - 1).Sum();
                 PiirraPuoliRaot(canvas, paksuudetVasen, raotVasen, -(totalMm / 2.0),
                     centerX, rectY, rectHeight, centerY, pixelsPerMm,
@@ -1469,6 +1013,7 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(ol, canvasWidth - 140); Canvas.SetTop(ol, 6);
                 canvas.Children.Add(ol);
             }
+
             {
                 Color normV = vasenOn ? Color.FromRgb(255, 107, 107) : Color.FromRgb(90, 50, 50);
                 double t3X = centerX - plc_T3 * pixelsPerMm;
@@ -1574,6 +1119,7 @@ namespace SahanOhjausGUI
                         Canvas.SetTop(rakoLbl, centerY + 4);
                         canvas.Children.Add(rakoLbl);
                     }
+
                     curMm += rako;
                 }
             }
@@ -1605,15 +1151,7 @@ namespace SahanOhjausGUI
         private static void PiirraAsteikko(Canvas canvas, double canvasWidth,
             double canvasHeight, double centerX, double pixelsPerMm)
         {
-            canvas.Children.Add(new Line
-            {
-                X1 = 10,
-                Y1 = canvasHeight - 30,
-                X2 = canvasWidth - 10,
-                Y2 = canvasHeight - 30,
-                Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
-                StrokeThickness = 1
-            });
+            canvas.Children.Add(new Line { X1 = 10, Y1 = canvasHeight - 30, X2 = canvasWidth - 10, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)), StrokeThickness = 1 });
 
             for (int mm = 0; mm <= 350; mm += 10)
             {
@@ -1624,25 +1162,10 @@ namespace SahanOhjausGUI
                 foreach (int sign in (mm == 0 ? new[] { 1 } : new[] { 1, -1 }))
                 {
                     double x = centerX + sign * mm * pixelsPerMm;
-                    canvas.Children.Add(new Line
-                    {
-                        X1 = x,
-                        Y1 = canvasHeight - 30,
-                        X2 = x,
-                        Y2 = canvasHeight - 30 - tickH,
-                        Stroke = new SolidColorBrush(isMajor ? Color.FromRgb(160, 160, 160) : Color.FromRgb(80, 80, 80)),
-                        StrokeThickness = 1
-                    });
+                    canvas.Children.Add(new Line { X1 = x, Y1 = canvasHeight - 30, X2 = x, Y2 = canvasHeight - 30 - tickH, Stroke = new SolidColorBrush(isMajor ? Color.FromRgb(160, 160, 160) : Color.FromRgb(80, 80, 80)), StrokeThickness = 1 });
                     if (isMajor)
                     {
-                        var lbl = new TextBlock
-                        {
-                            Text = mm.ToString(),
-                            FontSize = 9,
-                            Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)),
-                            TextAlignment = TextAlignment.Center,
-                            Width = 40
-                        };
+                        var lbl = new TextBlock { Text = mm.ToString(), FontSize = 9, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), TextAlignment = TextAlignment.Center, Width = 40 };
                         Canvas.SetLeft(lbl, x - 20); Canvas.SetTop(lbl, canvasHeight - 28);
                         canvas.Children.Add(lbl);
                     }
@@ -1664,15 +1187,7 @@ namespace SahanOhjausGUI
         {
             if (bladeX < 0 || bladeX > canvasWidth) return;
 
-            canvas.Children.Add(new Line
-            {
-                X1 = bladeX,
-                Y1 = rectY - 20,
-                X2 = bladeX,
-                Y2 = rectY + rectHeight + 20,
-                Stroke = brush,
-                StrokeThickness = 3
-            });
+            canvas.Children.Add(new Line { X1 = bladeX, Y1 = rectY - 20, X2 = bladeX, Y2 = rectY + rectHeight + 20, Stroke = brush, StrokeThickness = 3 });
 
             double labelX = labelRight
                 ? Math.Min(bladeX + 4, canvasWidth - 50)
@@ -1688,33 +1203,26 @@ namespace SahanOhjausGUI
             };
             tb.Inlines.Add(new Run(parts[0] + "\n"));
             if (parts.Length > 1) tb.Inlines.Add(new Run(parts[1]));
-
             Canvas.SetLeft(tb, labelX); Canvas.SetTop(tb, rectY - 38);
             canvas.Children.Add(tb);
         }
-
-        // ── Apufunktiot ───────────────────────────────────────────────────────
+        // ── Apufunktiot ──────────────────────────────────────────────────────
 
         private int GetSelectedPieceCount()
         {
-            if (KappaleCombo?.SelectedItem is ComboBoxItem item &&
-                int.TryParse(item.Content?.ToString(), out int count))
-                return count;
+            if (KappaleCombo?.SelectedItem is ComboBoxItem item && int.TryParse(item.Content?.ToString(), out int count)) return count;
             return 4;
         }
 
         private int GetSelectedYhdistettyCount()
         {
-            if (YhdistettyCombo?.SelectedItem is ComboBoxItem item &&
-                int.TryParse(item.Content?.ToString(), out int count))
-                return count;
+            if (YhdistettyCombo?.SelectedItem is ComboBoxItem item && int.TryParse(item.Content?.ToString(), out int count)) return count;
             return 3;
         }
 
         private void UpdateKappaleInfo()
         {
-            if (KappaleInfo != null)
-                KappaleInfo.Text = $"{GetSelectedPieceCount()} kpl / saha";
+            if (KappaleInfo != null) KappaleInfo.Text = $"{GetSelectedPieceCount()} kpl / saha";
         }
 
         private List<double> GetThicknessValuesVasen()
@@ -1723,10 +1231,7 @@ namespace SahanOhjausGUI
             var result = new List<double>();
             for (int i = 1; i <= count; i++)
             {
-                if (paksuusTextBoxesVasen.TryGetValue(i, out var tb) &&
-                    double.TryParse(tb.Text.Replace(",", "."),
-                        NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0)
-                    result.Add(v);
+                if (paksuusTextBoxesVasen.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v);
                 else result.Add(30.0);
             }
             return result;
@@ -1738,10 +1243,7 @@ namespace SahanOhjausGUI
             var result = new List<double>();
             for (int i = 5; i < 5 + count; i++)
             {
-                if (paksuusTextBoxesOikea.TryGetValue(i, out var tb) &&
-                    double.TryParse(tb.Text.Replace(",", "."),
-                        NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0)
-                    result.Add(v);
+                if (paksuusTextBoxesOikea.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v);
                 else result.Add(30.0);
             }
             return result;
@@ -1753,10 +1255,7 @@ namespace SahanOhjausGUI
             var result = new List<double>();
             for (int i = 1; i <= count; i++)
             {
-                if (paksuusTextBoxesYhdistetty.TryGetValue(i, out var tb) &&
-                    double.TryParse(tb.Text.Replace(",", "."),
-                        NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0)
-                    result.Add(v);
+                if (paksuusTextBoxesYhdistetty.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v);
                 else result.Add(30.0);
             }
             return result;

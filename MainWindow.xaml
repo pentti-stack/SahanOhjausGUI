@@ -63,7 +63,7 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal"
-                        VerticalAlignment="Center" Margin="10,0" >
+                        VerticalAlignment="Center" Margin="10,0">
                 <Button x:Name="LahetaBtn" Content="⚡ Lähetä logiikkaan"
                         Click="Laheta_Click" Margin="0,0,8,0"
                         Background="#1b5e20" BorderBrush="#388e3c"/>
@@ -85,7 +85,7 @@
                           Background="#1e1e1e">
                 <StackPanel x:Name="PaksuusPanel" Margin="10">
 
-                    <!-- Sahat käytössä -->
+                    <!-- 1: Sahat käytössä -->
                     <Border Background="#2d2d2d" CornerRadius="6"
                             Padding="8,6" Margin="0,0,0,8">
                         <StackPanel>
@@ -104,7 +104,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Kappaleiden määrä — erillinen saha -->
+                    <!-- 2: Kappaleiden määrä — erillinen saha -->
                     <Border x:Name="ErillinenPanel" Background="#2d2d2d" CornerRadius="6"
                             Padding="8,6" Margin="0,0,0,8">
                         <StackPanel>
@@ -153,7 +153,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Kappaleiden määrä — yhdistetty -->
+                    <!-- 3: Kappaleiden määrä — yhdistetty -->
                     <Border x:Name="YhdistettyPanel" Background="#2d2d2d" CornerRadius="6"
                             Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
                         <StackPanel>
@@ -175,7 +175,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Kuivaus -->
+                    <!-- 4: Kuivaus -->
                     <Border Background="#2d2d2d" CornerRadius="6"
                             Padding="8,6" Margin="0,0,0,8">
                         <StackPanel>
@@ -193,14 +193,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Paksuudet — täytetään koodista -->
-                    <Border Background="#2d2d2d" CornerRadius="6"
-                            Padding="8,6" Margin="0,0,0,8">
-                        <StackPanel>
-                            <TextBlock Text="🔧 Paksuus (mm)" FontWeight="Bold"
-                                       Foreground="#4fc3f7" Margin="0,0,0,6"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Paksuudet lisätään koodista tähän -->
 
                 </StackPanel>
             </ScrollViewer>
