@@ -4,12 +4,66 @@
         Title="Sahan ohjaus" Height="600" Width="1400"
         Background="#1a1a1a">
     <Window.Resources>
+
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="#2d2d2d"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#555"/>
             <Setter Property="Height" Value="28"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Background="#2d2d2d" BorderBrush="#555"
+                                          Foreground="White"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
+                                              RelativeSource={RelativeSource TemplatedParent}}"
+                                          Padding="6,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="20"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0"
+                                        Content="{TemplateBinding SelectionBoxItem}"
+                                        VerticalAlignment="Center" Margin="4,0"/>
+                                    <TextBlock Grid.Column="1" Text="▾"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               Foreground="White"/>
+                                </Grid>
+                            </ToggleButton>
+                            <Popup IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom" AllowsTransparency="True">
+                                <Border Background="#2d2d2d" BorderBrush="#555"
+                                        BorderThickness="1" CornerRadius="4">
+                                    <ScrollViewer>
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="#2d2d2d"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="#4fc3f7"/>
+                    <Setter Property="Foreground" Value="Black"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#3d3d3d"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -25,6 +79,7 @@
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
     </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>
@@ -93,11 +148,10 @@
                                        Foreground="#4fc3f7" Margin="0,0,0,6"/>
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox x:Name="VasenSahaCheck" Content="Vasen"
-                                          IsChecked="True" Margin="0,0,12,0"
+                                          Margin="0,0,12,0"
                                           Checked="SahaValinta_Changed"
                                           Unchecked="SahaValinta_Changed"/>
                                 <CheckBox x:Name="OikeaSahaCheck" Content="Oikea"
-                                          IsChecked="True"
                                           Checked="SahaValinta_Changed"
                                           Unchecked="SahaValinta_Changed"/>
                             </StackPanel>

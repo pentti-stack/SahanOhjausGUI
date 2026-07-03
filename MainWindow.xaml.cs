@@ -88,13 +88,28 @@ namespace SahanOhjausGUI
             teraRajat[5] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
             teraRajat[6] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
 
+            // ── Irrotetaan eventit ──
+            KappaleCombo.SelectionChanged -= Kappale_Changed;
+            YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
+            VasenSahaCheck.Checked -= SahaValinta_Changed;
+            VasenSahaCheck.Unchecked -= SahaValinta_Changed;
+            OikeaSahaCheck.Checked -= SahaValinta_Changed;
+            OikeaSahaCheck.Unchecked -= SahaValinta_Changed;
+
             KuivausTextBox.Text = "0";
             KappaleCombo.SelectedIndex = 2;
             YhdistettyCombo.SelectedIndex = 0;
 
+            // ── Palautetaan eventit ──
+            KappaleCombo.SelectionChanged += Kappale_Changed;
+            YhdistettyCombo.SelectionChanged += YhdistettyKappale_Changed;
+            VasenSahaCheck.Checked += SahaValinta_Changed;
+            VasenSahaCheck.Unchecked += SahaValinta_Changed;
+            OikeaSahaCheck.Checked += SahaValinta_Changed;
+            OikeaSahaCheck.Unchecked += SahaValinta_Changed;
+
             UpdateKappaleInfo();
             PaivitaNakymat();
-          
             PiirraVisual();
             SetStatus("Valmis", Colors.LightGray);
         }
@@ -108,13 +123,10 @@ namespace SahanOhjausGUI
 
         private void PaivitaNakymat()
         {
-            bool yhdistetty = OnYhdistettyTila();
-            if (ErillinenPanel != null)
-                ErillinenPanel.Visibility = yhdistetty ? Visibility.Collapsed : Visibility.Visible;
-            if (YhdistettyPanel != null)
-                YhdistettyPanel.Visibility = yhdistetty ? Visibility.Visible : Visibility.Collapsed;
+            // LuoParametriKontrollit hoitaa näkyvyydet
+            LuoParametriKontrollit();
+            PiirraVisual();
         }
-
         // ── Tallennus ────────────────────────────────────────────────────────
 
         private void TallennaTallennus()
@@ -140,6 +152,7 @@ namespace SahanOhjausGUI
             }
             catch { }
         }
+
         private void LataaTallennus()
         {
             try
@@ -209,7 +222,6 @@ namespace SahanOhjausGUI
             catch { }
         }
 
-
         // ── Parametrikontrollit ──────────────────────────────────────────────
 
         private void LuoParametriKontrollit()
@@ -223,6 +235,14 @@ namespace SahanOhjausGUI
 
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
             bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
+
+            // Piilota kappaleiden määrä jos sahat pois
+            if (ErillinenPanel != null)
+                ErillinenPanel.Visibility = (!vasenOn && !oikeaOn) ? Visibility.Collapsed
+                    : OnYhdistettyTila() ? Visibility.Collapsed : Visibility.Visible;
+            if (YhdistettyPanel != null)
+                YhdistettyPanel.Visibility = OnYhdistettyTila() ? Visibility.Visible : Visibility.Collapsed;
+
             if (!vasenOn && !oikeaOn) return;
 
             if (OnYhdistettyTila()) LuoYhdistettyKontrollit();
@@ -238,9 +258,14 @@ namespace SahanOhjausGUI
 
             if (vasenOn)
             {
-                root.Children.Add(LuoSahaOtsikkoTeksti(
-                    $"🔴 Vasen: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i}"))}",
-                    Color.FromRgb(255, 107, 107)));
+                root.Children.Add(new TextBlock
+                {
+                    Text = $"🔴 Vasen: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i}"))}",
+                    FontSize = 11,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
+                    Margin = new Thickness(0, 0, 0, 4)
+                });
                 var vasenStack = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
                 for (int i = 1; i <= count; i++)
                 {
@@ -254,9 +279,14 @@ namespace SahanOhjausGUI
 
             if (oikeaOn)
             {
-                root.Children.Add(LuoSahaOtsikkoTeksti(
-                    $"🟢 Oikea: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i + 4}"))}",
-                    Color.FromRgb(107, 203, 119)));
+                root.Children.Add(new TextBlock
+                {
+                    Text = $"🟢 Oikea: {string.Join(", ", Enumerable.Range(1, count).Select(i => $"K{i + 4}"))}",
+                    FontSize = 11,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(107, 203, 119)),
+                    Margin = new Thickness(0, 0, 0, 4)
+                });
                 var oikeaStack = new StackPanel();
                 for (int i = 5; i < 5 + count; i++)
                 {
@@ -270,21 +300,11 @@ namespace SahanOhjausGUI
 
             PaksuusPanel.Children.Add(root);
         }
-
         private void LuoYhdistettyKontrollit()
         {
             int count = GetSelectedYhdistettyCount();
             var root = new StackPanel { Orientation = Orientation.Vertical };
-            string teratInfo = count switch
-            {
-                3 => "T1, T2",
-                4 => "T1, T2, T4",
-                5 => "T1, T2, T3, T4",
-                6 => "T1, T2, T3, T4, T6",
-                7 => "T1, T2, T3, T4, T5, T6",
-                _ => ""
-            };
-            root.Children.Add(LuoSahaOtsikkoTeksti($"🔀 Yhdistetty: {count} kpl  ({teratInfo})", Color.FromRgb(255, 217, 61)));
+
             for (int i = 1; i <= count; i++)
             {
                 var card = LuoPaksuusKorttiKapea($"K{i}", i);
@@ -292,15 +312,16 @@ namespace SahanOhjausGUI
                 var tb = EtsiKortinTextBox(card);
                 if (tb != null) paksuusTextBoxesYhdistetty[i] = tb;
             }
+
             var turvaPanel = new Border { Margin = new Thickness(0, 8, 0, 0), Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 8, 6) };
             var turvaStack = new StackPanel();
             turvaStack.Children.Add(new TextBlock { Text = "T1-T2 turvaetäisyys:", FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)) });
             var turvaGrid = new Grid();
             turvaGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             turvaGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-            var turvaTb = new TextBox { Height = 28, Text = turvaEtaisyys.ToString("F1", CultureInfo.InvariantCulture), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)), BorderThickness = new Thickness(1), Padding = new Thickness(6, 0, 6, 0), VerticalContentAlignment = VerticalAlignment.Center, FontSize = 12, Margin = new Thickness(0, 4, 4, 0) };
+            var turvaTb = new TextBox { Height = 28, Text = turvaEtaisyys.ToString("F1", CultureInfo.InvariantCulture), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)), Padding = new Thickness(6, 0, 6, 0), VerticalContentAlignment = VerticalAlignment.Center };
             turvaTb.TextChanged += (s, e) => { if (double.TryParse(turvaTb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) { turvaEtaisyys = v; PiirraVisual(); } };
-            var turvaMm = new TextBlock { Text = "mm", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+            var turvaMm = new TextBlock { Text = "mm", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
             Grid.SetColumn(turvaTb, 0); Grid.SetColumn(turvaMm, 1);
             turvaGrid.Children.Add(turvaTb); turvaGrid.Children.Add(turvaMm);
             turvaStack.Children.Add(turvaGrid);
@@ -309,18 +330,15 @@ namespace SahanOhjausGUI
             PaksuusPanel.Children.Add(root);
         }
 
-        private static TextBlock LuoSahaOtsikkoTeksti(string teksti, Color vari) =>
-            new TextBlock { Text = teksti, FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(vari), Margin = new Thickness(0, 0, 0, 6), TextWrapping = TextWrapping.Wrap };
-
         private Border LuoPaksuusKorttiKapea(string otsikko, int tagId)
         {
-            var border = new Border { Margin = new Thickness(0, 0, 0, 4), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 6, 8, 6) };
+            var border = new Border { Margin = new Thickness(0, 0, 0, 4), Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)), CornerRadius = new CornerRadius(6), Padding = new Thickness(6, 4, 6, 4) };
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(24) });
             var lbl = new TextBlock { Text = otsikko, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)), VerticalAlignment = VerticalAlignment.Center, FontSize = 12 };
-            var textBox = new TextBox { Height = 28, Padding = new Thickness(6, 0, 6, 0), Text = "30", Tag = tagId, FontSize = 12, VerticalContentAlignment = VerticalAlignment.Center, Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)), BorderThickness = new Thickness(1), Margin = new Thickness(4, 0, 4, 0) };
+            var textBox = new TextBox { Height = 28, Padding = new Thickness(6, 0, 6, 0), Text = "30", Tag = tagId, FontSize = 12, VerticalContentAlignment = VerticalAlignment.Center, Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)), Foreground = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)) };
             var mm = new TextBlock { Text = "mm", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(140, 140, 140)), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
             textBox.TextChanged += (s, e) =>
             {
@@ -436,7 +454,7 @@ namespace SahanOhjausGUI
             catch (Exception ex) { MessageBox.Show($"Rajoitusikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}", "Virhe", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
-        // ── Piirrä ───────────────────────────────────────────────────────────
+        // ── Piirrä ────────────────────────────────────────────────────────────
 
         private void PiirraVisual()
         {
@@ -853,11 +871,11 @@ namespace SahanOhjausGUI
 
             var pieceColors = new[]
             {
-        Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
-        Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7),
-        Color.FromRgb(156, 39, 176), Color.FromRgb(0, 188, 212),
-        Color.FromRgb(255, 87, 34)
-    };
+                Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
+                Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7),
+                Color.FromRgb(156, 39, 176), Color.FromRgb(0, 188, 212),
+                Color.FromRgb(255, 87, 34)
+            };
 
             double kokonaisLeveys = paksuudet.Sum() + teraJarjestys.Select(t => RakoT(t)).Sum();
             double curMm = -kokonaisLeveys / 2.0;
@@ -872,10 +890,7 @@ namespace SahanOhjausGUI
                 {
                     Width = pieceW,
                     Height = rectHeight,
-                    Fill = new SolidColorBrush(Color.FromArgb(180,
-                        pieceColors[i % pieceColors.Length].R,
-                        pieceColors[i % pieceColors.Length].G,
-                        pieceColors[i % pieceColors.Length].B)),
+                    Fill = new SolidColorBrush(Color.FromArgb(180, pieceColors[i % pieceColors.Length].R, pieceColors[i % pieceColors.Length].G, pieceColors[i % pieceColors.Length].B)),
                     Stroke = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
                     StrokeThickness = 1,
                     RadiusX = 3,
@@ -884,17 +899,8 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(piece, pieceX); Canvas.SetTop(piece, rectY);
                 canvas.Children.Add(piece);
 
-                var tl = new TextBlock
-                {
-                    Text = $"K{i + 1}\n{paksuus:F1}",
-                    FontSize = 10,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.White,
-                    TextAlignment = TextAlignment.Center,
-                    Width = Math.Max(20, pieceW)
-                };
-                Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0);
-                Canvas.SetTop(tl, centerY - 14);
+                var tl = new TextBlock { Text = $"K{i + 1}\n{paksuus:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = Brushes.White, TextAlignment = TextAlignment.Center, Width = Math.Max(20, pieceW) };
+                Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0); Canvas.SetTop(tl, centerY - 14);
                 canvas.Children.Add(tl);
 
                 curMm += paksuus;
@@ -904,15 +910,7 @@ namespace SahanOhjausGUI
                     double rako = RakoT(teraJarjestys[i]);
                     double gapX = centerX + curMm * pixelsPerMm;
                     double gapW = rako * pixelsPerMm;
-                    var gap = new Rectangle
-                    {
-                        Width = gapW,
-                        Height = rectHeight,
-                        Fill = new SolidColorBrush(Color.FromArgb(80, 50, 50, 50)),
-                        Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)),
-                        StrokeThickness = 1,
-                        StrokeDashArray = new DoubleCollection { 3, 2 }
-                    };
+                    var gap = new Rectangle { Width = gapW, Height = rectHeight, Fill = new SolidColorBrush(Color.FromArgb(80, 50, 50, 50)), Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)), StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 2 } };
                     Canvas.SetLeft(gap, gapX); Canvas.SetTop(gap, rectY);
                     canvas.Children.Add(gap);
                     curMm += rako;
@@ -920,7 +918,6 @@ namespace SahanOhjausGUI
             }
 
             Color normC = Color.FromRgb(255, 217, 61);
-
             double t4X = centerX + plc_T4 * pixelsPerMm;
             double t2X = t4X + plc_T2 * pixelsPerMm;
             double t1X = t4X + plc_T1 * pixelsPerMm;
@@ -940,33 +937,15 @@ namespace SahanOhjausGUI
             double valiPx = t2AbsX - t1AbsX;
             double turvaVali_mm = Math.Abs(valiPx) / pixelsPerMm;
 
-            var turvaRect = new Rectangle
-            {
-                Width = Math.Abs(valiPx),
-                Height = 6,
-                Fill = new SolidColorBrush(turvaVali_mm < turvaEtaisyys
-                    ? Color.FromArgb(180, 255, 50, 50)
-                    : Color.FromArgb(100, 50, 255, 50))
-            };
+            var turvaRect = new Rectangle { Width = Math.Abs(valiPx), Height = 6, Fill = new SolidColorBrush(turvaVali_mm < turvaEtaisyys ? Color.FromArgb(180, 255, 50, 50) : Color.FromArgb(100, 50, 255, 50)) };
             Canvas.SetLeft(turvaRect, Math.Min(t1AbsX, t2AbsX)); Canvas.SetTop(turvaRect, rectY - 10);
             canvas.Children.Add(turvaRect);
 
-            var turvaLbl = new TextBlock
-            {
-                Text = $"{turvaVali_mm:F1} mm",
-                FontSize = 9,
-                Foreground = new SolidColorBrush(turvaVali_mm < turvaEtaisyys ? Colors.OrangeRed : Colors.LightGreen)
-            };
+            var turvaLbl = new TextBlock { Text = $"{turvaVali_mm:F1} mm", FontSize = 9, Foreground = new SolidColorBrush(turvaVali_mm < turvaEtaisyys ? Colors.OrangeRed : Colors.LightGreen) };
             Canvas.SetLeft(turvaLbl, Math.Min(t1AbsX, t2AbsX)); Canvas.SetTop(turvaLbl, rectY - 22);
             canvas.Children.Add(turvaLbl);
 
-            var otsikko = new TextBlock
-            {
-                Text = $"🔀 Yhdistetty sahaus — {n} kpl",
-                FontSize = 12,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61))
-            };
+            var otsikko = new TextBlock { Text = $"🔀 Yhdistetty sahaus — {n} kpl", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)) };
             Canvas.SetLeft(otsikko, centerX - 100); Canvas.SetTop(otsikko, 6);
             canvas.Children.Add(otsikko);
         }
@@ -994,38 +973,20 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(cLbl, centerX + 3); Canvas.SetTop(cLbl, 4);
             canvas.Children.Add(cLbl);
 
-            var pieceColors = new[]
-            {
-        Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
-        Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7)
-    };
+            var pieceColors = new[] { Color.FromRgb(76, 175, 80), Color.FromRgb(33, 150, 243), Color.FromRgb(233, 30, 99), Color.FromRgb(255, 193, 7) };
 
             if (oikeaOn && paksuudetOikea.Count > 0)
             {
-                var raotOikea = new[]
-                {
-            teraParametrit.TryGetValue(2, out var t2r) ? t2r.Rako : 4.0,
-            teraParametrit.TryGetValue(4, out var t4r) ? t4r.Rako : 4.0,
-            teraParametrit.TryGetValue(6, out var t6r) ? t6r.Rako : 4.0
-        };
+                var raotOikea = new[] { teraParametrit.TryGetValue(2, out var t2r) ? t2r.Rako : 4.0, teraParametrit.TryGetValue(4, out var t4r) ? t4r.Rako : 4.0, teraParametrit.TryGetValue(6, out var t6r) ? t6r.Rako : 4.0 };
                 double totalMm = paksuudetOikea.Sum() + raotOikea.Take(paksuudetOikea.Count - 1).Sum();
-                PiirraPuoliRaot(canvas, paksuudetOikea, raotOikea, -(totalMm / 2.0),
-                    centerX, rectY, rectHeight, centerY, pixelsPerMm,
-                    pieceColors, vasemmalle: false, border: Color.FromRgb(107, 203, 119), kappaleOffset: 5);
+                PiirraPuoliRaot(canvas, paksuudetOikea, raotOikea, -(totalMm / 2.0), centerX, rectY, rectHeight, centerY, pixelsPerMm, pieceColors, vasemmalle: false, border: Color.FromRgb(107, 203, 119), kappaleOffset: 5);
             }
 
             if (vasenOn && paksuudetVasen.Count > 0)
             {
-                var raotVasen = new[]
-                {
-            teraParametrit.TryGetValue(1, out var t1r) ? t1r.Rako : 4.0,
-            teraParametrit.TryGetValue(3, out var t3r) ? t3r.Rako : 4.0,
-            teraParametrit.TryGetValue(5, out var t5r) ? t5r.Rako : 4.0
-        };
+                var raotVasen = new[] { teraParametrit.TryGetValue(1, out var t1r) ? t1r.Rako : 4.0, teraParametrit.TryGetValue(3, out var t3r) ? t3r.Rako : 4.0, teraParametrit.TryGetValue(5, out var t5r) ? t5r.Rako : 4.0 };
                 double totalMm = paksuudetVasen.Sum() + raotVasen.Take(paksuudetVasen.Count - 1).Sum();
-                PiirraPuoliRaot(canvas, paksuudetVasen, raotVasen, -(totalMm / 2.0),
-                    centerX, rectY, rectHeight, centerY, pixelsPerMm,
-                    pieceColors, vasemmalle: true, border: Color.FromRgb(255, 107, 107), kappaleOffset: 1);
+                PiirraPuoliRaot(canvas, paksuudetVasen, raotVasen, -(totalMm / 2.0), centerX, rectY, rectHeight, centerY, pixelsPerMm, pieceColors, vasemmalle: true, border: Color.FromRgb(255, 107, 107), kappaleOffset: 1);
             }
 
             {
@@ -1068,45 +1029,17 @@ namespace SahanOhjausGUI
             {
                 double paksuus = paksuudet[i];
                 double pieceW = paksuus * pixelsPerMm;
-                double pieceX = vasemmalle
-                    ? centerX - curMm * pixelsPerMm - pieceW
-                    : centerX + curMm * pixelsPerMm;
+                double pieceX = vasemmalle ? centerX - curMm * pixelsPerMm - pieceW : centerX + curMm * pixelsPerMm;
 
-                var piece = new Rectangle
-                {
-                    Width = pieceW,
-                    Height = rectHeight,
-                    Fill = new SolidColorBrush(Color.FromArgb(180,
-                        pieceColors[i % pieceColors.Length].R,
-                        pieceColors[i % pieceColors.Length].G,
-                        pieceColors[i % pieceColors.Length].B)),
-                    Stroke = new SolidColorBrush(border),
-                    StrokeThickness = 1,
-                    RadiusX = 3,
-                    RadiusY = 3
-                };
+                var piece = new Rectangle { Width = pieceW, Height = rectHeight, Fill = new SolidColorBrush(Color.FromArgb(180, pieceColors[i % pieceColors.Length].R, pieceColors[i % pieceColors.Length].G, pieceColors[i % pieceColors.Length].B)), Stroke = new SolidColorBrush(border), StrokeThickness = 1, RadiusX = 3, RadiusY = 3 };
                 Canvas.SetLeft(piece, pieceX); Canvas.SetTop(piece, rectY);
                 canvas.Children.Add(piece);
 
-                var tl = new TextBlock
-                {
-                    Text = $"{paksuus:F1}",
-                    FontSize = 11,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.White,
-                    TextAlignment = TextAlignment.Center,
-                    Width = Math.Max(20, pieceW)
-                };
-                Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0);
-                Canvas.SetTop(tl, centerY - 10);
+                var tl = new TextBlock { Text = $"{paksuus:F1}", FontSize = 11, FontWeight = FontWeights.Bold, Foreground = Brushes.White, TextAlignment = TextAlignment.Center, Width = Math.Max(20, pieceW) };
+                Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0); Canvas.SetTop(tl, centerY - 10);
                 canvas.Children.Add(tl);
 
-                var nl = new TextBlock
-                {
-                    Text = $"K{kappaleOffset + i}",
-                    FontSize = 10,
-                    Foreground = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
-                };
+                var nl = new TextBlock { Text = $"K{kappaleOffset + i}", FontSize = 10, Foreground = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255)) };
                 Canvas.SetLeft(nl, pieceX + 4); Canvas.SetTop(nl, rectY + 4);
                 canvas.Children.Add(nl);
 
@@ -1115,35 +1048,17 @@ namespace SahanOhjausGUI
                 if (i < n - 1)
                 {
                     double rako = raot[i % raot.Length];
-                    double gapX = vasemmalle
-                        ? centerX - curMm * pixelsPerMm - rako * pixelsPerMm
-                        : centerX + curMm * pixelsPerMm;
+                    double gapX = vasemmalle ? centerX - curMm * pixelsPerMm - rako * pixelsPerMm : centerX + curMm * pixelsPerMm;
                     double gapW = rako * pixelsPerMm;
 
-                    var gap = new Rectangle
-                    {
-                        Width = gapW,
-                        Height = rectHeight,
-                        Fill = new SolidColorBrush(Color.FromArgb(120, 30, 30, 30)),
-                        Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        StrokeThickness = 1,
-                        StrokeDashArray = new DoubleCollection { 3, 2 }
-                    };
+                    var gap = new Rectangle { Width = gapW, Height = rectHeight, Fill = new SolidColorBrush(Color.FromArgb(120, 30, 30, 30)), Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100)), StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 2 } };
                     Canvas.SetLeft(gap, gapX); Canvas.SetTop(gap, rectY);
                     canvas.Children.Add(gap);
 
                     if (gapW > 8)
                     {
-                        var rakoLbl = new TextBlock
-                        {
-                            Text = $"{rako:F1}",
-                            FontSize = 8,
-                            Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                            TextAlignment = TextAlignment.Center,
-                            Width = Math.Max(10, gapW)
-                        };
-                        Canvas.SetLeft(rakoLbl, gapX + gapW / 2.0 - rakoLbl.Width / 2.0);
-                        Canvas.SetTop(rakoLbl, centerY + 4);
+                        var rakoLbl = new TextBlock { Text = $"{rako:F1}", FontSize = 8, Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)), TextAlignment = TextAlignment.Center, Width = Math.Max(10, gapW) };
+                        Canvas.SetLeft(rakoLbl, gapX + gapW / 2.0 - rakoLbl.Width / 2.0); Canvas.SetTop(rakoLbl, centerY + 4);
                         canvas.Children.Add(rakoLbl);
                     }
 
@@ -1151,9 +1066,7 @@ namespace SahanOhjausGUI
                 }
             }
 
-            double totalStartX = vasemmalle
-                ? centerX - (startMm + kokonaisLeveys) * pixelsPerMm
-                : centerX + startMm * pixelsPerMm;
+            double totalStartX = vasemmalle ? centerX - (startMm + kokonaisLeveys) * pixelsPerMm : centerX + startMm * pixelsPerMm;
             double totalW = kokonaisLeveys * pixelsPerMm;
             double arrowY = rectY + rectHeight + 10;
 
@@ -1161,22 +1074,12 @@ namespace SahanOhjausGUI
             canvas.Children.Add(new Line { X1 = totalStartX, Y1 = arrowY - 4, X2 = totalStartX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(border), StrokeThickness = 1 });
             canvas.Children.Add(new Line { X1 = totalStartX + totalW, Y1 = arrowY - 4, X2 = totalStartX + totalW, Y2 = arrowY + 4, Stroke = new SolidColorBrush(border), StrokeThickness = 1 });
 
-            var kokoLbl = new TextBlock
-            {
-                Text = $"⟵ {kokonaisLeveys:F1} mm ⟶",
-                FontSize = 10,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(border),
-                TextAlignment = TextAlignment.Center,
-                Width = Math.Max(60, totalW)
-            };
-            Canvas.SetLeft(kokoLbl, totalStartX + totalW / 2.0 - kokoLbl.Width / 2.0);
-            Canvas.SetTop(kokoLbl, arrowY + 5);
+            var kokoLbl = new TextBlock { Text = $"⟵ {kokonaisLeveys:F1} mm ⟶", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(border), TextAlignment = TextAlignment.Center, Width = Math.Max(60, totalW) };
+            Canvas.SetLeft(kokoLbl, totalStartX + totalW / 2.0 - kokoLbl.Width / 2.0); Canvas.SetTop(kokoLbl, arrowY + 5);
             canvas.Children.Add(kokoLbl);
         }
 
-        private static void PiirraAsteikko(Canvas canvas, double canvasWidth,
-            double canvasHeight, double centerX, double pixelsPerMm)
+        private static void PiirraAsteikko(Canvas canvas, double canvasWidth, double canvasHeight, double centerX, double pixelsPerMm)
         {
             canvas.Children.Add(new Line { X1 = 10, Y1 = canvasHeight - 30, X2 = canvasWidth - 10, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(80, 80, 80)), StrokeThickness = 1 });
 
@@ -1216,23 +1119,16 @@ namespace SahanOhjausGUI
 
             canvas.Children.Add(new Line { X1 = bladeX, Y1 = rectY - 20, X2 = bladeX, Y2 = rectY + rectHeight + 20, Stroke = brush, StrokeThickness = 3 });
 
-            double labelX = labelRight
-                ? Math.Min(bladeX + 4, canvasWidth - 50)
-                : Math.Max(bladeX - 44, 4);
+            double labelX = labelRight ? Math.Min(bladeX + 4, canvasWidth - 50) : Math.Max(bladeX - 44, 4);
 
             var parts = label.Split('\n');
-            var tb = new TextBlock
-            {
-                Foreground = brush,
-                FontSize = 10,
-                FontWeight = FontWeights.Bold,
-                TextAlignment = labelRight ? TextAlignment.Left : TextAlignment.Right
-            };
+            var tb = new TextBlock { Foreground = brush, FontSize = 10, FontWeight = FontWeights.Bold, TextAlignment = labelRight ? TextAlignment.Left : TextAlignment.Right };
             tb.Inlines.Add(new Run(parts[0] + "\n"));
             if (parts.Length > 1) tb.Inlines.Add(new Run(parts[1]));
             Canvas.SetLeft(tb, labelX); Canvas.SetTop(tb, rectY - 38);
             canvas.Children.Add(tb);
         }
+
         // ── Apufunktiot ──────────────────────────────────────────────────────
 
         private int GetSelectedPieceCount()
