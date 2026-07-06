@@ -680,8 +680,23 @@ namespace SahanOhjausGUI
                 plc_T2 = VaistoT(2);
                 plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1));
                 plc_T4 = (paksuudet[0] + r1 + paksuudet[1] + r2 / 2.0 - kl) + OffsetT(2) + Math.Abs(VaistoT(2));
-                plc_T5 = LepopaikkaT(5);
-                plc_T6 = LepopaikkaT(6);
+                plc_T5 = VaistoT(5);
+                plc_T6 = VaistoT(6);
+                return;
+            }
+
+            if (n == 4)
+            {
+                double kl = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 + paksuudet[3]) / 2.0;
+
+                double rakoT4 = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 / 2.0) - kl;
+
+                plc_T1 = VaistoT(1);
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[2], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1));
+                plc_T4 = rakoT4 + OffsetT(4);
+                plc_T5 = VaistoT(5);
+                plc_T6 = VaistoT(6);
                 return;
             }
 
