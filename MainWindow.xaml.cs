@@ -1054,12 +1054,15 @@ namespace SahanOhjausGUI
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
 
             var pieceColors = new[]
-            {
-        Color.FromRgb(76, 175, 80),   Color.FromRgb(33, 150, 243),
-        Color.FromRgb(233, 30, 99),   Color.FromRgb(255, 193, 7),
-        Color.FromRgb(156, 39, 176),  Color.FromRgb(0, 188, 212),
-        Color.FromRgb(255, 87, 34)
-    };
+         {
+    Color.FromRgb(210, 175, 130),  // vaalea mänty
+    Color.FromRgb(185, 145, 100),  // keskiruskea koivu
+    Color.FromRgb(160, 115, 72),   // tummempi kuusi
+    Color.FromRgb(220, 190, 148),  // vaalea haapa
+    Color.FromRgb(175, 132, 88),   // keski mänty
+    Color.FromRgb(145, 100, 60),   // tumma puu
+    Color.FromRgb(230, 205, 165),  // hyvin vaalea koivu
+};
 
             double kokonaisLeveys = paksuudet.Sum() + teraJarjestys.Select(t => RakoT(t)).Sum();
             double curMm = -kokonaisLeveys / 2.0;
@@ -1078,7 +1081,7 @@ namespace SahanOhjausGUI
                         pieceColors[i % pieceColors.Length].R,
                         pieceColors[i % pieceColors.Length].G,
                         pieceColors[i % pieceColors.Length].B)),
-                    Stroke = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    Stroke = new SolidColorBrush(Color.FromRgb(100, 65, 30)),
                     StrokeThickness = 1,
                     RadiusX = 3,
                     RadiusY = 3
@@ -1261,11 +1264,12 @@ namespace SahanOhjausGUI
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
 
             var pieceColors = new[]
-            {
-                Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
-                Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7)
-            };
-
+{
+    Color.FromRgb(210, 175, 130),  // vaalea mänty
+    Color.FromRgb(185, 145, 100),  // keskiruskea koivu
+    Color.FromRgb(160, 115, 72),   // tummempi kuusi
+    Color.FromRgb(220, 190, 148),  // vaalea haapa
+};
             void PiirraKappale(double xMm, double paksuus, Color color, Color border, string label)
             {
                 double x = centerX + xMm * pixelsPerMm;
