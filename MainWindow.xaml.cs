@@ -656,19 +656,15 @@ namespace SahanOhjausGUI
             if (n == 3)
             {
                 double kl = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2]) / 2.0;
-
                 plc_T1 = VaistoT(1);
                 plc_T2 = VaistoT(2);
-
                 plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1));
                 plc_T4 = (paksuudet[0] + r1 + paksuudet[1] + r2 / 2.0 - kl) + OffsetT(2) + Math.Abs(VaistoT(2));
-
                 plc_T5 = LepopaikkaT(5);
                 plc_T6 = LepopaikkaT(6);
                 return;
             }
 
-            // --- muut tapaukset ennallaan ---
             int puolikas = n / 2;
             bool parillinenN = (n % 2 == 0);
             var paksuudetVasen = paksuudet.Take(puolikas).ToList();
@@ -740,9 +736,11 @@ namespace SahanOhjausGUI
                         double rako1 = tera2.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
                         double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
-                        plc_T2 = -(paksuudet[0] + rako1 / 2.0 + off2 - kl);
-                        plc_T4 = vaistoUlko;
+                        plc_T2 = vaistoSisa;
+                        plc_T4 = paksuudet[0] + rako1 / 2.0 + off2 - kl - (vaistoSisa);
                         plc_T6 = vaistoUlko;
+                        
+                       
                     }
                 }
             }
@@ -760,14 +758,12 @@ namespace SahanOhjausGUI
                     double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
                     plc_T4 = paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + off4 - kl;
                 }
-
                 if (tera2 != null && tera4 != null)
                 {
                     double off4 = LaskeOffset(tera4.OnkoVasenKatinen, tera4.Laippa, tera4.Runko);
                     double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
                     plc_T2 = LaskeSivuTeraPlc(paksuudet[1], rako1, rako2, off2, off4);
                 }
-
                 plc_T6 = vaistoUlko;
             }
             else if (paksuudet.Count == 4)
@@ -791,7 +787,6 @@ namespace SahanOhjausGUI
                     double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
                     plc_T2 = LaskeSivuTeraPlc(k2, rako1, rako2, off2, off4);
                 }
-
                 if (tera6 != null)
                 {
                     double off6 = LaskeOffset(tera6.OnkoVasenKatinen, tera6.Laippa, tera6.Runko);
@@ -820,6 +815,7 @@ namespace SahanOhjausGUI
                         plc_T3 = paksuudet[0] + rako1 / 2.0 + off3 - kl;
                         plc_T1 = vaistoSisa;
                         plc_T5 = vaistoUlko;
+                        
                     }
                 }
                 else if (halkaisuTera == 1)
@@ -829,9 +825,10 @@ namespace SahanOhjausGUI
                         double rako1 = tera1.Rako;
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
                         double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
-                        plc_T1 = -(paksuudet[0] + rako1 / 2.0 + off1 - kl);
-                        plc_T3 = vaistoSisa;
+                        plc_T1 = vaistoSisa;
+                        plc_T3 = paksuudet[0] + rako1 / 2.0 + off1 - kl - (vaistoSisa);
                         plc_T5 = vaistoUlko;
+                       
                     }
                 }
             }
@@ -849,14 +846,12 @@ namespace SahanOhjausGUI
                     double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
                     plc_T3 = paksuudet[0] + rako1 + paksuudet[1] + rako2 / 2.0 + off3 - kl;
                 }
-
                 if (tera1 != null && tera3 != null)
                 {
                     double off3 = LaskeOffset(tera3.OnkoVasenKatinen, tera3.Laippa, tera3.Runko);
                     double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
                     plc_T1 = LaskeSivuTeraPlc(paksuudet[1], rako1, rako2, off1, off3);
                 }
-
                 plc_T5 = vaistoUlko;
             }
             else if (paksuudet.Count == 4)
@@ -880,7 +875,6 @@ namespace SahanOhjausGUI
                     double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
                     plc_T1 = LaskeSivuTeraPlc(k2, rako1, rako2, off1, off3);
                 }
-
                 if (tera5 != null)
                 {
                     double off5 = LaskeOffset(tera5.OnkoVasenKatinen, tera5.Laippa, tera5.Runko);
@@ -1055,32 +1049,23 @@ namespace SahanOhjausGUI
                 }
             }
 
-            // ── Terä x-koordinaatit ──────────────────────────────────────────
             double t1X = n == 3
                 ? centerX - (plc_T3 + plc_T1) * pixelsPerMm
                 : centerX + plc_T1 * pixelsPerMm;
-
             double t2X = n == 3
                 ? centerX + (plc_T4 + plc_T2) * pixelsPerMm
                 : centerX + plc_T2 * pixelsPerMm;
-
             double t3X = n == 3
                 ? centerX - plc_T3 * pixelsPerMm
                 : centerX + plc_T3 * pixelsPerMm;
-
-            double t4X = n == 3
-                ? centerX + plc_T4 * pixelsPerMm
-                : centerX + plc_T4 * pixelsPerMm;
-
+            double t4X = centerX + plc_T4 * pixelsPerMm;
             double t5X = n == 3
                 ? centerX - (plc_T3 + plc_T5) * pixelsPerMm
                 : centerX + plc_T5 * pixelsPerMm;
-
             double t6X = n == 3
                 ? centerX + (plc_T4 + plc_T6) * pixelsPerMm
                 : centerX + plc_T6 * pixelsPerMm;
 
-            // ── Mitkä terät sahaa ────────────────────────────────────────────
             bool t1Sahaa = true;
             bool t2Sahaa = true;
             bool t3Sahaa = n != 3;
@@ -1092,7 +1077,6 @@ namespace SahanOhjausGUI
             Color normV = Color.FromRgb(255, 107, 107);
             Color lepoVari = Color.FromRgb(100, 100, 100);
 
-            // Lepopaikalla olevat ensin (piirtyy alle)
             PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth,
                 t5Sahaa ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepoVari),
                 $"T5\n{plc_T5:F1}", t5Sahaa, true);
@@ -1105,8 +1089,6 @@ namespace SahanOhjausGUI
             PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth,
                 t4Sahaa ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepoVari),
                 $"T4\n{plc_T4:F1}", t4Sahaa, true);
-
-            // Sahaavat viimeisenä (piirtyy päälle)
             PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth,
                 TeraViivaBrush(plc_T1, 1, normV),
                 $"T1\n{plc_T1:F1}", true, false);
@@ -1114,7 +1096,6 @@ namespace SahanOhjausGUI
                 TeraViivaBrush(plc_T2, 2, normO),
                 $"T2\n{plc_T2:F1}", true, true);
 
-            // ── Turvaväli fyysisten sijaintien perusteella ───────────────────
             double fyysT1mm = (t1X - centerX) / pixelsPerMm;
             double fyysT2mm = (t2X - centerX) / pixelsPerMm;
             double valiMm = Math.Abs(fyysT2mm - fyysT1mm);
@@ -1141,7 +1122,6 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(turvaLbl, turvaStartX); Canvas.SetTop(turvaLbl, rectY - 22);
             canvas.Children.Add(turvaLbl);
 
-            // ── Otsikko ──────────────────────────────────────────────────────
             var otsikko = new TextBlock
             {
                 Text = $"🔀 Yhdistetty sahaus — {n} kpl",
@@ -1195,38 +1175,161 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(cLbl, centerX + 3); Canvas.SetTop(cLbl, 4);
             canvas.Children.Add(cLbl);
 
+            double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
+
             var pieceColors = new[]
             {
                 Color.FromRgb(76, 175, 80),  Color.FromRgb(33, 150, 243),
                 Color.FromRgb(233, 30, 99),  Color.FromRgb(255, 193, 7)
             };
 
-            if (oikeaOn && paksuudetOikea.Count > 0)
+            void PiirraKappale(double xMm, double paksuus, Color color, Color border, string label)
             {
-                var raotOikea = new[]
+                double x = centerX + xMm * pixelsPerMm;
+                double w = paksuus * pixelsPerMm;
+                var rect = new Rectangle
                 {
-                    teraParametrit.TryGetValue(2, out var t2r) ? t2r.Rako : 4.0,
-                    teraParametrit.TryGetValue(4, out var t4r) ? t4r.Rako : 4.0,
-                    teraParametrit.TryGetValue(6, out var t6r) ? t6r.Rako : 4.0
+                    Width = Math.Max(1, w),
+                    Height = rectHeight,
+                    Fill = new SolidColorBrush(Color.FromArgb(180, color.R, color.G, color.B)),
+                    Stroke = new SolidColorBrush(border),
+                    StrokeThickness = 1,
+                    RadiusX = 3,
+                    RadiusY = 3
                 };
-                double totalMm = paksuudetOikea.Sum() + raotOikea.Take(paksuudetOikea.Count - 1).Sum();
-                PiirraPuoliRaot(canvas, paksuudetOikea, raotOikea, -(totalMm / 2.0), centerX,
-                    rectY, rectHeight, centerY, pixelsPerMm, pieceColors,
-                    vasemmalle: false, border: Color.FromRgb(107, 203, 119), kappaleOffset: 5);
+                Canvas.SetLeft(rect, x); Canvas.SetTop(rect, rectY);
+                canvas.Children.Add(rect);
+
+                var tl = new TextBlock
+                {
+                    Text = $"{label}\n{paksuus:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White,
+                    TextAlignment = TextAlignment.Center,
+                    Width = Math.Max(20, w)
+                };
+                Canvas.SetLeft(tl, x + w / 2.0 - tl.Width / 2.0);
+                Canvas.SetTop(tl, centerY - 14);
+                canvas.Children.Add(tl);
             }
 
+            // ── Vasen saha kappaleet: K4 | T5 | K3 | T3 | K2 | T1 | K1 ─────
             if (vasenOn && paksuudetVasen.Count > 0)
             {
-                var raotVasen = new[]
+                Color borderV = Color.FromRgb(255, 107, 107);
+                double r1 = RakoT(1);
+                double r3 = RakoT(3);
+                double r5 = RakoT(5);
+
+                double k1 = paksuudetVasen.Count >= 1 ? paksuudetVasen[0] : 0;
+                double k2 = paksuudetVasen.Count >= 2 ? paksuudetVasen[1] : 0;
+                double k3 = paksuudetVasen.Count >= 3 ? paksuudetVasen[2] : 0;
+                double k4 = paksuudetVasen.Count >= 4 ? paksuudetVasen[3] : 0;
+
+                double totalV = k1
+                    + (paksuudetVasen.Count >= 2 ? r1 + k2 : 0)
+                    + (paksuudetVasen.Count >= 3 ? r3 + k3 : 0)
+                    + (paksuudetVasen.Count >= 4 ? r5 + k4 : 0);
+                double klV = totalV / 2.0;
+
+                // Ulkoa sisään: K4 → K3 → K2 → K1
+                double k4X = -klV;
+                double k3X = paksuudetVasen.Count >= 4 ? k4X + k4 + r5 : -klV;
+                double k2X = paksuudetVasen.Count >= 3 ? k3X + k3 + r3
+                           : paksuudetVasen.Count >= 2 ? -klV : -klV;
+                double k1X = paksuudetVasen.Count >= 2 ? k2X + k2 + r1 : -klV;
+
+                if (paksuudetVasen.Count >= 4)
+                    PiirraKappale(k4X, k4, pieceColors[3], borderV, "K4");
+                if (paksuudetVasen.Count >= 3)
+                    PiirraKappale(k3X, k3, pieceColors[2], borderV, "K3");
+                if (paksuudetVasen.Count >= 2)
+                    PiirraKappale(k2X, k2, pieceColors[1], borderV, "K2");
+                if (paksuudetVasen.Count >= 1)
+                    PiirraKappale(k1X, k1, pieceColors[0], borderV, "K1");
+
+                double leftEdge = paksuudetVasen.Count >= 4 ? k4X
+                                : paksuudetVasen.Count >= 3 ? k3X
+                                : paksuudetVasen.Count >= 2 ? k2X : k1X;
+                double rightEdge = k1X + k1;
+                double arrowY = rectY + rectHeight + 10;
+                double leftX = centerX + leftEdge * pixelsPerMm;
+                double rightX = centerX + rightEdge * pixelsPerMm;
+                canvas.Children.Add(new Line { X1 = leftX, Y1 = arrowY, X2 = rightX, Y2 = arrowY, Stroke = new SolidColorBrush(Color.FromRgb(255, 107, 107)), StrokeThickness = 1 });
+                canvas.Children.Add(new Line { X1 = leftX, Y1 = arrowY - 4, X2 = leftX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(255, 107, 107)), StrokeThickness = 1 });
+                canvas.Children.Add(new Line { X1 = rightX, Y1 = arrowY - 4, X2 = rightX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(255, 107, 107)), StrokeThickness = 1 });
+                var kokoLblV = new TextBlock
                 {
-                    teraParametrit.TryGetValue(1, out var t1r) ? t1r.Rako : 4.0,
-                    teraParametrit.TryGetValue(3, out var t3r) ? t3r.Rako : 4.0,
-                    teraParametrit.TryGetValue(5, out var t5r) ? t5r.Rako : 4.0
+                    Text = $"⟵ {totalV:F1} mm ⟶",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
+                    TextAlignment = TextAlignment.Center,
+                    Width = Math.Max(60, Math.Abs(rightX - leftX))
                 };
-                double totalMm = paksuudetVasen.Sum() + raotVasen.Take(paksuudetVasen.Count - 1).Sum();
-                PiirraPuoliRaot(canvas, paksuudetVasen, raotVasen, -(totalMm / 2.0), centerX,
-                    rectY, rectHeight, centerY, pixelsPerMm, pieceColors,
-                    vasemmalle: true, border: Color.FromRgb(255, 107, 107), kappaleOffset: 1);
+                Canvas.SetLeft(kokoLblV, leftX + (rightX - leftX) / 2.0 - kokoLblV.Width / 2.0);
+                Canvas.SetTop(kokoLblV, arrowY + 5);
+                canvas.Children.Add(kokoLblV);
+            }
+
+            // ── Oikea saha kappaleet: K5 | T2 | K6 | T4 | K7 | T6 | K8 ─────
+            if (oikeaOn && paksuudetOikea.Count > 0)
+            {
+                Color borderO = Color.FromRgb(107, 203, 119);
+                double r2 = RakoT(2);
+                double r4 = RakoT(4);
+                double r6 = RakoT(6);
+
+                double k5 = paksuudetOikea.Count >= 1 ? paksuudetOikea[0] : 0;
+                double k6 = paksuudetOikea.Count >= 2 ? paksuudetOikea[1] : 0;
+                double k7 = paksuudetOikea.Count >= 3 ? paksuudetOikea[2] : 0;
+                double k8 = paksuudetOikea.Count >= 4 ? paksuudetOikea[3] : 0;
+
+                double totalO = k5
+                    + (paksuudetOikea.Count >= 2 ? r2 + k6 : 0)
+                    + (paksuudetOikea.Count >= 3 ? r4 + k7 : 0)
+                    + (paksuudetOikea.Count >= 4 ? r6 + k8 : 0);
+                double klO = totalO / 2.0;
+
+                // Sisältä ulos: K5 → K6 → K7 → K8
+                double k5X = -klO;
+                double k6X = k5X + k5 + r2;
+                double k7X = k6X + k6 + r4;
+                double k8X = k7X + k7 + r6;
+
+                if (paksuudetOikea.Count >= 1)
+                    PiirraKappale(k5X, k5, pieceColors[0], borderO, "K5");
+                if (paksuudetOikea.Count >= 2)
+                    PiirraKappale(k6X, k6, pieceColors[1], borderO, "K6");
+                if (paksuudetOikea.Count >= 3)
+                    PiirraKappale(k7X, k7, pieceColors[2], borderO, "K7");
+                if (paksuudetOikea.Count >= 4)
+                    PiirraKappale(k8X, k8, pieceColors[3], borderO, "K8");
+
+                double leftEdge = k5X;
+                double rightEdge = paksuudetOikea.Count >= 4 ? k8X + k8
+                                 : paksuudetOikea.Count >= 3 ? k7X + k7
+                                 : paksuudetOikea.Count >= 2 ? k6X + k6
+                                 : k5X + k5;
+                double arrowY = rectY + rectHeight + 10;
+                double leftX = centerX + leftEdge * pixelsPerMm;
+                double rightX = centerX + rightEdge * pixelsPerMm;
+                canvas.Children.Add(new Line { X1 = leftX, Y1 = arrowY, X2 = rightX, Y2 = arrowY, Stroke = new SolidColorBrush(Color.FromRgb(107, 203, 119)), StrokeThickness = 1 });
+                canvas.Children.Add(new Line { X1 = leftX, Y1 = arrowY - 4, X2 = leftX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(107, 203, 119)), StrokeThickness = 1 });
+                canvas.Children.Add(new Line { X1 = rightX, Y1 = arrowY - 4, X2 = rightX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(107, 203, 119)), StrokeThickness = 1 });
+                var kokoLblO = new TextBlock
+                {
+                    Text = $"⟵ {totalO:F1} mm ⟶",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(107, 203, 119)),
+                    TextAlignment = TextAlignment.Center,
+                    Width = Math.Max(60, Math.Abs(rightX - leftX))
+                };
+                Canvas.SetLeft(kokoLblO, leftX + (rightX - leftX) / 2.0 - kokoLblO.Width / 2.0);
+                Canvas.SetTop(kokoLblO, arrowY + 5);
+                canvas.Children.Add(kokoLblO);
             }
 
             // ── Oikea saha terät ─────────────────────────────────────────────
@@ -1237,9 +1340,9 @@ namespace SahanOhjausGUI
                 bool t4Sahaa = oikeaOn && paksuudetOikea.Count >= 2;
                 bool t6Sahaa = oikeaOn && paksuudetOikea.Count >= 3;
 
-                double t6X = centerX + plc_T6 * pixelsPerMm;
+                double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
                 double t4X = centerX + plc_T4 * pixelsPerMm;
-                double t2X = centerX + plc_T2 * pixelsPerMm;
+                double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
 
                 PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth,
                     t6Sahaa ? TeraViivaBrush(plc_T6, 6, normO) : new SolidColorBrush(lepoVari),
@@ -1270,10 +1373,9 @@ namespace SahanOhjausGUI
                 bool t3Sahaa = vasenOn && paksuudetVasen.Count >= 2;
                 bool t5Sahaa = vasenOn && paksuudetVasen.Count >= 3;
 
-                // Vasen saha: terät ovat negatiivisella puolella
-                double t5X = centerX - plc_T5 * pixelsPerMm;
+                double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm;
                 double t3X = centerX - plc_T3 * pixelsPerMm;
-                double t1X = centerX - plc_T1 * pixelsPerMm;
+                double t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
 
                 PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth,
                     t5Sahaa ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepoVari),
@@ -1295,126 +1397,6 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(vl, 6); Canvas.SetTop(vl, 6);
                 canvas.Children.Add(vl);
             }
-        }
-
-        private static void PiirraPuoliRaot(
-            Canvas canvas, List<double> paksuudet, double[] raot, double startMm,
-            double centerX, double rectY, double rectHeight, double centerY,
-            double pixelsPerMm, Color[] pieceColors, bool vasemmalle, Color border, int kappaleOffset)
-        {
-            int n = paksuudet.Count;
-            double curMm = startMm;
-            double kokonaisLeveys = paksuudet.Sum() + raot.Take(n - 1).Sum();
-
-            for (int i = 0; i < n; i++)
-            {
-                double paksuus = paksuudet[i];
-                double pieceW = paksuus * pixelsPerMm;
-                double pieceX = vasemmalle
-                    ? centerX - curMm * pixelsPerMm - pieceW
-                    : centerX + curMm * pixelsPerMm;
-
-                var piece = new Rectangle
-                {
-                    Width = pieceW,
-                    Height = rectHeight,
-                    Fill = new SolidColorBrush(Color.FromArgb(180,
-                        pieceColors[i % pieceColors.Length].R,
-                        pieceColors[i % pieceColors.Length].G,
-                        pieceColors[i % pieceColors.Length].B)),
-                    Stroke = new SolidColorBrush(border),
-                    StrokeThickness = 1,
-                    RadiusX = 3,
-                    RadiusY = 3
-                };
-                Canvas.SetLeft(piece, pieceX); Canvas.SetTop(piece, rectY);
-                canvas.Children.Add(piece);
-
-                var tl = new TextBlock
-                {
-                    Text = $"{paksuus:F1}",
-                    FontSize = 11,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.White,
-                    TextAlignment = TextAlignment.Center,
-                    Width = Math.Max(20, pieceW)
-                };
-                Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0);
-                Canvas.SetTop(tl, centerY - 10);
-                canvas.Children.Add(tl);
-
-                var nl = new TextBlock
-                {
-                    Text = $"K{kappaleOffset + i}",
-                    FontSize = 10,
-                    Foreground = new SolidColorBrush(Color.FromArgb(220, 255, 255, 255))
-                };
-                Canvas.SetLeft(nl, pieceX + 4); Canvas.SetTop(nl, rectY + 4);
-                canvas.Children.Add(nl);
-
-                curMm += paksuus;
-
-                if (i < n - 1)
-                {
-                    double rako = raot[i % raot.Length];
-                    double gapX = vasemmalle
-                        ? centerX - curMm * pixelsPerMm - rako * pixelsPerMm
-                        : centerX + curMm * pixelsPerMm;
-                    double gapW = rako * pixelsPerMm;
-
-                    var gap = new Rectangle
-                    {
-                        Width = gapW,
-                        Height = rectHeight,
-                        Fill = new SolidColorBrush(Color.FromArgb(120, 30, 30, 30)),
-                        Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                        StrokeThickness = 1,
-                        StrokeDashArray = new DoubleCollection { 3, 2 }
-                    };
-                    Canvas.SetLeft(gap, gapX); Canvas.SetTop(gap, rectY);
-                    canvas.Children.Add(gap);
-
-                    if (gapW > 8)
-                    {
-                        var rakoLbl = new TextBlock
-                        {
-                            Text = $"{rako:F1}",
-                            FontSize = 8,
-                            Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                            TextAlignment = TextAlignment.Center,
-                            Width = Math.Max(10, gapW)
-                        };
-                        Canvas.SetLeft(rakoLbl, gapX + gapW / 2.0 - rakoLbl.Width / 2.0);
-                        Canvas.SetTop(rakoLbl, centerY + 4);
-                        canvas.Children.Add(rakoLbl);
-                    }
-
-                    curMm += rako;
-                }
-            }
-
-            double totalStartX = vasemmalle
-                ? centerX - (startMm + kokonaisLeveys) * pixelsPerMm
-                : centerX + startMm * pixelsPerMm;
-            double totalW = kokonaisLeveys * pixelsPerMm;
-            double arrowY = rectY + rectHeight + 10;
-
-            canvas.Children.Add(new Line { X1 = totalStartX, Y1 = arrowY, X2 = totalStartX + totalW, Y2 = arrowY, Stroke = new SolidColorBrush(border), StrokeThickness = 1 });
-            canvas.Children.Add(new Line { X1 = totalStartX, Y1 = arrowY - 4, X2 = totalStartX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(border), StrokeThickness = 1 });
-            canvas.Children.Add(new Line { X1 = totalStartX + totalW, Y1 = arrowY - 4, X2 = totalStartX + totalW, Y2 = arrowY + 4, Stroke = new SolidColorBrush(border), StrokeThickness = 1 });
-
-            var kokoLbl = new TextBlock
-            {
-                Text = $"⟵ {kokonaisLeveys:F1} mm ⟶",
-                FontSize = 10,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(border),
-                TextAlignment = TextAlignment.Center,
-                Width = Math.Max(60, totalW)
-            };
-            Canvas.SetLeft(kokoLbl, totalStartX + totalW / 2.0 - kokoLbl.Width / 2.0);
-            Canvas.SetTop(kokoLbl, arrowY + 5);
-            canvas.Children.Add(kokoLbl);
         }
 
         private static void PiirraAsteikko(Canvas canvas, double canvasWidth, double canvasHeight, double centerX, double pixelsPerMm)
