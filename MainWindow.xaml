@@ -179,30 +179,22 @@
                             <StackPanel x:Name="HalkaisuPanel" Margin="0,6,0,0"
                                         Visibility="Collapsed">
                                 <TextBlock Text="Halkaiseva terä:" Margin="0,0,0,4"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition/>
-                                        <ColumnDefinition/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                        <TextBlock Text="Oikea:" FontSize="11"
-                                                   Foreground="#aaa"/>
-                                        <ComboBox x:Name="HalkaisuOikeaCombo"
-                                                  SelectionChanged="Halkaisu_Changed">
-                                            <ComboBoxItem Content="T4 — pää" IsSelected="True"/>
-                                            <ComboBoxItem Content="T2 — sivu"/>
-                                        </ComboBox>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Vasen:" FontSize="11"
-                                                   Foreground="#aaa"/>
-                                        <ComboBox x:Name="HalkaisuVasenCombo"
-                                                  SelectionChanged="Halkaisu_Changed">
-                                            <ComboBoxItem Content="T3 — pää" IsSelected="True"/>
-                                            <ComboBoxItem Content="T1 — sivu"/>
-                                        </ComboBox>
-                                    </StackPanel>
-                                </Grid>
+                                <StackPanel x:Name="HalkaisuVasenPanel" Margin="0,0,0,4">
+                                    <TextBlock Text="Vasen:" FontSize="11" Foreground="#aaa"/>
+                                    <ComboBox x:Name="HalkaisuVasenCombo"
+                                              SelectionChanged="Halkaisu_Changed">
+                                        <ComboBoxItem Content="T3 — pää" IsSelected="True"/>
+                                        <ComboBoxItem Content="T1 — sivu"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel x:Name="HalkaisuOikeaPanel">
+                                    <TextBlock Text="Oikea:" FontSize="11" Foreground="#aaa"/>
+                                    <ComboBox x:Name="HalkaisuOikeaCombo"
+                                              SelectionChanged="Halkaisu_Changed">
+                                        <ComboBoxItem Content="T4 — pää" IsSelected="True"/>
+                                        <ComboBoxItem Content="T2 — sivu"/>
+                                    </ComboBox>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </Border>

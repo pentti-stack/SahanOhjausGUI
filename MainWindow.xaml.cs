@@ -249,6 +249,12 @@ namespace SahanOhjausGUI
                     : OnYhdistettyTila() ? Visibility.Collapsed : Visibility.Visible;
             if (YhdistettyPanel != null)
                 YhdistettyPanel.Visibility = OnYhdistettyTila() ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuPanel != null)
+                HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2 ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuVasenPanel != null)
+                HalkaisuVasenPanel.Visibility = vasenOn ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuOikeaPanel != null)
+                HalkaisuOikeaPanel.Visibility = oikeaOn ? Visibility.Visible : Visibility.Collapsed;
 
             if (!vasenOn && !oikeaOn) return;
 
@@ -444,9 +450,19 @@ namespace SahanOhjausGUI
         private int GetHalkaisuTeraOikea() => HalkaisuOikeaCombo?.SelectedIndex == 1 ? 2 : 4;
         private int GetHalkaisuTeraVasen() => HalkaisuVasenCombo?.SelectedIndex == 1 ? 1 : 3;
         private void PaksuusTextBox_Changed(object sender, TextChangedEventArgs e) => PiirraVisual();
-        private void SahaValinta_Changed(object sender, RoutedEventArgs e) { PaivitaNakymat(); LuoParametriKontrollit(); PiirraVisual(); }
         private void Halkaisu_Changed(object sender, SelectionChangedEventArgs e) => PiirraVisual();
         private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e) => PiirraVisual();
+
+        private void SahaValinta_Changed(object sender, RoutedEventArgs e)
+        {
+            if (HalkaisuVasenPanel != null)
+                HalkaisuVasenPanel.Visibility = VasenSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuOikeaPanel != null)
+                HalkaisuOikeaPanel.Visibility = OikeaSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PaivitaNakymat();
+            LuoParametriKontrollit();
+            PiirraVisual();
+        }
 
         private void Kuivaus_Changed(object sender, TextChangedEventArgs e)
         {
@@ -463,6 +479,10 @@ namespace SahanOhjausGUI
             UpdateKappaleInfo();
             if (HalkaisuPanel != null)
                 HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2 ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuVasenPanel != null)
+                HalkaisuVasenPanel.Visibility = VasenSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuOikeaPanel != null)
+                HalkaisuOikeaPanel.Visibility = OikeaSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             LuoParametriKontrollit();
             PiirraVisual();
         }
@@ -737,10 +757,8 @@ namespace SahanOhjausGUI
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
                         double off2 = LaskeOffset(tera2.OnkoVasenKatinen, tera2.Laippa, tera2.Runko);
                         plc_T2 = vaistoSisa;
-                        plc_T4 = paksuudet[0] + rako1 / 2.0 + off2 - kl - (vaistoSisa);
+                        plc_T4 = paksuudet[0] + rako1 / 2.0 + off2 - kl - vaistoSisa;
                         plc_T6 = vaistoUlko;
-                        
-                       
                     }
                 }
             }
@@ -815,7 +833,6 @@ namespace SahanOhjausGUI
                         plc_T3 = paksuudet[0] + rako1 / 2.0 + off3 - kl;
                         plc_T1 = vaistoSisa;
                         plc_T5 = vaistoUlko;
-                        
                     }
                 }
                 else if (halkaisuTera == 1)
@@ -826,9 +843,8 @@ namespace SahanOhjausGUI
                         double kl = LaskeKeskilinja2(paksuudet, rako1);
                         double off1 = LaskeOffset(tera1.OnkoVasenKatinen, tera1.Laippa, tera1.Runko);
                         plc_T1 = vaistoSisa;
-                        plc_T3 = paksuudet[0] + rako1 / 2.0 + off1 - kl - (vaistoSisa);
+                        plc_T3 = paksuudet[0] + rako1 / 2.0 + off1 - kl - vaistoSisa;
                         plc_T5 = vaistoUlko;
-                       
                     }
                 }
             }
@@ -1049,22 +1065,12 @@ namespace SahanOhjausGUI
                 }
             }
 
-            double t1X = n == 3
-                ? centerX - (plc_T3 + plc_T1) * pixelsPerMm
-                : centerX + plc_T1 * pixelsPerMm;
-            double t2X = n == 3
-                ? centerX + (plc_T4 + plc_T2) * pixelsPerMm
-                : centerX + plc_T2 * pixelsPerMm;
-            double t3X = n == 3
-                ? centerX - plc_T3 * pixelsPerMm
-                : centerX + plc_T3 * pixelsPerMm;
+            double t1X = n == 3 ? centerX - (plc_T3 + plc_T1) * pixelsPerMm : centerX + plc_T1 * pixelsPerMm;
+            double t2X = n == 3 ? centerX + (plc_T4 + plc_T2) * pixelsPerMm : centerX + plc_T2 * pixelsPerMm;
+            double t3X = n == 3 ? centerX - plc_T3 * pixelsPerMm : centerX + plc_T3 * pixelsPerMm;
             double t4X = centerX + plc_T4 * pixelsPerMm;
-            double t5X = n == 3
-                ? centerX - (plc_T3 + plc_T5) * pixelsPerMm
-                : centerX + plc_T5 * pixelsPerMm;
-            double t6X = n == 3
-                ? centerX + (plc_T4 + plc_T6) * pixelsPerMm
-                : centerX + plc_T6 * pixelsPerMm;
+            double t5X = n == 3 ? centerX - (plc_T3 + plc_T5) * pixelsPerMm : centerX + plc_T5 * pixelsPerMm;
+            double t6X = n == 3 ? centerX + (plc_T4 + plc_T6) * pixelsPerMm : centerX + plc_T6 * pixelsPerMm;
 
             bool t1Sahaa = true;
             bool t2Sahaa = true;
@@ -1090,11 +1096,9 @@ namespace SahanOhjausGUI
                 t4Sahaa ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepoVari),
                 $"T4\n{plc_T4:F1}", t4Sahaa, true);
             PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth,
-                TeraViivaBrush(plc_T1, 1, normV),
-                $"T1\n{plc_T1:F1}", true, false);
+                TeraViivaBrush(plc_T1, 1, normV), $"T1\n{plc_T1:F1}", true, false);
             PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth,
-                TeraViivaBrush(plc_T2, 2, normO),
-                $"T2\n{plc_T2:F1}", true, true);
+                TeraViivaBrush(plc_T2, 2, normO), $"T2\n{plc_T2:F1}", true, true);
 
             double fyysT1mm = (t1X - centerX) / pixelsPerMm;
             double fyysT2mm = (t2X - centerX) / pixelsPerMm;
@@ -1214,13 +1218,11 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(tl);
             }
 
-            // ── Vasen saha kappaleet: K4 | T5 | K3 | T3 | K2 | T1 | K1 ─────
+            // ── Vasen saha: K4 | T5 | K3 | T3 | K2 | T1 | K1 ───────────────
             if (vasenOn && paksuudetVasen.Count > 0)
             {
                 Color borderV = Color.FromRgb(255, 107, 107);
-                double r1 = RakoT(1);
-                double r3 = RakoT(3);
-                double r5 = RakoT(5);
+                double r1 = RakoT(1), r3 = RakoT(3), r5 = RakoT(5);
 
                 double k1 = paksuudetVasen.Count >= 1 ? paksuudetVasen[0] : 0;
                 double k2 = paksuudetVasen.Count >= 2 ? paksuudetVasen[1] : 0;
@@ -1233,21 +1235,16 @@ namespace SahanOhjausGUI
                     + (paksuudetVasen.Count >= 4 ? r5 + k4 : 0);
                 double klV = totalV / 2.0;
 
-                // Ulkoa sisään: K4 → K3 → K2 → K1
                 double k4X = -klV;
                 double k3X = paksuudetVasen.Count >= 4 ? k4X + k4 + r5 : -klV;
                 double k2X = paksuudetVasen.Count >= 3 ? k3X + k3 + r3
                            : paksuudetVasen.Count >= 2 ? -klV : -klV;
                 double k1X = paksuudetVasen.Count >= 2 ? k2X + k2 + r1 : -klV;
 
-                if (paksuudetVasen.Count >= 4)
-                    PiirraKappale(k4X, k4, pieceColors[3], borderV, "K4");
-                if (paksuudetVasen.Count >= 3)
-                    PiirraKappale(k3X, k3, pieceColors[2], borderV, "K3");
-                if (paksuudetVasen.Count >= 2)
-                    PiirraKappale(k2X, k2, pieceColors[1], borderV, "K2");
-                if (paksuudetVasen.Count >= 1)
-                    PiirraKappale(k1X, k1, pieceColors[0], borderV, "K1");
+                if (paksuudetVasen.Count >= 4) PiirraKappale(k4X, k4, pieceColors[3], borderV, "K4");
+                if (paksuudetVasen.Count >= 3) PiirraKappale(k3X, k3, pieceColors[2], borderV, "K3");
+                if (paksuudetVasen.Count >= 2) PiirraKappale(k2X, k2, pieceColors[1], borderV, "K2");
+                if (paksuudetVasen.Count >= 1) PiirraKappale(k1X, k1, pieceColors[0], borderV, "K1");
 
                 double leftEdge = paksuudetVasen.Count >= 4 ? k4X
                                 : paksuudetVasen.Count >= 3 ? k3X
@@ -1273,13 +1270,11 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(kokoLblV);
             }
 
-            // ── Oikea saha kappaleet: K5 | T2 | K6 | T4 | K7 | T6 | K8 ─────
+            // ── Oikea saha: K5 | T2 | K6 | T4 | K7 | T6 | K8 ──────────────
             if (oikeaOn && paksuudetOikea.Count > 0)
             {
                 Color borderO = Color.FromRgb(107, 203, 119);
-                double r2 = RakoT(2);
-                double r4 = RakoT(4);
-                double r6 = RakoT(6);
+                double r2 = RakoT(2), r4 = RakoT(4), r6 = RakoT(6);
 
                 double k5 = paksuudetOikea.Count >= 1 ? paksuudetOikea[0] : 0;
                 double k6 = paksuudetOikea.Count >= 2 ? paksuudetOikea[1] : 0;
@@ -1292,20 +1287,15 @@ namespace SahanOhjausGUI
                     + (paksuudetOikea.Count >= 4 ? r6 + k8 : 0);
                 double klO = totalO / 2.0;
 
-                // Sisältä ulos: K5 → K6 → K7 → K8
                 double k5X = -klO;
                 double k6X = k5X + k5 + r2;
                 double k7X = k6X + k6 + r4;
                 double k8X = k7X + k7 + r6;
 
-                if (paksuudetOikea.Count >= 1)
-                    PiirraKappale(k5X, k5, pieceColors[0], borderO, "K5");
-                if (paksuudetOikea.Count >= 2)
-                    PiirraKappale(k6X, k6, pieceColors[1], borderO, "K6");
-                if (paksuudetOikea.Count >= 3)
-                    PiirraKappale(k7X, k7, pieceColors[2], borderO, "K7");
-                if (paksuudetOikea.Count >= 4)
-                    PiirraKappale(k8X, k8, pieceColors[3], borderO, "K8");
+                if (paksuudetOikea.Count >= 1) PiirraKappale(k5X, k5, pieceColors[0], borderO, "K5");
+                if (paksuudetOikea.Count >= 2) PiirraKappale(k6X, k6, pieceColors[1], borderO, "K6");
+                if (paksuudetOikea.Count >= 3) PiirraKappale(k7X, k7, pieceColors[2], borderO, "K7");
+                if (paksuudetOikea.Count >= 4) PiirraKappale(k8X, k8, pieceColors[3], borderO, "K8");
 
                 double leftEdge = k5X;
                 double rightEdge = paksuudetOikea.Count >= 4 ? k8X + k8
