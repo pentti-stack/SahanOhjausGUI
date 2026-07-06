@@ -688,15 +688,57 @@ namespace SahanOhjausGUI
             if (n == 4)
             {
                 double kl = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 + paksuudet[3]) / 2.0;
-
                 double rakoT4 = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 / 2.0) - kl;
-
                 plc_T1 = VaistoT(1);
                 plc_T2 = LaskeSivuTeraPlc(paksuudet[2], r2, r4, OffsetT(2), OffsetT(4));
                 plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1));
                 plc_T4 = rakoT4 + OffsetT(4);
                 plc_T5 = VaistoT(5);
                 plc_T6 = VaistoT(6);
+                return;
+            }
+
+            if (n == 5)
+            {
+                double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4]) / 2.0;
+                double rakoT3 = kl - (paksuudet[0] + r3 / 2.0);
+                double rakoT4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl;
+                plc_T3 = rakoT3 + OffsetT(3);
+                plc_T4 = rakoT4 + OffsetT(4);
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[1], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[3], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = VaistoT(5);
+                plc_T6 = VaistoT(6);
+                return;
+            }
+
+            if (n == 6)
+            {
+                double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4] + r6 + paksuudet[5]) / 2.0;
+                double rakoT3 = kl - (paksuudet[0] + r3 / 2.0);
+                double rakoT4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl;
+                plc_T3 = rakoT3 + OffsetT(3);
+                plc_T4 = rakoT4 + OffsetT(4);
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[1], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[3], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = VaistoT(5);
+                plc_T6 = LaskeUlkoTeraPlc(paksuudet[4], r6, r4, OffsetT(6), OffsetT(4));
+                return;
+            }
+
+            if (n == 7)
+            {
+                double kl = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0;
+
+                double rakoT3 = kl - (paksuudet[0] + r5 + paksuudet[1] + r3 / 2.0);
+                double rakoT4 = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0) - kl;
+
+                plc_T3 = rakoT3 + OffsetT(3);
+                plc_T4 = rakoT4 + OffsetT(4);
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[2], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[4], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = LaskeUlkoTeraPlc(paksuudet[1], r5, r3, OffsetT(5), OffsetT(3));
+                plc_T6 = LaskeUlkoTeraPlc(paksuudet[5], r6, r4, OffsetT(6), OffsetT(4));
                 return;
             }
 
@@ -717,7 +759,6 @@ namespace SahanOhjausGUI
                 plc_T2 -= (keskinenPaksuus / 2.0 + r2 / 2.0);
             }
         }
-
         // ── Laskenta erillinen ───────────────────────────────────────────────
 
         private static double LaskeKeskilinja2(List<double> paksuudet, double rako1) =>
@@ -959,9 +1000,9 @@ namespace SahanOhjausGUI
         }
 
         private void PiirraYhteisCanvasYhdistetty(Canvas canvas,
-            List<double> paksuudet,
-            double plc_T1, double plc_T2, double plc_T3,
-            double plc_T4, double plc_T5, double plc_T6)
+       List<double> paksuudet,
+       double plc_T1, double plc_T2, double plc_T3,
+       double plc_T4, double plc_T5, double plc_T6)
         {
             canvas.Children.Clear();
             int n = paksuudet.Count;
@@ -1004,7 +1045,7 @@ namespace SahanOhjausGUI
             {
                 3 => new[] { 1, 2 },
                 4 => new[] { 1, 2, 4 },
-                5 => new[] { 3, 1, 2, 4 },
+                5 => new[] { 1, 3, 2, 4 },
                 6 => new[] { 3, 1, 2, 4, 6 },
                 7 => new[] { 5, 3, 1, 2, 4, 6 },
                 _ => Array.Empty<int>()
@@ -1014,11 +1055,11 @@ namespace SahanOhjausGUI
 
             var pieceColors = new[]
             {
-                Color.FromRgb(76, 175, 80),   Color.FromRgb(33, 150, 243),
-                Color.FromRgb(233, 30, 99),   Color.FromRgb(255, 193, 7),
-                Color.FromRgb(156, 39, 176),  Color.FromRgb(0, 188, 212),
-                Color.FromRgb(255, 87, 34)
-            };
+        Color.FromRgb(76, 175, 80),   Color.FromRgb(33, 150, 243),
+        Color.FromRgb(233, 30, 99),   Color.FromRgb(255, 193, 7),
+        Color.FromRgb(156, 39, 176),  Color.FromRgb(0, 188, 212),
+        Color.FromRgb(255, 87, 34)
+    };
 
             double kokonaisLeveys = paksuudet.Sum() + teraJarjestys.Select(t => RakoT(t)).Sum();
             double curMm = -kokonaisLeveys / 2.0;
@@ -1080,12 +1121,33 @@ namespace SahanOhjausGUI
                 }
             }
 
-            double t1X = n == 3 ? centerX - (plc_T3 + plc_T1) * pixelsPerMm : centerX + plc_T1 * pixelsPerMm;
-            double t2X = n == 3 ? centerX + (plc_T4 + plc_T2) * pixelsPerMm : centerX + plc_T2 * pixelsPerMm;
-            double t3X = n == 3 ? centerX - plc_T3 * pixelsPerMm : centerX + plc_T3 * pixelsPerMm;
+            // ── Kokonaisleveys nuoli ──────────────────────────────────────────
+            double totalStartX = centerX - kokonaisLeveys / 2.0 * pixelsPerMm;
+            double totalEndX = centerX + kokonaisLeveys / 2.0 * pixelsPerMm;
+            double arrowY = rectY + rectHeight + 10;
+            canvas.Children.Add(new Line { X1 = totalStartX, Y1 = arrowY, X2 = totalEndX, Y2 = arrowY, Stroke = new SolidColorBrush(Color.FromRgb(255, 217, 61)), StrokeThickness = 1 });
+            canvas.Children.Add(new Line { X1 = totalStartX, Y1 = arrowY - 4, X2 = totalStartX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(255, 217, 61)), StrokeThickness = 1 });
+            canvas.Children.Add(new Line { X1 = totalEndX, Y1 = arrowY - 4, X2 = totalEndX, Y2 = arrowY + 4, Stroke = new SolidColorBrush(Color.FromRgb(255, 217, 61)), StrokeThickness = 1 });
+            var kokoLbl = new TextBlock
+            {
+                Text = $"⟵ {kokonaisLeveys:F1} mm ⟶",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)),
+                TextAlignment = TextAlignment.Center,
+                Width = Math.Max(60, totalEndX - totalStartX)
+            };
+            Canvas.SetLeft(kokoLbl, totalStartX + (totalEndX - totalStartX) / 2.0 - kokoLbl.Width / 2.0);
+            Canvas.SetTop(kokoLbl, arrowY + 5);
+            canvas.Children.Add(kokoLbl);
+
+            // ── Terä-viivat ───────────────────────────────────────────────────
+            double t3X = centerX - plc_T3 * pixelsPerMm;
+            double t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
             double t4X = centerX + plc_T4 * pixelsPerMm;
-            double t5X = n == 3 ? centerX - (plc_T3 + plc_T5) * pixelsPerMm : centerX + plc_T5 * pixelsPerMm;
-            double t6X = n == 3 ? centerX + (plc_T4 + plc_T6) * pixelsPerMm : centerX + plc_T6 * pixelsPerMm;
+            double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
+            double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm;
+            double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
 
             bool t1Sahaa = true;
             bool t2Sahaa = true;
@@ -1111,10 +1173,11 @@ namespace SahanOhjausGUI
                 t4Sahaa ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepoVari),
                 $"T4\n{plc_T4:F1}", t4Sahaa, true);
             PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth,
-                TeraViivaBrush(plc_T1, 1, normV), $"T1\n{plc_T1:F1}", true, false);
+                TeraViivaBrush(plc_T1, 1, normV), $"T1\n{plc_T1:F1}", t1Sahaa, false);
             PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth,
-                TeraViivaBrush(plc_T2, 2, normO), $"T2\n{plc_T2:F1}", true, true);
+                TeraViivaBrush(plc_T2, 2, normO), $"T2\n{plc_T2:F1}", t2Sahaa, true);
 
+            // ── T1-T2 turvaväli ───────────────────────────────────────────────
             double fyysT1mm = (t1X - centerX) / pixelsPerMm;
             double fyysT2mm = (t2X - centerX) / pixelsPerMm;
             double valiMm = Math.Abs(fyysT2mm - fyysT1mm);
@@ -1141,6 +1204,7 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(turvaLbl, turvaStartX); Canvas.SetTop(turvaLbl, rectY - 22);
             canvas.Children.Add(turvaLbl);
 
+            // ── Otsikko ───────────────────────────────────────────────────────
             var otsikko = new TextBlock
             {
                 Text = $"🔀 Yhdistetty sahaus — {n} kpl",
