@@ -39,7 +39,7 @@
                    FontSize="15" FontWeight="Bold"
                    Foreground="#4FC3F7" Margin="0,0,0,12"/>
 
-        <!-- Sarakkeiden otsikot -->
+        <!-- Sarakkeiden otsikot --->
         <Grid Grid.Row="1" Margin="0,0,0,6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="80"/>

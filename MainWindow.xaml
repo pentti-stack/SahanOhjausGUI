@@ -31,7 +31,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Yläpalkki ── -->
+        <!-- ── Yläpalkki ─-─ -->
         <Grid Grid.Row="0" Background="#111">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
