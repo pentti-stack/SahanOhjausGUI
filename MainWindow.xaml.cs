@@ -339,7 +339,7 @@ namespace SahanOhjausGUI
 
             if (!vasenOn && !oikeaOn)
             {
-                
+
                 return;
             }
 
@@ -661,16 +661,46 @@ namespace SahanOhjausGUI
 
             if (jakosahaOn)
             {
-                var leveydet = GetLeveysValues();
-                var paksuudet = GetPaksuusValues();
-                levinKappale = leveydet.Count > 0 ? leveydet.Max() : 0;
-                kokonaisLeveys = paksuudet.Count > 0 ? paksuudet.Sum() : 0;
-
                 double.TryParse(PhKuivausBox?.Text.Replace(",", ".") ?? "0",
                     NumberStyles.Float, CultureInfo.InvariantCulture, out double phKuivaus);
                 double kerroin = 1.0 + phKuivaus / 100.0;
-                levinKappale *= kerroin;
-                kokonaisLeveys *= kerroin;
+
+                var leveydet = GetLeveysValues();
+                levinKappale = leveydet.Count > 0 ? leveydet.Max() * kerroin : 0;
+
+                double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
+
+                if (OnYhdistettyTila())
+                {
+                    var p = GetThicknessValuesYhdistetty().Select(x => x * kerroin).ToList();
+                    int n = GetSelectedYhdistettyCount();
+                    var rakoJarjestys = n switch { 3 => new[] { 1, 2 }, 4 => new[] { 1, 2, 4 }, 5 => new[] { 1, 3, 2, 4 }, 6 => new[] { 3, 1, 2, 4, 6 }, 7 => new[] { 5, 3, 1, 2, 4, 6 }, _ => Array.Empty<int>() };
+                    kokonaisLeveys = p.Sum() + rakoJarjestys.Select(t => RakoT(t)).Sum();
+                }
+                else if (VasenSahaCheck?.IsChecked == true)
+                {
+                    var p = GetThicknessValuesVasen().Select(x => x * kerroin).ToList();
+                    kokonaisLeveys = p.Count switch
+                    {
+                        1 => p[0],
+                        2 => p[0] + RakoT(1) + p[1],
+                        3 => p[0] + RakoT(1) + p[1] + RakoT(3) + p[2],
+                        4 => p[0] + RakoT(1) + p[1] + RakoT(3) + p[2] + RakoT(5) + p[3],
+                        _ => p.Sum()
+                    };
+                }
+                else
+                {
+                    var p = GetThicknessValuesOikea().Select(x => x * kerroin).ToList();
+                    kokonaisLeveys = p.Count switch
+                    {
+                        1 => p[0],
+                        2 => p[0] + RakoT(2) + p[1],
+                        3 => p[0] + RakoT(2) + p[1] + RakoT(4) + p[2],
+                        4 => p[0] + RakoT(2) + p[1] + RakoT(4) + p[2] + RakoT(6) + p[3],
+                        _ => p.Sum()
+                    };
+                }
 
                 if (PhLevinKappaleBox != null) PhLevinKappaleBox.Text = levinKappale.ToString("F1", CultureInfo.InvariantCulture);
                 if (PhKokonaisLeveysBox != null) PhKokonaisLeveysBox.Text = kokonaisLeveys.ToString("F1", CultureInfo.InvariantCulture);
