@@ -4,7 +4,6 @@
         Title="Sahan ohjaus" Height="600" Width="1400"
         Background="#1a1a1a">
     <Window.Resources>
-
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="#2d2d2d"/>
             <Setter Property="Foreground" Value="White"/>
@@ -47,7 +46,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style TargetType="ComboBoxItem">
             <Setter Property="Background" Value="#2d2d2d"/>
             <Setter Property="Foreground" Value="White"/>
@@ -63,7 +61,6 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -77,6 +74,20 @@
             <Setter Property="BorderBrush" Value="#555"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#2d2d2d"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1a1a1a"/>
+                    <Setter Property="Foreground" Value="#4fc3f7"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -103,18 +114,21 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal"
                         VerticalAlignment="Center" Margin="10,0">
-                <TextBlock Text="O:" Foreground="#aaa" Margin="0,0,4,0"/>
-                <TextBlock x:Name="Tera2_Value" Text="T2: -" Margin="0,0,8,0"/>
-                <Border x:Name="Tera4_Border" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="0,0,8,0">
-                    <TextBlock x:Name="Tera4_Value" Text="T4: -"/>
-                </Border>
-                <TextBlock x:Name="Tera6_Value" Text="T6: -" Margin="0,0,16,0"/>
+                <TextBlock x:Name="Ph1V_Value" Text="PH1V: -" Margin="0,0,8,0" Foreground="#FFC850"/>
+                <TextBlock x:Name="Ph1O_Value" Text="PH1O: -" Margin="0,0,8,0" Foreground="#FFC850"/>
+                <TextBlock x:Name="Ph2V_Value" Text="PH2V: -" Margin="0,0,8,0" Foreground="#50C8FF"/>
+                <TextBlock x:Name="Ph2O_Value" Text="PH2O: -" Margin="0,0,16,0" Foreground="#50C8FF"/>
+                <TextBlock Text="|" Foreground="#555" Margin="0,0,16,0"/>
+                <TextBlock x:Name="Prof_Value" Text="Prof: -" Margin="0,0,16,0" Foreground="#B39DDB"/>
+                <TextBlock Text="|" Foreground="#555" Margin="0,0,16,0"/>
                 <TextBlock Text="V:" Foreground="#aaa" Margin="0,0,4,0"/>
-                <TextBlock x:Name="Tera1_Value" Text="T1: -" Margin="0,0,8,0"/>
-                <Border x:Name="Tera3_Border" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="0,0,8,0">
-                    <TextBlock x:Name="Tera3_Value" Text="T3: -"/>
-                </Border>
-                <TextBlock x:Name="Tera5_Value" Text="T5: -"/>
+                <TextBlock x:Name="Tera5_Value" Text="T5: -" Margin="0,0,8,0" Foreground="#FF6B6B"/>
+                <TextBlock x:Name="Tera3_Value" Text="T3: -" Margin="0,0,8,0" Foreground="#FF6B6B"/>
+                <TextBlock x:Name="Tera1_Value" Text="T1: -" Margin="0,0,16,0" Foreground="#FF6B6B"/>
+                <TextBlock Text="O:" Foreground="#aaa" Margin="0,0,4,0"/>
+                <TextBlock x:Name="Tera2_Value" Text="T2: -" Margin="0,0,8,0" Foreground="#6BCB77"/>
+                <TextBlock x:Name="Tera4_Value" Text="T4: -" Margin="0,0,8,0" Foreground="#6BCB77"/>
+                <TextBlock x:Name="Tera6_Value" Text="T6: -" Foreground="#6BCB77"/>
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal"
@@ -128,130 +142,250 @@
             </StackPanel>
         </Grid>
 
-        <!-- ── Sisältö ── -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="210"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- ── Välilehdet ── -->
+        <TabControl Grid.Row="1" Background="#1a1a1a" BorderBrush="#333"
+                    SelectionChanged="TabControl_SelectionChanged">
 
-            <!-- ── Vasen paneeli ── -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
-                          Background="#1e1e1e">
-                <StackPanel x:Name="PaksuusPanel" Margin="10">
+            <!-- ══ PELKKAHAKKURIT ══ -->
+            <TabItem Header="🪵 Pelkkahakkurit">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="210"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                    <!-- 1: Sahat käytössä -->
-                    <Border Background="#2d2d2d" CornerRadius="6"
-                            Padding="8,6" Margin="0,0,0,8">
-                        <StackPanel>
-                            <TextBlock Text="⚙ Sahat käytössä" FontWeight="Bold"
-                                       Foreground="#4fc3f7" Margin="0,0,0,6"/>
-                            <StackPanel Orientation="Horizontal">
-                                <CheckBox x:Name="VasenSahaCheck" Content="Vasen"
-                                          Margin="0,0,12,0"
-                                          Checked="SahaValinta_Changed"
-                                          Unchecked="SahaValinta_Changed"/>
-                                <CheckBox x:Name="OikeaSahaCheck" Content="Oikea"
-                                          Checked="SahaValinta_Changed"
-                                          Unchecked="SahaValinta_Changed"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
+                                  Background="#1e1e1e">
+                        <StackPanel Margin="10">
 
-                    <!-- 2: Kappaleiden määrä — erillinen saha -->
-                    <Border x:Name="ErillinenPanel" Background="#2d2d2d" CornerRadius="6"
-                            Padding="8,6" Margin="0,0,0,8">
-                        <StackPanel>
-                            <TextBlock Text="Kappaleiden määrä:" Margin="0,0,0,4"/>
-                            <StackPanel Orientation="Horizontal">
-                                <ComboBox x:Name="KappaleCombo" Width="70"
-                                          SelectionChanged="Kappale_Changed">
-                                    <ComboBoxItem Content="2"/>
-                                    <ComboBoxItem Content="3"/>
-                                    <ComboBoxItem Content="4" IsSelected="True"/>
-                                </ComboBox>
-                                <TextBlock x:Name="KappaleInfo" Text="4 kpl / saha"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           Foreground="#aaa" FontSize="11"/>
-                            </StackPanel>
-
-                            <!-- Halkaisuterä — näkyy vain 2kpl:lla -->
-                            <StackPanel x:Name="HalkaisuPanel" Margin="0,6,0,0"
-                                        Visibility="Collapsed">
-                                <TextBlock Text="Halkaiseva terä:" Margin="0,0,0,4"/>
-                                <StackPanel x:Name="HalkaisuVasenPanel" Margin="0,0,0,4">
-                                    <TextBlock Text="Vasen:" FontSize="11" Foreground="#aaa"/>
-                                    <ComboBox x:Name="HalkaisuVasenCombo"
-                                              SelectionChanged="Halkaisu_Changed">
-                                        <ComboBoxItem Content="T3 — pää" IsSelected="True"/>
-                                        <ComboBoxItem Content="T1 — sivu"/>
-                                    </ComboBox>
+                            <!-- PH1 -->
+                            <Border Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="🪵 PH1 — Pelkkahakkuri 1"
+                                               FontWeight="Bold" Foreground="#FFC850"
+                                               Margin="0,0,0,6"/>
+                                    <CheckBox x:Name="Ph1Check" Content="Käytössä"
+                                              IsChecked="True"
+                                              Margin="0,0,0,6"
+                                              Checked="PhValinta_Changed"
+                                              Unchecked="PhValinta_Changed"/>
+                                    <TextBlock Text="PH1 leveys (levein kappale):"
+                                               FontSize="11" Foreground="#aaa" Margin="0,0,0,2"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBox x:Name="PhLevinKappaleBox" Width="80" Height="28"
+                                                 Text="200" TextChanged="Ph_Changed"
+                                                 Background="#3d3d3d" Foreground="White"
+                                                 BorderBrush="#555" Padding="6,0"
+                                                 VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="6,0,0,0" Foreground="#aaa"/>
+                                    </StackPanel>
                                 </StackPanel>
-                                <StackPanel x:Name="HalkaisuOikeaPanel">
-                                    <TextBlock Text="Oikea:" FontSize="11" Foreground="#aaa"/>
-                                    <ComboBox x:Name="HalkaisuOikeaCombo"
-                                              SelectionChanged="Halkaisu_Changed">
-                                        <ComboBoxItem Content="T4 — pää" IsSelected="True"/>
-                                        <ComboBoxItem Content="T2 — sivu"/>
-                                    </ComboBox>
+                            </Border>
+
+                            <!-- PH2 -->
+                            <Border Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="🪵 PH2 — Pelkkahakkuri 2"
+                                               FontWeight="Bold" Foreground="#50C8FF"
+                                               Margin="0,0,0,6"/>
+                                    <CheckBox x:Name="Ph2Check" Content="Käytössä"
+                                              IsChecked="True"
+                                              Margin="0,0,0,6"
+                                              Checked="PhValinta_Changed"
+                                              Unchecked="PhValinta_Changed"/>
+                                    <TextBlock Text="PH2 leveys (kokonaisleveys):"
+                                               FontSize="11" Foreground="#aaa" Margin="0,0,0,2"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBox x:Name="PhKokonaisLeveysBox" Width="80" Height="28"
+                                                 Text="200" TextChanged="Ph_Changed"
+                                                 Background="#3d3d3d" Foreground="White"
+                                                 BorderBrush="#555" Padding="6,0"
+                                                 VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="6,0,0,0" Foreground="#aaa"/>
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
+                            </Border>
+
+                            <!-- Kuivaus PH -->
+                            <Border Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Kuivaus PH (%):" Margin="0,0,0,4"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox x:Name="PhKuivausBox" Width="80" Height="28"
+                                                 Text="0" TextChanged="Ph_Changed"
+                                                 Background="#3d3d3d" Foreground="White"
+                                                 BorderBrush="#555" Padding="6,0"
+                                                 VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="%" VerticalAlignment="Center"
+                                                   Margin="6,0,0,0" Foreground="#aaa"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
                         </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PH1 Canvas -->
+                    <Border Grid.Column="1" BorderBrush="#333" BorderThickness="1,0,1,0">
+                        <Canvas x:Name="Ph1Canvas" SizeChanged="PhCanvas_SizeChanged"/>
                     </Border>
 
-                    <!-- 3: Kappaleiden määrä — yhdistetty -->
-                    <Border x:Name="YhdistettyPanel" Background="#2d2d2d" CornerRadius="6"
-                            Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
-                        <StackPanel>
-                            <TextBlock Text="Yhdistetty sahaus:" FontWeight="Bold"
-                                       Foreground="#ffd93d" Margin="0,0,0,6"/>
-                            <StackPanel Orientation="Horizontal">
-                                <ComboBox x:Name="YhdistettyCombo" Width="70"
-                                          SelectionChanged="YhdistettyKappale_Changed">
-                                    <ComboBoxItem Content="3" IsSelected="True"/>
-                                    <ComboBoxItem Content="4"/>
-                                    <ComboBoxItem Content="5"/>
-                                    <ComboBoxItem Content="6"/>
-                                    <ComboBoxItem Content="7"/>
-                                </ComboBox>
-                                <TextBlock x:Name="YhdistettyInfo" Text="3 kpl"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           Foreground="#aaa" FontSize="11"/>
-                            </StackPanel>
+                    <!-- PH2 Canvas -->
+                    <Canvas x:Name="Ph2Canvas" Grid.Column="2"
+                            SizeChanged="PhCanvas_SizeChanged"/>
+                </Grid>
+            </TabItem>
+
+            <!-- ══ PROFILOINTI ══ -->
+            <TabItem Header="📐 Profilointi">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="210"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ScrollViewer Grid.Column="0" Background="#1e1e1e">
+                        <StackPanel Margin="10">
+                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6">
+                                <TextBlock Text="📐 Profilointi — tulossa"
+                                           Foreground="#B39DDB" FontWeight="Bold"/>
+                            </Border>
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
+                    <Canvas x:Name="ProfilointiCanvas" Grid.Column="1">
+                        <TextBlock Canvas.Left="20" Canvas.Top="20"
+                                   Text="Profilointi — tulossa"
+                                   Foreground="#B39DDB" FontSize="16" FontWeight="Bold"/>
+                    </Canvas>
+                </Grid>
+            </TabItem>
 
-                    <!-- 4: Kuivaus -->
-                    <Border Background="#2d2d2d" CornerRadius="6"
-                            Padding="8,6" Margin="0,0,0,8">
-                        <StackPanel>
-                            <TextBlock Text="Kuivaus (%):" Margin="0,0,0,4"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBox x:Name="KuivausTextBox" Width="80" Height="28"
-                                         Text="0" TextChanged="Kuivaus_Changed"
-                                         Background="#3d3d3d" Foreground="White"
-                                         BorderBrush="#555" Padding="6,0"
-                                         VerticalContentAlignment="Center"/>
-                                <TextBlock x:Name="KuivausValue" Text="0 %"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           Foreground="#aaa"/>
-                            </StackPanel>
+            <!-- ══ JAKOSAHA ══ -->
+            <TabItem Header="⚙ Jakosaha">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="210"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
+                                  Background="#1e1e1e">
+                        <StackPanel x:Name="PaksuusPanel" Margin="10">
+
+                            <Border Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="⚙ Jakosahat käytössä"
+                                               FontWeight="Bold" Foreground="#4fc3f7"
+                                               Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox x:Name="VasenSahaCheck" Content="Vasen"
+                                                  IsChecked="True" Margin="0,0,12,0"
+                                                  Checked="SahaValinta_Changed"
+                                                  Unchecked="SahaValinta_Changed"/>
+                                        <CheckBox x:Name="OikeaSahaCheck" Content="Oikea"
+                                                  IsChecked="True"
+                                                  Checked="SahaValinta_Changed"
+                                                  Unchecked="SahaValinta_Changed"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="ErillinenPanel" Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Kappaleiden määrä:" Margin="0,0,0,4"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ComboBox x:Name="KappaleCombo" Width="70"
+                                                  SelectionChanged="Kappale_Changed">
+                                            <ComboBoxItem Content="2"/>
+                                            <ComboBoxItem Content="3"/>
+                                            <ComboBoxItem Content="4" IsSelected="True"/>
+                                        </ComboBox>
+                                        <TextBlock x:Name="KappaleInfo" Text="4 kpl / saha"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"
+                                                   Foreground="#aaa" FontSize="11"/>
+                                    </StackPanel>
+                                    <StackPanel x:Name="HalkaisuPanel" Margin="0,6,0,0"
+                                                Visibility="Collapsed">
+                                        <TextBlock Text="Halkaiseva terä:" Margin="0,0,0,4"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <TextBlock Text="Oikea:" FontSize="11" Foreground="#aaa"/>
+                                                <ComboBox x:Name="HalkaisuOikeaCombo"
+                                                          SelectionChanged="Halkaisu_Changed">
+                                                    <ComboBoxItem Content="T4 — pää" IsSelected="True"/>
+                                                    <ComboBoxItem Content="T2 — sivu"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="Vasen:" FontSize="11" Foreground="#aaa"/>
+                                                <ComboBox x:Name="HalkaisuVasenCombo"
+                                                          SelectionChanged="Halkaisu_Changed">
+                                                    <ComboBoxItem Content="T3 — pää" IsSelected="True"/>
+                                                    <ComboBoxItem Content="T1 — sivu"/>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border x:Name="YhdistettyPanel" Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock Text="Yhdistetty sahaus:" FontWeight="Bold"
+                                               Foreground="#ffd93d" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ComboBox x:Name="YhdistettyCombo" Width="70"
+                                                  SelectionChanged="YhdistettyKappale_Changed">
+                                            <ComboBoxItem Content="3" IsSelected="True"/>
+                                            <ComboBoxItem Content="4"/>
+                                            <ComboBoxItem Content="5"/>
+                                            <ComboBoxItem Content="6"/>
+                                            <ComboBoxItem Content="7"/>
+                                        </ComboBox>
+                                        <TextBlock x:Name="YhdistettyInfo" Text="3 kpl"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"
+                                                   Foreground="#aaa" FontSize="11"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="Kuivaus (%):" Margin="0,0,0,4"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox x:Name="KuivausTextBox" Width="80" Height="28"
+                                                 Text="0" TextChanged="Kuivaus_Changed"
+                                                 Background="#3d3d3d" Foreground="White"
+                                                 BorderBrush="#555" Padding="6,0"
+                                                 VerticalContentAlignment="Center"/>
+                                        <TextBlock x:Name="KuivausValue" Text="0 %"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0"
+                                                   Foreground="#aaa"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
                         </StackPanel>
-                    </Border>
+                    </ScrollViewer>
 
-                    <!-- Paksuudet lisätään koodista tähän -->
+                    <Canvas x:Name="YhteisCanvas" Grid.Column="1"
+                            SizeChanged="Canvas_SizeChanged"/>
+                </Grid>
+            </TabItem>
 
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- ── Canvas ── -->
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Canvas x:Name="YhteisCanvas"
-                        SizeChanged="Canvas_SizeChanged"/>
-            </Grid>
-        </Grid>
+        </TabControl>
     </Grid>
 </Window>
