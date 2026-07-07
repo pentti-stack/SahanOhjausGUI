@@ -36,20 +36,20 @@ namespace SahanOhjausGUI
 
         private static readonly (int numero, string nimi, Color vari)[] TeraInfo =
         {
-            (1, "T1  ◀ Vasen",  Color.FromRgb(255, 107, 107)),
-            (2, "T2  ▶ Oikea",  Color.FromRgb(107, 203, 119)),
-            (3, "T3  ◀ Vasen",  Color.FromRgb(255, 107, 107)),
-            (4, "T4  ▶ Oikea",  Color.FromRgb(107, 203, 119)),
-            (5, "T5  ◀ Vasen",  Color.FromRgb(255, 107, 107)),
-            (6, "T6  ▶ Oikea",  Color.FromRgb(107, 203, 119)),
+            (1, "T1  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
+            (2, "T2  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
+            (3, "T3  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
+            (4, "T4  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
+            (5, "T5  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
+            (6, "T6  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
         };
 
         private static readonly (string key, string nimi, Color vari)[] PhInfo =
         {
-            ("PH1V", "PH1  ◀ Vasen", Color.FromRgb(255, 200, 80)),
-            ("PH1O", "PH1  ▶ Oikea", Color.FromRgb(255, 200, 80)),
-            ("PH2V", "PH2  ◀ Vasen", Color.FromRgb(80, 200, 255)),
-            ("PH2O", "PH2  ▶ Oikea", Color.FromRgb(80, 200, 255)),
+            ("PH1V", "PH1  \u25c0 Vasen", Color.FromRgb(255, 200, 80)),
+            ("PH1O", "PH1  \u25b6 Oikea", Color.FromRgb(255, 200, 80)),
+            ("PH2V", "PH2  \u25c0 Vasen", Color.FromRgb(80, 200, 255)),
+            ("PH2O", "PH2  \u25b6 Oikea", Color.FromRgb(80, 200, 255)),
         };
 
         public RajatAsetuksetWindow(Dictionary<int, TeraRajat> nykyisetRajat,
@@ -69,8 +69,7 @@ namespace SahanOhjausGUI
             TeratPanel.Children.Clear();
             textBoxes.Clear();
 
-            // Otsikkorivi terille
-            TeratPanel.Children.Add(LuoOtsikkoRivi("Terä", "Min (mm)", "Max (mm)", "Lepopaikka (mm)", "Väistö (mm)"));
+            TeratPanel.Children.Add(LuoOtsikkoRivi("Ter\u00e4", "Min (mm)", "Max (mm)", "Lepopaikka (mm)", "V\u00e4ist\u00f6 (mm)"));
 
             foreach (var (numero, nimi, vari) in TeraInfo)
             {
@@ -89,11 +88,10 @@ namespace SahanOhjausGUI
 
         private void LuoPhRivit()
         {
-            // Väli ja otsikko
             TeratPanel.Children.Add(new Border { Height = 12 });
             TeratPanel.Children.Add(new TextBlock
             {
-                Text = "⚙ Pelkkahakkurit — leposijainnit",
+                Text = "\u2699 Pelkkahakkurit \u2014 leposijainnit",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)),
@@ -106,7 +104,6 @@ namespace SahanOhjausGUI
                 if (!phRajat.ContainsKey(key))
                     phRajat[key] = new PhRajat();
 
-                // PH1V ja PH1O ryhmitetään yhteen riviin per suunta
                 var vasenBox = LuoTextBox(phRajat[key].LepoVasen.ToString("F1", CultureInfo.InvariantCulture));
                 var oikeaBox = LuoTextBox(phRajat[key].LepoOikea.ToString("F1", CultureInfo.InvariantCulture));
 
@@ -120,7 +117,7 @@ namespace SahanOhjausGUI
             TeratPanel.Children.Add(new Border { Height = 12 });
             TeratPanel.Children.Add(new TextBlock
             {
-                Text = "🛡 T1-T2 turvaetäisyys",
+                Text = "\U0001f6e1 T1-T2 turvae\u0074\u00e4isyys",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
@@ -142,7 +139,7 @@ namespace SahanOhjausGUI
 
             var lbl = new TextBlock
             {
-                Text = "Turvaetäisyys (mm):",
+                Text = "Turvae\u0074\u00e4isyys (mm):",
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
                 FontSize = 12,
@@ -173,14 +170,19 @@ namespace SahanOhjausGUI
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            void Add(int col, string text) => grid.Children.Add(new TextBlock
+            void Add(int col, string text)
             {
-                Text = text,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-                HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 4)
-            }.Also(tb => Grid.SetColumn(tb, col)));
+                var tb = new TextBlock
+                {
+                    Text = text,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 4)
+                };
+                Grid.SetColumn(tb, col);
+                grid.Children.Add(tb);
+            }
 
             Add(0, col0); Add(1, col1); Add(3, col3); Add(5, col5); Add(7, col7);
             return new Border { Child = grid };
@@ -194,14 +196,19 @@ namespace SahanOhjausGUI
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            void Add(int col, string text) => grid.Children.Add(new TextBlock
+            void Add(int col, string text)
             {
-                Text = text,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-                HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 4)
-            }.Also(tb => Grid.SetColumn(tb, col)));
+                var tb = new TextBlock
+                {
+                    Text = text,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 4)
+                };
+                Grid.SetColumn(tb, col);
+                grid.Children.Add(tb);
+            }
 
             Add(0, col0); Add(1, col1); Add(3, col2);
             return new Border { Child = grid };
@@ -284,7 +291,6 @@ namespace SahanOhjausGUI
             var paivitetytPh = new Dictionary<string, PhRajat>();
             bool virhe = false;
 
-            // Terät
             foreach (var kvp in textBoxes)
             {
                 bool minOk = double.TryParse(kvp.Value.min.Text.Replace(",", "."),
@@ -308,7 +314,6 @@ namespace SahanOhjausGUI
                 { Min = minVal, Max = maxVal, Lepopaikka = lepoVal, Vaisto = vaistoVal };
             }
 
-            // PH-lepoarvot
             foreach (var kvp in phBoxes)
             {
                 bool vasenOk = double.TryParse(kvp.Value.vasen.Text.Replace(",", "."),
@@ -323,7 +328,6 @@ namespace SahanOhjausGUI
                 paivitetytPh[kvp.Key] = new PhRajat { LepoVasen = vasenVal, LepoOikea = oikeaVal };
             }
 
-            // Turvaetäisyys
             double turvaVal = turvaEtaisyys;
             if (turvaTb != null)
             {
@@ -335,7 +339,7 @@ namespace SahanOhjausGUI
 
             if (virhe)
             {
-                MessageBox.Show("Tarkista arvot — min täytyy olla pienempi kuin max.",
+                MessageBox.Show("Tarkista arvot \u2014 min t\u00e4ytyy olla pienempi kuin max.",
                     "Virhe", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -346,11 +350,5 @@ namespace SahanOhjausGUI
         }
 
         private void Peruuta_Click(object sender, RoutedEventArgs e) => Close();
-    }
-
-    // Extension-apuri
-    internal static class UiExtensions
-    {
-        public static T Also<T>(this T self, Action<T> action) { action(self); return self; }
     }
 }
