@@ -76,6 +76,9 @@ namespace SahanOhjausGUI
         private double _ph1Offset = 0.0;
         private double _ph2Offset = 0.0;
 
+        private double _offsetT1 = 0.0, _offsetT2 = 0.0, _offsetT3 = 0.0;
+        private double _offsetT4 = 0.0, _offsetT5 = 0.0, _offsetT6 = 0.0;
+
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
 
@@ -218,7 +221,20 @@ namespace SahanOhjausGUI
                     Ph2On = Ph2Check?.IsChecked == true,
                     Ph1Offset = _ph1Offset,
                     Ph2Offset = _ph2Offset,
-                    PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
+                    OffsetT1 = _offsetT1,
+                    OffsetT2 = _offsetT2,
+                    OffsetT3 = _offsetT3,
+                    OffsetT4 = _offsetT4,
+                    OffsetT5 = _offsetT5,
+                    OffsetT6 = _offsetT6,
+
+                    public double OffsetT1 { get; set; } = 0.0;
+        public double OffsetT2 { get; set; } = 0.0;
+        public double OffsetT3 { get; set; } = 0.0;
+        public double OffsetT4 { get; set; } = 0.0;
+        public double OffsetT5 { get; set; } = 0.0;
+        public double OffsetT6 { get; set; } = 0.0;
+        PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
                     PhKokonaisLeveys = PhKokonaisLeveysBox?.Text ?? "600",
                     PhKuivaus = PhKuivausBox?.Text ?? "0",
                     TurvaEtaisyys = turvaEtaisyys,
@@ -275,8 +291,10 @@ namespace SahanOhjausGUI
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
                 _ph1Offset = data.Ph1Offset;
                 _ph2Offset = data.Ph2Offset;
+        _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
+        _offsetT4 = data.OffsetT4; _offsetT5 = data.OffsetT5; _offsetT6 = data.OffsetT6;
 
-                KappaleCombo.SelectionChanged -= Kappale_Changed;
+        KappaleCombo.SelectionChanged -= Kappale_Changed;
                 YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
                 VasenSahaCheck.Checked -= SahaValinta_Changed; VasenSahaCheck.Unchecked -= SahaValinta_Changed;
                 OikeaSahaCheck.Checked -= SahaValinta_Changed; OikeaSahaCheck.Unchecked -= SahaValinta_Changed;
@@ -815,6 +833,7 @@ namespace SahanOhjausGUI
             {
                 if (ph1On)
                     PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale, kuivaPh1, tuore1);
+                else
                 PiirraPhLepopaikkaCanvas(Ph1Canvas, use1V, use1O, true);
             }
 
@@ -1080,7 +1099,14 @@ namespace SahanOhjausGUI
                 double plc_T1 = teraRajat.TryGetValue(1, out var r1) ? r1.Lepopaikka : -25.0;
                 double plc_T5 = teraRajat.TryGetValue(5, out var r5) ? r5.Lepopaikka : 25.0;
 
-                var paksuudetVasen = new List<double>();
+        plc_T1 += _offsetT1;
+        plc_T2 += _offsetT2;
+        plc_T3 += _offsetT3;
+        plc_T4 += _offsetT4;
+        plc_T5 += _offsetT5;
+        plc_T6 += _offsetT6;
+
+        var paksuudetVasen = new List<double>();
                 var paksuudetOikea = new List<double>();
                 var paksuudetYhd = new List<double>();
                 var leveydetYhd = new List<double>();
@@ -1878,25 +1904,25 @@ namespace SahanOhjausGUI
         {
             _ph1Offset = Math.Round(_ph1Offset + 0.1, 1);
             if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
-            PiirraPhCanvasit();
+            PiirraVisual();
         }
         private void Ph1OffsetMinus_Click(object sender, RoutedEventArgs e)
         {
             _ph1Offset = Math.Round(_ph1Offset - 0.1, 1);
             if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
-            PiirraPhCanvasit();
+            PiirraVisual();
         }
         private void Ph2OffsetPlus_Click(object sender, RoutedEventArgs e)
         {
             _ph2Offset = Math.Round(_ph2Offset + 0.1, 1);
             if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
-            PiirraPhCanvasit();
+            PiirraVisual();
         }
         private void Ph2OffsetMinus_Click(object sender, RoutedEventArgs e)
         {
             _ph2Offset = Math.Round(_ph2Offset - 0.1, 1);
             if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
-            PiirraPhCanvasit();
+            PiirraVisual();
         }
         private void SetStatus(string message, Color color)
         {
