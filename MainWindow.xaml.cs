@@ -661,7 +661,8 @@ namespace SahanOhjausGUI
 
             if (jakosahaOn)
             {
-                double.TryParse(PhKuivausBox?.Text.Replace(",", ".") ?? "0",
+                // Jakosaha päällä — käytä jakosahan kuivaus%
+                double.TryParse(KuivausTextBox?.Text.Replace(",", ".") ?? "0",
                     NumberStyles.Float, CultureInfo.InvariantCulture, out double phKuivaus);
                 double kerroin = 1.0 + phKuivaus / 100.0;
 
@@ -707,6 +708,7 @@ namespace SahanOhjausGUI
             }
             else
             {
+                // Jakosaha ei päällä — käytä PH:n omaa kuivaus%
                 double.TryParse(PhLevinKappaleBox?.Text.Replace(",", ".") ?? "150", NumberStyles.Float, CultureInfo.InvariantCulture, out levinKappale);
                 double.TryParse(PhKokonaisLeveysBox?.Text.Replace(",", ".") ?? "600", NumberStyles.Float, CultureInfo.InvariantCulture, out kokonaisLeveys);
                 double.TryParse(PhKuivausBox?.Text.Replace(",", ".") ?? "0", NumberStyles.Float, CultureInfo.InvariantCulture, out double phKuivaus);
@@ -1337,7 +1339,9 @@ namespace SahanOhjausGUI
                 double pieceY = centerY - pieceH / 2.0;
                 var c = PuuVarit[i % PuuVarit.Length];
                 canvas.Children.Add(new Rectangle { Width = pieceW, Height = pieceH, Fill = new SolidColorBrush(Color.FromArgb(200, c.R, c.G, c.B)), Stroke = new SolidColorBrush(PuuReuna), StrokeThickness = 1, RadiusX = 3, RadiusY = 3 }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, pieceY); }));
-                var tl = new TextBlock { Text = $"K{i + 1}\n{paksuus:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)), TextAlignment = TextAlignment.Center, Width = Math.Max(20, pieceW) };
+                double lev = (leveydet != null && i < leveydet.Count && leveydet[i] > 0) ? leveydet[i] : 0;
+                string levTeksti = lev > 0 ? $"\n×\n{lev:F0}" : "";
+                var tl = new TextBlock { Text = $"K{i + 1}\n{paksuus:F1}{levTeksti}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)), TextAlignment = TextAlignment.Center, Width = Math.Max(20, pieceW) };
                 Canvas.SetLeft(tl, pieceX + pieceW / 2.0 - tl.Width / 2.0); Canvas.SetTop(tl, centerY - 14); canvas.Children.Add(tl);
                 curMm += paksuus;
                 if (i < teraJarjestys.Length)
@@ -1400,16 +1404,18 @@ namespace SahanOhjausGUI
             canvas.Children.Add(new Line { X1 = centerX, Y1 = 20, X2 = centerX, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)), StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 } });
 
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
-
-            void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color border, string label)
-            {
-                double x = centerX + xMm * pixelsPerMm, w = paksuus * pixelsPerMm;
-                double h = leveys > 0 ? Math.Min(leveys * pixelsPerMm, rectHeight) : rectHeight;
-                double y = centerY - h / 2.0;
-                canvas.Children.Add(new Rectangle { Width = Math.Max(1, w), Height = h, Fill = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B)), Stroke = new SolidColorBrush(border), StrokeThickness = 1, RadiusX = 3, RadiusY = 3 }.Also(r => { Canvas.SetLeft(r, x); Canvas.SetTop(r, y); }));
-                var tl = new TextBlock { Text = $"{label}\n{paksuus:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)), TextAlignment = TextAlignment.Center, Width = Math.Max(20, w) };
+void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color border, string label)
+{
+    double x = centerX + xMm * pixelsPerMm, w = paksuus * pixelsPerMm;
+    double h = leveys > 0 ? Math.Min(leveys * pixelsPerMm, rectHeight) : rectHeight;
+    double y = centerY - h / 2.0;
+    canvas.Children.Add(new Rectangle { Width = Math.Max(1, w), Height = h, Fill = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B)), Stroke = new SolidColorBrush(border), StrokeThickness = 1.2 }.Also(r => { Canvas.SetLeft(r, x); Canvas.SetTop(r, y); }));
+                string levTeksti = leveys > 0 ? $"\n×\n{leveys:F0}" : "";
+                var tl = new TextBlock { Text = $"{label}\n{paksuus:F1}{levTeksti}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)), TextAlignment = TextAlignment.Center, Width = Math.Max(1, w) };
                 Canvas.SetLeft(tl, x + w / 2.0 - tl.Width / 2.0); Canvas.SetTop(tl, centerY - 14); canvas.Children.Add(tl);
-            }
+
+
+}
 
             if (vasenOn && paksuudetVasen.Count > 0)
             {

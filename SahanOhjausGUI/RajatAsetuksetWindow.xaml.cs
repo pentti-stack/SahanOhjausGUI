@@ -28,7 +28,7 @@ namespace SahanOhjausGUI
         private double turvaEtaisyys;
 
         private readonly Dictionary<int, (TextBox min, TextBox max, TextBox lepopaikka, TextBox vaisto)> textBoxes = new();
-        private readonly Dictionary<string, (TextBox vasen, TextBox oikea)> phBoxes = new();
+        private readonly Dictionary<string, TextBox> phBoxes = new();
         private TextBox? turvaTb;
 
         public event Action<Dictionary<int, TeraRajat>>? OnRajatChanged;
@@ -36,20 +36,20 @@ namespace SahanOhjausGUI
 
         private static readonly (int numero, string nimi, Color vari)[] TeraInfo =
         {
-            (1, "T1  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
-            (2, "T2  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
-            (3, "T3  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
-            (4, "T4  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
-            (5, "T5  \u25c0 Vasen",  Color.FromRgb(255, 107, 107)),
-            (6, "T6  \u25b6 Oikea",  Color.FromRgb(107, 203, 119)),
+            (1, "T1  \u25c0 Vasen", Color.FromRgb(255, 107, 107)),
+            (2, "T2  \u25b6 Oikea", Color.FromRgb(107, 203, 119)),
+            (3, "T3  \u25c0 Vasen", Color.FromRgb(255, 107, 107)),
+            (4, "T4  \u25b6 Oikea", Color.FromRgb(107, 203, 119)),
+            (5, "T5  \u25c0 Vasen", Color.FromRgb(255, 107, 107)),
+            (6, "T6  \u25b6 Oikea", Color.FromRgb(107, 203, 119)),
         };
 
-        private static readonly (string key, string nimi, Color vari)[] PhInfo =
+        private static readonly (string key, string nimi, Color vari, bool kaytaVasen)[] PhInfo =
         {
-            ("PH1V", "PH1  \u25c0 Vasen", Color.FromRgb(255, 200, 80)),
-            ("PH1O", "PH1  \u25b6 Oikea", Color.FromRgb(255, 200, 80)),
-            ("PH2V", "PH2  \u25c0 Vasen", Color.FromRgb(80, 200, 255)),
-            ("PH2O", "PH2  \u25b6 Oikea", Color.FromRgb(80, 200, 255)),
+            ("PH1V", "PH1  \u25c0 Vasen", Color.FromRgb(255, 200,  80), true),
+            ("PH1O", "PH1  \u25b6 Oikea", Color.FromRgb(255, 200,  80), false),
+            ("PH2V", "PH2  \u25c0 Vasen", Color.FromRgb( 80, 200, 255), true),
+            ("PH2O", "PH2  \u25b6 Oikea", Color.FromRgb( 80, 200, 255), false),
         };
 
         public RajatAsetuksetWindow(Dictionary<int, TeraRajat> nykyisetRajat,
@@ -59,16 +59,22 @@ namespace SahanOhjausGUI
             rajat = new Dictionary<int, TeraRajat>(nykyisetRajat);
             phRajat = new Dictionary<string, PhRajat>(nykyisetPhRajat);
             turvaEtaisyys = nykyinenTurva;
-            LuoTeraRivit();
             LuoPhRivit();
+            LuoTeraRivit();
             LuoTurvaRivi();
         }
 
         private void LuoTeraRivit()
         {
-            TeratPanel.Children.Clear();
-            textBoxes.Clear();
-
+            TeratPanel.Children.Add(new Border { Height = 12 });
+            TeratPanel.Children.Add(new TextBlock
+            {
+                Text = "\u2699 Jakosaha \u2014 terien rajat",
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                Margin = new Thickness(0, 0, 0, 6)
+            });
             TeratPanel.Children.Add(LuoOtsikkoRivi("Ter\u00e4", "Min (mm)", "Max (mm)", "Lepopaikka (mm)", "V\u00e4ist\u00f6 (mm)"));
 
             foreach (var (numero, nimi, vari) in TeraInfo)
@@ -88,7 +94,6 @@ namespace SahanOhjausGUI
 
         private void LuoPhRivit()
         {
-            TeratPanel.Children.Add(new Border { Height = 12 });
             TeratPanel.Children.Add(new TextBlock
             {
                 Text = "\u2699 Pelkkahakkurit \u2014 leposijainnit",
@@ -97,18 +102,17 @@ namespace SahanOhjausGUI
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)),
                 Margin = new Thickness(0, 0, 0, 6)
             });
-            TeratPanel.Children.Add(LuoOtsikkoRivi2("Laite", "Lepopaikka vasen (mm)", "Lepopaikka oikea (mm)"));
+            TeratPanel.Children.Add(LuoOtsikkoRivi3("Laite", "Lepopaikka (mm)"));
 
-            foreach (var (key, nimi, vari) in PhInfo)
+            foreach (var (key, nimi, vari, kaytaVasen) in PhInfo)
             {
                 if (!phRajat.ContainsKey(key))
                     phRajat[key] = new PhRajat();
 
-                var vasenBox = LuoTextBox(phRajat[key].LepoVasen.ToString("F1", CultureInfo.InvariantCulture));
-                var oikeaBox = LuoTextBox(phRajat[key].LepoOikea.ToString("F1", CultureInfo.InvariantCulture));
-
-                TeratPanel.Children.Add(LuoKaksikentkaRivi(nimi, vari, vasenBox, oikeaBox));
-                phBoxes[key] = (vasenBox, oikeaBox);
+                double arvo = kaytaVasen ? phRajat[key].LepoVasen : phRajat[key].LepoOikea;
+                var lepoBox = LuoTextBox(arvo.ToString("F1", CultureInfo.InvariantCulture));
+                TeratPanel.Children.Add(LuoYksikenttaRivi(nimi, vari, lepoBox));
+                phBoxes[key] = lepoBox;
             }
         }
 
@@ -117,7 +121,7 @@ namespace SahanOhjausGUI
             TeratPanel.Children.Add(new Border { Height = 12 });
             TeratPanel.Children.Add(new TextBlock
             {
-                Text = "\U0001f6e1 T1-T2 turvae\u0074\u00e4isyys",
+                Text = "\U0001f527 Jakosaha \u2014 T1-T2 turvae\u0074\u00e4isyys",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
@@ -131,7 +135,6 @@ namespace SahanOhjausGUI
                 CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(10, 8, 10, 8)
             };
-
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(180) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
@@ -145,13 +148,9 @@ namespace SahanOhjausGUI
                 FontSize = 12,
                 VerticalAlignment = VerticalAlignment.Center
             };
-
             turvaTb = LuoTextBox(turvaEtaisyys.ToString("F1", CultureInfo.InvariantCulture));
-
-            Grid.SetColumn(lbl, 0);
-            Grid.SetColumn(turvaTb, 1);
-            grid.Children.Add(lbl);
-            grid.Children.Add(turvaTb);
+            Grid.SetColumn(lbl, 0); Grid.SetColumn(turvaTb, 1);
+            grid.Children.Add(lbl); grid.Children.Add(turvaTb);
             border.Child = grid;
             TeratPanel.Children.Add(border);
         }
@@ -180,20 +179,16 @@ namespace SahanOhjausGUI
                     HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
                     Margin = new Thickness(0, 0, 0, 4)
                 };
-                Grid.SetColumn(tb, col);
-                grid.Children.Add(tb);
+                Grid.SetColumn(tb, col); grid.Children.Add(tb);
             }
-
             Add(0, col0); Add(1, col1); Add(3, col3); Add(5, col5); Add(7, col7);
             return new Border { Child = grid };
         }
 
-        private static Border LuoOtsikkoRivi2(string col0, string col1, string col2)
+        private static Border LuoOtsikkoRivi3(string col0, string col1)
         {
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             void Add(int col, string text)
@@ -206,11 +201,9 @@ namespace SahanOhjausGUI
                     HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
                     Margin = new Thickness(0, 0, 0, 4)
                 };
-                Grid.SetColumn(tb, col);
-                grid.Children.Add(tb);
+                Grid.SetColumn(tb, col); grid.Children.Add(tb);
             }
-
-            Add(0, col0); Add(1, col1); Add(3, col2);
+            Add(0, col0); Add(1, col1);
             return new Border { Child = grid };
         }
 
@@ -250,7 +243,7 @@ namespace SahanOhjausGUI
             return border;
         }
 
-        private static Border LuoKaksikentkaRivi(string nimi, Color vari, TextBox b1, TextBox b2)
+        private static Border LuoYksikenttaRivi(string nimi, Color vari, TextBox b1)
         {
             var border = new Border
             {
@@ -262,8 +255,6 @@ namespace SahanOhjausGUI
             var grid = new Grid();
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
             var lbl = new TextBlock
             {
@@ -273,8 +264,8 @@ namespace SahanOhjausGUI
                 FontSize = 12,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            Grid.SetColumn(lbl, 0); Grid.SetColumn(b1, 1); Grid.SetColumn(b2, 3);
-            grid.Children.Add(lbl); grid.Children.Add(b1); grid.Children.Add(b2);
+            Grid.SetColumn(lbl, 0); Grid.SetColumn(b1, 1);
+            grid.Children.Add(lbl); grid.Children.Add(b1);
             border.Child = grid;
             return border;
         }
@@ -309,23 +300,23 @@ namespace SahanOhjausGUI
                 kvp.Value.vaisto.BorderBrush = vaistoOk ? Brushes.Gray : Brushes.OrangeRed;
 
                 if (!minOk || !maxOk || !lepoOk || !vaistoOk || !rangeOk) { virhe = true; continue; }
-
                 paivitetyt[kvp.Key] = new TeraRajat
                 { Min = minVal, Max = maxVal, Lepopaikka = lepoVal, Vaisto = vaistoVal };
             }
 
-            foreach (var kvp in phBoxes)
+            foreach (var (key, _, _, kaytaVasen) in PhInfo)
             {
-                bool vasenOk = double.TryParse(kvp.Value.vasen.Text.Replace(",", "."),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out double vasenVal);
-                bool oikeaOk = double.TryParse(kvp.Value.oikea.Text.Replace(",", "."),
-                    NumberStyles.Float, CultureInfo.InvariantCulture, out double oikeaVal);
+                if (!phBoxes.TryGetValue(key, out var tb)) continue;
+                bool lepoOk = double.TryParse(tb.Text.Replace(",", "."),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out double lepoVal);
+                tb.BorderBrush = lepoOk ? Brushes.Gray : Brushes.OrangeRed;
+                if (!lepoOk) { virhe = true; continue; }
 
-                kvp.Value.vasen.BorderBrush = vasenOk ? Brushes.Gray : Brushes.OrangeRed;
-                kvp.Value.oikea.BorderBrush = oikeaOk ? Brushes.Gray : Brushes.OrangeRed;
+                if (!paivitetytPh.ContainsKey(key))
+                    paivitetytPh[key] = new PhRajat();
 
-                if (!vasenOk || !oikeaOk) { virhe = true; continue; }
-                paivitetytPh[kvp.Key] = new PhRajat { LepoVasen = vasenVal, LepoOikea = oikeaVal };
+                if (kaytaVasen) paivitetytPh[key].LepoVasen = lepoVal;
+                else paivitetytPh[key].LepoOikea = lepoVal;
             }
 
             double turvaVal = turvaEtaisyys;
