@@ -225,11 +225,11 @@
 
                     <!-- PH1 Canvas -->
                     <Border Grid.Column="1" BorderBrush="#333" BorderThickness="1,0,1,0">
-                        <Canvas x:Name="Ph1Canvas" SizeChanged="PhCanvas_SizeChanged"/>
+                        <Canvas x:Name="Ph1Canvas" SizeChanged="PhCanvas_SizeChanged" ClipToBounds="True"/>
                     </Border>
 
                     <!-- PH2 Canvas -->
-                    <Canvas x:Name="Ph2Canvas" Grid.Column="2" SizeChanged="PhCanvas_SizeChanged"/>
+                    <Canvas x:Name="Ph2Canvas" Grid.Column="2" SizeChanged="PhCanvas_SizeChanged" ClipToBounds="True"/>
                 </Grid>
             </TabItem>
 

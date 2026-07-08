@@ -799,10 +799,20 @@ namespace SahanOhjausGUI
             double scale = Math.Min(Math.Min(scale1X, scale1Y), Math.Min(scale2X, scale2Y));
 
             if (Ph1Canvas != null)
-                PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale);
+            {
+                if (ph1On)
+                    PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale);
+                else
+                    PiirraPhLepopaikkaCanvas(Ph1Canvas, use1V, use1O, true);
+            }
 
             if (Ph2Canvas != null)
-                PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale);
+            {
+                if (ph2On)
+                    PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale);
+                else
+                    PiirraPhLepopaikkaCanvas(Ph2Canvas, use2V, use2O, false);
+            }
         }
 
         private static void PiirraPh1Canvas(Canvas canvas,
@@ -813,6 +823,7 @@ namespace SahanOhjausGUI
             double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 400;
             double H = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
             double cx = W / 2.0, cy = H / 2.0;
+            double pixelsPerMm = (W / 2.0 - 20) / 350.0;
 
             double ph1Leveys = ph1V + ph1O;
             double tukkiR = halkaisija / 2.0 * scale;
@@ -826,6 +837,7 @@ namespace SahanOhjausGUI
             // Tausta
             canvas.Children.Add(new Rectangle
             { Width = W, Height = H, Fill = taustaBrush });
+            PiirraAsteikko(canvas, W, H, W / 2.0, scale);
 
             // Tukki — täytetty ympyrä
             canvas.Children.Add(new Ellipse
@@ -932,7 +944,7 @@ namespace SahanOhjausGUI
             double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 400;
             double H = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
             double cx = W / 2.0, cy = H / 2.0;
-
+            double pixelsPerMm = (W / 2.0 - 20) / 350.0;
             double ph2Leveys = ph2V + ph2O;
             double tukkiR = halkaisija / 2.0 * scale;
             double pelkkaW = ph2Leveys * scale;
@@ -942,7 +954,7 @@ namespace SahanOhjausGUI
 
             canvas.Children.Add(new Rectangle
             { Width = W, Height = H, Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12)) });
-
+            PiirraAsteikko(canvas, W, H, cx, scale);
             canvas.Children.Add(new Ellipse
             {
                 Width = tukkiR * 2,
@@ -1153,8 +1165,8 @@ namespace SahanOhjausGUI
                                 leveydetVasen, leveydetOikea, vasenOn, oikeaOn,
                                 plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
                     }
-                   
-                        YhteisCanvas.Children.Clear();
+                    else
+                        PiirraJakosahaLepopaikka(YhteisCanvas, plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6);
                 }
 
                 PiirraPhCanvasit();
@@ -1494,7 +1506,90 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(vl, 6); Canvas.SetTop(vl, 6); canvas.Children.Add(vl);
             }
         }
+        private void PiirraJakosahaLepopaikka(Canvas canvas,
+    double plc_T1, double plc_T2, double plc_T3,
+    double plc_T4, double plc_T5, double plc_T6)
+        {
+            canvas.Children.Clear();
+            double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
+            double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
+            double centerX = canvasWidth / 2.0, centerY = canvasHeight / 2.0;
+            double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
+            double rectHeight = canvasHeight * 0.45, rectY = centerY - rectHeight / 2.0;
 
+            canvas.Children.Add(new Rectangle
+            {
+                Width = canvasWidth,
+                Height = canvasHeight,
+                Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12))
+            });
+
+            PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
+
+            canvas.Children.Add(new Line
+            {
+                X1 = centerX,
+                Y1 = 20,
+                X2 = centerX,
+                Y2 = canvasHeight - 30,
+                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 6, 3 }
+            });
+
+            var lepo = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+
+            // Vasen puoli — T3, T1, T5
+            double t3X = centerX - plc_T3 * pixelsPerMm;
+            double t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
+            double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm;
+
+            // Oikea puoli — T4, T2, T6
+            double t4X = centerX + plc_T4 * pixelsPerMm;
+            double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
+            double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
+
+            foreach (var (x, label) in new[] {
+        (t5X, $"T5\n{plc_T5:F1}"),
+        (t3X, $"T3\n{plc_T3:F1}"),
+        (t1X, $"T1\n{plc_T1:F1}"),
+        (t2X, $"T2\n{plc_T2:F1}"),
+        (t4X, $"T4\n{plc_T4:F1}"),
+        (t6X, $"T6\n{plc_T6:F1}") })
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = x,
+                    Y1 = rectY - 20,
+                    X2 = x,
+                    Y2 = rectY + rectHeight + 20,
+                    Stroke = lepo,
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 4, 3 }
+                });
+                bool right = x >= centerX;
+                var tb = new TextBlock
+                {
+                    Text = label,
+                    FontSize = 10,
+                    Foreground = lepo,
+                    TextAlignment = right ? TextAlignment.Left : TextAlignment.Right
+                };
+                Canvas.SetLeft(tb, right ? x + 4 : x - 44);
+                Canvas.SetTop(tb, rectY - 38);
+                canvas.Children.Add(tb);
+            }
+
+            var otsikko = new TextBlock
+            {
+                Text = "Lepopaikat",
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100))
+            };
+            Canvas.SetLeft(otsikko, centerX - 40); Canvas.SetTop(otsikko, 6);
+            canvas.Children.Add(otsikko);
+        }
         private void PiirraPhCanvas(Canvas canvas,
       double ph1V, double ph1O, double ph2V, double ph2O)
         {
@@ -1617,7 +1712,83 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(otsikko, centerX - 120); Canvas.SetTop(otsikko, 6);
             canvas.Children.Add(otsikko);
         }
+        private void PiirraPhLepopaikkaCanvas(Canvas canvas,
+    double lepoV, double lepoO, bool isPh1)
+        {
+            canvas.Children.Clear();
+            double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
+            double H = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
+            double cx = W / 2.0;
+            double pixelsPerMm = (W / 2.0 - 20) / 350.0;
+            double rectHeight = H * 0.60, rectY = H / 2.0 - rectHeight / 2.0;
 
+            canvas.Children.Add(new Rectangle
+            {
+                Width = W,
+                Height = H,
+                Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12))
+            });
+
+            PiirraAsteikko(canvas, W, H, cx, pixelsPerMm);
+
+            canvas.Children.Add(new Line
+            {
+                X1 = cx,
+                Y1 = 20,
+                X2 = cx,
+                Y2 = H - 30,
+                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 6, 3 }
+            });
+
+            // Vain yksi terälinjapari — harmaa katkoviiva
+            var brush = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+            double vX = cx - lepoV * pixelsPerMm;
+            double oX = cx + lepoO * pixelsPerMm;
+
+            canvas.Children.Add(new Line
+            {
+                X1 = vX,
+                Y1 = rectY,
+                X2 = vX,
+                Y2 = rectY + rectHeight,
+                Stroke = brush,
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 3 }
+            });
+            canvas.Children.Add(new Line
+            {
+                X1 = oX,
+                Y1 = rectY,
+                X2 = oX,
+                Y2 = rectY + rectHeight,
+                Stroke = brush,
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 4, 3 }
+            });
+
+            string etuliite = isPh1 ? "PH1" : "PH2";
+            var vLbl = new TextBlock
+            {
+                Text = $"{etuliite}V\n{lepoV:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = brush,
+                TextAlignment = TextAlignment.Right
+            };
+            Canvas.SetLeft(vLbl, Math.Max(vX - 44, 4)); Canvas.SetTop(vLbl, rectY - 38);
+            canvas.Children.Add(vLbl);
+            var oLbl = new TextBlock
+            {
+                Text = $"{etuliite}O\n{lepoO:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = brush
+            };
+            Canvas.SetLeft(oLbl, oX + 4); Canvas.SetTop(oLbl, rectY - 38);
+            canvas.Children.Add(oLbl);
+        }
         private static void PiirraAsteikko(Canvas canvas, double canvasWidth,
             double canvasHeight, double centerX, double pixelsPerMm)
         {
