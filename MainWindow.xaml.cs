@@ -1097,6 +1097,8 @@ namespace SahanOhjausGUI
 
                 double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0;
                 if (phOn) (ph1V, ph1O, ph2V, ph2O) = LaskePhArvot();
+             
+
 
                 var rajaVaroitukset = new List<string>();
                 void TarkistaRaja(string nimi, double arvo, int teraNumero)
@@ -1124,22 +1126,22 @@ namespace SahanOhjausGUI
                 else
                     SetStatus("Valmis", Colors.LightGray);
 
-                if (jakosahaOn)
-                {
-                    if (Tera4_Value != null) Tera4_Value.Text = $"T4: {plc_T4:F1}";
-                    if (Tera2_Value != null) Tera2_Value.Text = $"T2: {plc_T2:F1}";
-                    if (Tera6_Value != null) Tera6_Value.Text = $"T6: {plc_T6:F1}";
-                    if (Tera3_Value != null) Tera3_Value.Text = $"T3: {plc_T3:F1}";
-                    if (Tera1_Value != null) Tera1_Value.Text = $"T1: {plc_T1:F1}";
-                    if (Tera5_Value != null) Tera5_Value.Text = $"T5: {plc_T5:F1}";
-                }
-                if (phOn)
-                {
-                    if (Ph1V_Value != null) Ph1V_Value.Text = $"PH1V: {ph1V:F1}";
-                    if (Ph1O_Value != null) Ph1O_Value.Text = $"PH1O: {ph1O:F1}";
-                    if (Ph2V_Value != null) Ph2V_Value.Text = $"PH2V: {ph2V:F1}";
-                    if (Ph2O_Value != null) Ph2O_Value.Text = $"PH2O: {ph2O:F1}";
-                }
+                if (Tera4_Value != null) Tera4_Value.Text = $"T4: {plc_T4:F1}";
+                if (Tera2_Value != null) Tera2_Value.Text = $"T2: {plc_T2:F1}";
+                if (Tera6_Value != null) Tera6_Value.Text = $"T6: {plc_T6:F1}";
+                if (Tera3_Value != null) Tera3_Value.Text = $"T3: {plc_T3:F1}";
+                if (Tera1_Value != null) Tera1_Value.Text = $"T1: {plc_T1:F1}";
+                if (Tera5_Value != null) Tera5_Value.Text = $"T5: {plc_T5:F1}";
+
+
+                double showPh1V = phOn ? ph1V : (phRajat.TryGetValue("PH1V", out var rph1v) ? rph1v.LepoVasen : 0.0);
+                double showPh1O = phOn ? ph1O : (phRajat.TryGetValue("PH1O", out var rph1o) ? rph1o.LepoOikea : 0.0);
+                double showPh2V = phOn ? ph2V : (phRajat.TryGetValue("PH2V", out var rph2v) ? rph2v.LepoVasen : 0.0);
+                double showPh2O = phOn ? ph2O : (phRajat.TryGetValue("PH2O", out var rph2o) ? rph2o.LepoOikea : 0.0);
+                if (Ph1V_Value != null) Ph1V_Value.Text = $"PH1V: {showPh1V:F1}";
+                if (Ph1O_Value != null) Ph1O_Value.Text = $"PH1O: {showPh1O:F1}";
+                if (Ph2V_Value != null) Ph2V_Value.Text = $"PH2V: {showPh2V:F1}";
+                if (Ph2O_Value != null) Ph2O_Value.Text = $"PH2O: {showPh2O:F1}";
 
                 if (YhteisCanvas != null)
                 {
@@ -1153,8 +1155,13 @@ namespace SahanOhjausGUI
                                 leveydetVasen, leveydetOikea, vasenOn, oikeaOn,
                                 plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
                     }
+                    else if (Ph1Check?.IsChecked == true || Ph2Check?.IsChecked == true)
+                    {
+                        // Piirrä PH lepopaikat harmaalla jakosahan canvasiin
+                        PiirraPhCanvas(YhteisCanvas, showPh1V, showPh1O, showPh2V, showPh2O);
+                    }
                     else
-                        YhteisCanvas.Children.Clear();  // ← ei PH-canvasia jakosahan canvasiin
+                        YhteisCanvas.Children.Clear();
                 }
 
                 PiirraPhCanvasit();
@@ -1412,18 +1419,18 @@ namespace SahanOhjausGUI
             canvas.Children.Add(new Line { X1 = centerX, Y1 = 20, X2 = centerX, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)), StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 } });
 
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
-void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color border, string label)
-{
-    double x = centerX + xMm * pixelsPerMm, w = paksuus * pixelsPerMm;
-    double h = leveys > 0 ? Math.Min(leveys * pixelsPerMm, rectHeight) : rectHeight;
-    double y = centerY - h / 2.0;
-    canvas.Children.Add(new Rectangle { Width = Math.Max(1, w), Height = h, Fill = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B)), Stroke = new SolidColorBrush(border), StrokeThickness = 1.2 }.Also(r => { Canvas.SetLeft(r, x); Canvas.SetTop(r, y); }));
+            void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color border, string label)
+            {
+                double x = centerX + xMm * pixelsPerMm, w = paksuus * pixelsPerMm;
+                double h = leveys > 0 ? Math.Min(leveys * pixelsPerMm, rectHeight) : rectHeight;
+                double y = centerY - h / 2.0;
+                canvas.Children.Add(new Rectangle { Width = Math.Max(1, w), Height = h, Fill = new SolidColorBrush(Color.FromArgb(200, color.R, color.G, color.B)), Stroke = new SolidColorBrush(border), StrokeThickness = 1.2 }.Also(r => { Canvas.SetLeft(r, x); Canvas.SetTop(r, y); }));
                 string levTeksti = leveys > 0 ? $"\n×\n{leveys:F0}" : "";
                 var tl = new TextBlock { Text = $"{label}\n{paksuus:F1}{levTeksti}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)), TextAlignment = TextAlignment.Center, Width = Math.Max(1, w) };
                 Canvas.SetLeft(tl, x + w / 2.0 - tl.Width / 2.0); Canvas.SetTop(tl, centerY - 14); canvas.Children.Add(tl);
 
 
-}
+            }
 
             if (vasenOn && paksuudetVasen.Count > 0)
             {
@@ -1496,7 +1503,7 @@ void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color
         }
 
         private void PiirraPhCanvas(Canvas canvas,
-            double ph1V, double ph1O, double ph2V, double ph2O)
+      double ph1V, double ph1O, double ph2V, double ph2O)
         {
             canvas.Children.Clear();
             double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
@@ -1505,30 +1512,117 @@ void PiirraKappale(double xMm, double paksuus, double leveys, Color color, Color
             double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
             double rectHeight = canvasHeight * 0.40, rectY = centerY - rectHeight / 2.0;
 
-            canvas.Children.Add(new Rectangle { Width = canvasWidth, Height = canvasHeight, Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12)) });
-            PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
-            canvas.Children.Add(new Line { X1 = centerX, Y1 = 20, X2 = centerX, Y2 = canvasHeight - 30, Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)), StrokeThickness = 1.5, StrokeDashArray = new DoubleCollection { 4, 3 } });
+            canvas.Children.Add(new Rectangle
+            {
+                Width = canvasWidth,
+                Height = canvasHeight,
+                Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12))
+            });
 
+            PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm); // ← LISÄÄ TÄMÄ
+
+            canvas.Children.Add(new Line
+            {
+                X1 = centerX,
+                Y1 = 20,
+                X2 = centerX,
+                Y2 = canvasHeight - 30,
+                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 6, 3 }
+            });
+
+            // PH1 terälinjat
             var ph1Brush = new SolidColorBrush(Color.FromRgb(255, 200, 80));
             double ph1VX = centerX - ph1V * pixelsPerMm, ph1OX = centerX + ph1O * pixelsPerMm;
-            canvas.Children.Add(new Line { X1 = ph1VX, Y1 = rectY - 20, X2 = ph1VX, Y2 = rectY + rectHeight + 20, Stroke = ph1Brush, StrokeThickness = 3 });
-            canvas.Children.Add(new Line { X1 = ph1OX, Y1 = rectY - 20, X2 = ph1OX, Y2 = rectY + rectHeight + 20, Stroke = ph1Brush, StrokeThickness = 3 });
-            var ph1VLbl = new TextBlock { Text = $"PH1V\n{ph1V:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = ph1Brush, TextAlignment = TextAlignment.Right };
-            Canvas.SetLeft(ph1VLbl, Math.Max(ph1VX - 44, 4)); Canvas.SetTop(ph1VLbl, rectY - 38); canvas.Children.Add(ph1VLbl);
-            var ph1OLbl = new TextBlock { Text = $"PH1O\n{ph1O:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = ph1Brush };
-            Canvas.SetLeft(ph1OLbl, ph1OX + 4); Canvas.SetTop(ph1OLbl, rectY - 38); canvas.Children.Add(ph1OLbl);
+            canvas.Children.Add(new Line
+            {
+                X1 = ph1VX,
+                Y1 = rectY - 20,
+                X2 = ph1VX,
+                Y2 = rectY + rectHeight + 20,
+                Stroke = ph1Brush,
+                StrokeThickness = 3
+            });
+            canvas.Children.Add(new Line
+            {
+                X1 = ph1OX,
+                Y1 = rectY - 20,
+                X2 = ph1OX,
+                Y2 = rectY + rectHeight + 20,
+                Stroke = ph1Brush,
+                StrokeThickness = 3
+            });
+            var ph1VLbl = new TextBlock
+            {
+                Text = $"PH1V\n{ph1V:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = ph1Brush,
+                TextAlignment = TextAlignment.Right
+            };
+            Canvas.SetLeft(ph1VLbl, Math.Max(ph1VX - 44, 4)); Canvas.SetTop(ph1VLbl, rectY - 38);
+            canvas.Children.Add(ph1VLbl);
+            var ph1OLbl = new TextBlock
+            {
+                Text = $"PH1O\n{ph1O:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = ph1Brush
+            };
+            Canvas.SetLeft(ph1OLbl, ph1OX + 4); Canvas.SetTop(ph1OLbl, rectY - 38);
+            canvas.Children.Add(ph1OLbl);
 
+            // PH2 terälinjat
             var ph2Brush = new SolidColorBrush(Color.FromRgb(80, 200, 255));
             double ph2VX = centerX - ph2V * pixelsPerMm, ph2OX = centerX + ph2O * pixelsPerMm;
-            canvas.Children.Add(new Line { X1 = ph2VX, Y1 = rectY - 20, X2 = ph2VX, Y2 = rectY + rectHeight + 20, Stroke = ph2Brush, StrokeThickness = 3 });
-            canvas.Children.Add(new Line { X1 = ph2OX, Y1 = rectY - 20, X2 = ph2OX, Y2 = rectY + rectHeight + 20, Stroke = ph2Brush, StrokeThickness = 3 });
-            var ph2VLbl = new TextBlock { Text = $"PH2V\n{ph2V:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = ph2Brush, TextAlignment = TextAlignment.Right };
-            Canvas.SetLeft(ph2VLbl, Math.Max(ph2VX - 44, 4)); Canvas.SetTop(ph2VLbl, rectY - 38); canvas.Children.Add(ph2VLbl);
-            var ph2OLbl = new TextBlock { Text = $"PH2O\n{ph2O:F1}", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = ph2Brush };
-            Canvas.SetLeft(ph2OLbl, ph2OX + 4); Canvas.SetTop(ph2OLbl, rectY - 38); canvas.Children.Add(ph2OLbl);
+            canvas.Children.Add(new Line
+            {
+                X1 = ph2VX,
+                Y1 = rectY - 20,
+                X2 = ph2VX,
+                Y2 = rectY + rectHeight + 20,
+                Stroke = ph2Brush,
+                StrokeThickness = 3
+            });
+            canvas.Children.Add(new Line
+            {
+                X1 = ph2OX,
+                Y1 = rectY - 20,
+                X2 = ph2OX,
+                Y2 = rectY + rectHeight + 20,
+                Stroke = ph2Brush,
+                StrokeThickness = 3
+            });
+            var ph2VLbl = new TextBlock
+            {
+                Text = $"PH2V\n{ph2V:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = ph2Brush,
+                TextAlignment = TextAlignment.Right
+            };
+            Canvas.SetLeft(ph2VLbl, Math.Max(ph2VX - 44, 4)); Canvas.SetTop(ph2VLbl, rectY - 38);
+            canvas.Children.Add(ph2VLbl);
+            var ph2OLbl = new TextBlock
+            {
+                Text = $"PH2O\n{ph2O:F1}",
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = ph2Brush
+            };
+            Canvas.SetLeft(ph2OLbl, ph2OX + 4); Canvas.SetTop(ph2OLbl, rectY - 38);
+            canvas.Children.Add(ph2OLbl);
 
-            var otsikko = new TextBlock { Text = "\U0001fab5 Pelkkaparrua \u2014 PH1 & PH2", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 80)) };
-            Canvas.SetLeft(otsikko, centerX - 120); Canvas.SetTop(otsikko, 6); canvas.Children.Add(otsikko);
+            var otsikko = new TextBlock
+            {
+                Text = "\U0001fab5 Pelkkaparrua \u2014 PH1 & PH2",
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 80))
+            };
+            Canvas.SetLeft(otsikko, centerX - 120); Canvas.SetTop(otsikko, 6);
+            canvas.Children.Add(otsikko);
         }
 
         private static void PiirraAsteikko(Canvas canvas, double canvasWidth,
