@@ -703,8 +703,18 @@ namespace SahanOhjausGUI
                     };
                 }
 
-                if (PhLevinKappaleBox != null) PhLevinKappaleBox.Text = levinKappale.ToString("F1", CultureInfo.InvariantCulture);
-                if (PhKokonaisLeveysBox != null) PhKokonaisLeveysBox.Text = kokonaisLeveys.ToString("F1", CultureInfo.InvariantCulture);
+                if (PhLevinKappaleBox != null)
+                {
+                    PhLevinKappaleBox.TextChanged -= Ph_Changed;
+                    PhLevinKappaleBox.Text = levinKappale.ToString("F1", CultureInfo.InvariantCulture);
+                    PhLevinKappaleBox.TextChanged += Ph_Changed;
+                }
+                if (PhKokonaisLeveysBox != null)
+                {
+                    PhKokonaisLeveysBox.TextChanged -= Ph_Changed;
+                    PhKokonaisLeveysBox.Text = kokonaisLeveys.ToString("F1", CultureInfo.InvariantCulture);
+                    PhKokonaisLeveysBox.TextChanged += Ph_Changed;
+                }
             }
             else
             {
@@ -1143,10 +1153,8 @@ namespace SahanOhjausGUI
                                 leveydetVasen, leveydetOikea, vasenOn, oikeaOn,
                                 plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
                     }
-                    else if (phOn)
-                        PiirraPhCanvas(YhteisCanvas, ph1V, ph1O, ph2V, ph2O);
                     else
-                        YhteisCanvas.Children.Clear();
+                        YhteisCanvas.Children.Clear();  // ← ei PH-canvasia jakosahan canvasiin
                 }
 
                 PiirraPhCanvasit();
