@@ -37,6 +37,12 @@ namespace SahanOhjausGUI
         public double Ph1Offset { get; set; } = 0.0;
         public double Ph2Offset { get; set; } = 0.0;
         public double TurvaEtaisyys { get; set; } = 15.0;
+        public double OffsetT1 { get; set; } = 0.0;
+        public double OffsetT2 { get; set; } = 0.0;
+        public double OffsetT3 { get; set; } = 0.0;
+        public double OffsetT4 { get; set; } = 0.0;
+        public double OffsetT5 { get; set; } = 0.0;
+        public double OffsetT6 { get; set; } = 0.0;
     }
 
     public class TeraParametritDto
@@ -228,12 +234,7 @@ namespace SahanOhjausGUI
                     OffsetT5 = _offsetT5,
                     OffsetT6 = _offsetT6,
 
-                    public double OffsetT1 { get; set; } = 0.0;
-        public double OffsetT2 { get; set; } = 0.0;
-        public double OffsetT3 { get; set; } = 0.0;
-        public double OffsetT4 { get; set; } = 0.0;
-        public double OffsetT5 { get; set; } = 0.0;
-        public double OffsetT6 { get; set; } = 0.0;
+
         PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
                     PhKokonaisLeveys = PhKokonaisLeveysBox?.Text ?? "600",
                     PhKuivaus = PhKuivausBox?.Text ?? "0",
@@ -1924,6 +1925,30 @@ namespace SahanOhjausGUI
             if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
             PiirraVisual();
         }
+        private void T1OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT1 = Math.Round(_offsetT1 + 0.1, 1); if (T1OffsetLabel != null) T1OffsetLabel.Text = $"{_offsetT1:F1}"; PiirraVisual(); }
+        private void T1OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT1 = Math.Round(_offsetT1 - 0.1, 1); if (T1OffsetLabel != null) T1OffsetLabel.Text = $"{_offsetT1:F1}"; PiirraVisual(); }
+        private void T2OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT2 = Math.Round(_offsetT2 + 0.1, 1); if (T2OffsetLabel != null) T2OffsetLabel.Text = $"{_offsetT2:F1}"; PiirraVisual(); }
+        private void T2OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT2 = Math.Round(_offsetT2 - 0.1, 1); if (T2OffsetLabel != null) T2OffsetLabel.Text = $"{_offsetT2:F1}"; PiirraVisual(); }
+        private void T3OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT3 = Math.Round(_offsetT3 + 0.1, 1); if (T3OffsetLabel != null) T3OffsetLabel.Text = $"{_offsetT3:F1}"; PiirraVisual(); }
+        private void T3OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT3 = Math.Round(_offsetT3 - 0.1, 1); if (T3OffsetLabel != null) T3OffsetLabel.Text = $"{_offsetT3:F1}"; PiirraVisual(); }
+        private void T4OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT4 = Math.Round(_offsetT4 + 0.1, 1); if (T4OffsetLabel != null) T4OffsetLabel.Text = $"{_offsetT4:F1}"; PiirraVisual(); }
+        private void T4OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT4 = Math.Round(_offsetT4 - 0.1, 1); if (T4OffsetLabel != null) T4OffsetLabel.Text = $"{_offsetT4:F1}"; PiirraVisual(); }
+        private void T5OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT5 = Math.Round(_offsetT5 + 0.1, 1); if (T5OffsetLabel != null) T5OffsetLabel.Text = $"{_offsetT5:F1}"; PiirraVisual(); }
+        private void T5OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT5 = Math.Round(_offsetT5 - 0.1, 1); if (T5OffsetLabel != null) T5OffsetLabel.Text = $"{_offsetT5:F1}"; PiirraVisual(); }
+        private void T6OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { _offsetT6 = Math.Round(_offsetT6 + 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
+        private void T6OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { _offsetT6 = Math.Round(_offsetT6 - 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
         private void SetStatus(string message, Color color)
         {
             if (StatusTextBlock != null)
