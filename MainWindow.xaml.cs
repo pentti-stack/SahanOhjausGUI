@@ -760,51 +760,49 @@ namespace SahanOhjausGUI
         private void PiirraPhCanvasit()
         {
             double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0;
-            bool phLaskettu = false;
 
             if (Ph1Check?.IsChecked == true || Ph2Check?.IsChecked == true)
-            {
                 (ph1V, ph1O, ph2V, ph2O) = LaskePhArvot();
-                phLaskettu = true;
-            }
-
-            if (!phLaskettu)
-            {
-                Ph1Canvas?.Children.Clear();
-                Ph2Canvas?.Children.Clear();
-                return;
-            }
 
             double ph1Leveys = ph1V + ph1O;
             double ph2Leveys = ph2V + ph2O;
             double halkaisija = Math.Sqrt(ph1Leveys * ph1Leveys + ph2Leveys * ph2Leveys);
+
+          
+
+            double lepoPh1V = phRajat.TryGetValue("PH1V", out var lp1v) ? lp1v.LepoVasen : 0.0;
+            double lepoPh1O = phRajat.TryGetValue("PH1O", out var lp1o) ? lp1o.LepoOikea : 0.0;
+            double lepoPh2V = phRajat.TryGetValue("PH2V", out var lp2v) ? lp2v.LepoVasen : 0.0;
+            double lepoPh2O = phRajat.TryGetValue("PH2O", out var lp2o) ? lp2o.LepoOikea : 0.0;
+
+            bool ph1On = Ph1Check?.IsChecked == true;
+            bool ph2On = Ph2Check?.IsChecked == true;
+
+            double use1V = ph1On ? ph1V : lepoPh1V;
+            double use1O = ph1On ? ph1O : lepoPh1O;
+            double use2V = ph2On ? ph2V : lepoPh2V;
+            double use2O = ph2On ? ph2O : lepoPh2O;
+
+            double use1Leveys = use1V + use1O;
+            double use2Leveys = use2V + use2O;
+            double useHalkaisija = Math.Sqrt(use1Leveys * use1Leveys + use2Leveys * use2Leveys);
 
             double W1 = Ph1Canvas?.ActualWidth > 20 ? Ph1Canvas.ActualWidth : 400;
             double H1 = Ph1Canvas?.ActualHeight > 20 ? Ph1Canvas.ActualHeight : 400;
             double W2 = Ph2Canvas?.ActualWidth > 20 ? Ph2Canvas.ActualWidth : 400;
             double H2 = Ph2Canvas?.ActualHeight > 20 ? Ph2Canvas.ActualHeight : 400;
 
-            double scale1X = W1 * 0.45 / Math.Max(ph1Leveys / 2.0, 1.0);
-            double scale1Y = H1 * 0.42 / Math.Max(halkaisija / 2.0, 1.0);
-            double scale2X = W2 * 0.38 / Math.Max(halkaisija / 2.0, 1.0);
-            double scale2Y = H2 * 0.38 / Math.Max(halkaisija / 2.0, 1.0);
+            double scale1X = W1 * 0.45 / Math.Max(use1Leveys / 2.0, 1.0);
+            double scale1Y = H1 * 0.42 / Math.Max(useHalkaisija / 2.0, 1.0);
+            double scale2X = W2 * 0.38 / Math.Max(useHalkaisija / 2.0, 1.0);
+            double scale2Y = H2 * 0.38 / Math.Max(useHalkaisija / 2.0, 1.0);
             double scale = Math.Min(Math.Min(scale1X, scale1Y), Math.Min(scale2X, scale2Y));
 
             if (Ph1Canvas != null)
-            {
-                if (Ph1Check?.IsChecked == true)
-                    PiirraPh1Canvas(Ph1Canvas, ph1V, ph1O, ph2Leveys, halkaisija, scale);
-                else
-                    Ph1Canvas.Children.Clear();
-            }
+                PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale);
 
             if (Ph2Canvas != null)
-            {
-                if (Ph2Check?.IsChecked == true)
-                    PiirraPh2Canvas(Ph2Canvas, ph2V, ph2O, ph1Leveys, halkaisija, scale);
-                else
-                    Ph2Canvas.Children.Clear();
-            }
+                PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale);
         }
 
         private static void PiirraPh1Canvas(Canvas canvas,
@@ -1155,12 +1153,7 @@ namespace SahanOhjausGUI
                                 leveydetVasen, leveydetOikea, vasenOn, oikeaOn,
                                 plc_T3, plc_T1, plc_T5, plc_T4, plc_T2, plc_T6);
                     }
-                    else if (Ph1Check?.IsChecked == true || Ph2Check?.IsChecked == true)
-                    {
-                        // Piirrä PH lepopaikat harmaalla jakosahan canvasiin
-                        PiirraPhCanvas(YhteisCanvas, showPh1V, showPh1O, showPh2V, showPh2O);
-                    }
-                    else
+                   
                         YhteisCanvas.Children.Clear();
                 }
 
