@@ -1557,6 +1557,7 @@ namespace SahanOhjausGUI
         (t4X, $"T4\n{plc_T4:F1}"),
         (t6X, $"T6\n{plc_T6:F1}") })
             {
+                if (x < 10 || x > canvasWidth - 10) continue;
                 canvas.Children.Add(new Line
                 {
                     X1 = x,
