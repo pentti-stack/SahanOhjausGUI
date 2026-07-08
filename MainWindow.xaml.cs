@@ -730,16 +730,18 @@ namespace SahanOhjausGUI
                 // Jakosaha ei päällä — käytä PH:n omaa kuivaus%
                 double.TryParse(PhLevinKappaleBox?.Text.Replace(",", ".") ?? "150", NumberStyles.Float, CultureInfo.InvariantCulture, out levinKappale);
                 double.TryParse(PhKokonaisLeveysBox?.Text.Replace(",", ".") ?? "600", NumberStyles.Float, CultureInfo.InvariantCulture, out kokonaisLeveys);
+                double kuivaPh1 = levinKappale;    // ← LISÄÄ TÄHÄN ennen kerrointa
+                double kuivaPh2 = kokonaisLeveys;  // ← LISÄÄ TÄHÄN ennen kerrointa
                 double.TryParse(PhKuivausBox?.Text.Replace(",", ".") ?? "0", NumberStyles.Float, CultureInfo.InvariantCulture, out double phKuivaus);
                 double kerroin = 1.0 + phKuivaus / 100.0;
                 levinKappale *= kerroin;
                 kokonaisLeveys *= kerroin;
+                double ph1V = levinKappale / 2.0 + _ph1Offset / 2.0;
+                double ph1O = levinKappale / 2.0 + _ph1Offset / 2.0;
+                double ph2V = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
+                double ph2O = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
+                return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2);  // ← MUUTA
             }
-            double ph1V = levinKappale / 2.0 + _ph1Offset / 2.0;
-            double ph1O = levinKappale / 2.0 + _ph1Offset / 2.0;
-            double ph2V = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
-            double ph2O = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
-            return (ph1V, ph1O, ph2V, ph2O);
         }
 
         private List<double> GetLeveysValues()
@@ -771,10 +773,9 @@ namespace SahanOhjausGUI
 
         private void PiirraPhCanvasit()
         {
-            double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0;
-
+            double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0, kuivaPh1 = 0, kuivaPh2 = 0;
             if (Ph1Check?.IsChecked == true || Ph2Check?.IsChecked == true)
-                (ph1V, ph1O, ph2V, ph2O) = LaskePhArvot();
+                (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2) = LaskePhArvot();
 
             double ph1Leveys = ph1V + ph1O;
             double ph2Leveys = ph2V + ph2O;
