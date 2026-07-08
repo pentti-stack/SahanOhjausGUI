@@ -1124,15 +1124,12 @@ namespace SahanOhjausGUI
                 else
                     SetStatus("Valmis", Colors.LightGray);
 
-                if (jakosahaOn)
-                {
-                    if (Tera4_Value != null) Tera4_Value.Text = $"T4: {plc_T4:F1}";
-                    if (Tera2_Value != null) Tera2_Value.Text = $"T2: {plc_T2:F1}";
-                    if (Tera6_Value != null) Tera6_Value.Text = $"T6: {plc_T6:F1}";
-                    if (Tera3_Value != null) Tera3_Value.Text = $"T3: {plc_T3:F1}";
-                    if (Tera1_Value != null) Tera1_Value.Text = $"T1: {plc_T1:F1}";
-                    if (Tera5_Value != null) Tera5_Value.Text = $"T5: {plc_T5:F1}";
-                }
+                if (Tera4_Value != null) Tera4_Value.Text = $"T4: {plc_T4:F1}";
+                if (Tera2_Value != null) Tera2_Value.Text = $"T2: {plc_T2:F1}";
+                if (Tera6_Value != null) Tera6_Value.Text = $"T6: {plc_T6:F1}";
+                if (Tera3_Value != null) Tera3_Value.Text = $"T3: {plc_T3:F1}";
+                if (Tera1_Value != null) Tera1_Value.Text = $"T1: {plc_T1:F1}";
+                if (Tera5_Value != null) Tera5_Value.Text = $"T5: {plc_T5:F1}";
                 if (phOn)
                 {
                     if (Ph1V_Value != null) Ph1V_Value.Text = $"PH1V: {ph1V:F1}";
