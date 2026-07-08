@@ -245,7 +245,7 @@
                                         <TextBlock Text="%" VerticalAlignment="Center" Margin="6,0,0,0" Foreground="#aaa"/>
                                     </StackPanel>
                                 </StackPanel>
-                                </Border>
+                            </Border>
 
                         </StackPanel>
                     </ScrollViewer>
