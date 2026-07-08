@@ -178,6 +178,31 @@
                                                FontSize="10" Foreground="#888"
                                                Visibility="Collapsed" Margin="0,2,0,4"/>
                                 </StackPanel>
+                                private void Ph1OffsetPlus_Click(object sender, RoutedEventArgs e)
+{
+    _ph1Offset = Math.Round(_ph1Offset + 0.1, 1);
+    if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
+    PiirraPhCanvasit();
+}
+private void Ph1OffsetMinus_Click(object sender, RoutedEventArgs e)
+{
+    _ph1Offset = Math.Round(_ph1Offset - 0.1, 1);
+    if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
+    PiirraPhCanvasit();
+}
+private void Ph2OffsetPlus_Click(object sender, RoutedEventArgs e)
+{
+    _ph2Offset = Math.Round(_ph2Offset + 0.1, 1);
+    if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
+    PiirraPhCanvasit();
+}
+private void Ph2OffsetMinus_Click(object sender, RoutedEventArgs e)
+{
+    _ph2Offset = Math.Round(_ph2Offset - 0.1, 1);
+    if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
+    PiirraPhCanvasit();
+}
+                                
                             </Border>
 
                             <!-- PH2 -->
@@ -202,6 +227,20 @@
                                                Text="&#x1F512; lukittu — dimensiot jakosahalta"
                                                FontSize="10" Foreground="#888"
                                                Visibility="Collapsed" Margin="0,2,0,4"/>
+                                </StackPanel>
+                                <!-- PH2 offset -->
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Text="Offset:" FontSize="11" Foreground="#aaa"
+               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <Button Content="−" Width="26" Height="26"
+            Click="Ph2OffsetMinus_Click" FontSize="14"
+            Background="#3d3d3d" Foreground="White" BorderBrush="#555"/>
+                                    <TextBlock x:Name="Ph2OffsetLabel" Text="0,0 mm"
+               Width="52" TextAlignment="Center"
+               VerticalAlignment="Center" FontSize="11"/>
+                                    <Button Content="+" Width="26" Height="26"
+            Click="Ph2OffsetPlus_Click" FontSize="14"
+            Background="#3d3d3d" Foreground="White" BorderBrush="#555"/>
                                 </StackPanel>
                             </Border>
 

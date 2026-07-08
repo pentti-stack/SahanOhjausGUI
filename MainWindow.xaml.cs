@@ -34,6 +34,8 @@ namespace SahanOhjausGUI
         public string PhKuivaus { get; set; } = "0";
         public Dictionary<int, TeraRajatDto> TeraRajat { get; set; } = new();
         public Dictionary<string, PhRajatDto> PhRajat { get; set; } = new();
+        public double Ph1Offset { get; set; } = 0.0;
+        public double Ph2Offset { get; set; } = 0.0;
         public double TurvaEtaisyys { get; set; } = 15.0;
     }
 
@@ -70,6 +72,9 @@ namespace SahanOhjausGUI
         private readonly Dictionary<int, TextBox> leveysTextBoxesYhdistetty = new();
         private readonly Dictionary<int, TeraRajat> teraRajat = new();
         private readonly Dictionary<string, PhRajat> phRajat = new();
+
+        private double _ph1Offset = 0.0;
+        private double _ph2Offset = 0.0;
 
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
@@ -211,6 +216,8 @@ namespace SahanOhjausGUI
                     OikeaOn = OikeaSahaCheck?.IsChecked == true,
                     Ph1On = Ph1Check?.IsChecked == true,
                     Ph2On = Ph2Check?.IsChecked == true,
+                    Ph1Offset = _ph1Offset,
+                    Ph2Offset = _ph2Offset,
                     PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
                     PhKokonaisLeveys = PhKokonaisLeveysBox?.Text ?? "600",
                     PhKuivaus = PhKuivausBox?.Text ?? "0",
@@ -266,6 +273,8 @@ namespace SahanOhjausGUI
                 }
 
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
+                _ph1Offset = data.Ph1Offset;   
+                _ph2Offset = data.Ph2Offset;   
 
                 KappaleCombo.SelectionChanged -= Kappale_Changed;
                 YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
@@ -726,8 +735,11 @@ namespace SahanOhjausGUI
                 levinKappale *= kerroin;
                 kokonaisLeveys *= kerroin;
             }
-
-            return (levinKappale / 2.0, levinKappale / 2.0, kokonaisLeveys / 2.0, kokonaisLeveys / 2.0);
+            double ph1V = levinKappale / 2.0 + _ph1Offset / 2.0;
+            double ph1O = levinKappale / 2.0 + _ph1Offset / 2.0;
+            double ph2V = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
+            double ph2O = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
+            return (ph1V, ph1O, ph2V, ph2O);
         }
 
         private List<double> GetLeveysValues()
@@ -1870,7 +1882,30 @@ namespace SahanOhjausGUI
             { if (leveysTextBoxesYhdistetty.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); else result.Add(0.0); }
             return result;
         }
-
+        private void Ph1OffsetPlus_Click(object sender, RoutedEventArgs e)
+        {
+            _ph1Offset = Math.Round(_ph1Offset + 0.1, 1);
+            if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
+            PiirraPhCanvasit();
+        }
+        private void Ph1OffsetMinus_Click(object sender, RoutedEventArgs e)
+        {
+            _ph1Offset = Math.Round(_ph1Offset - 0.1, 1);
+            if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
+            PiirraPhCanvasit();
+        }
+        private void Ph2OffsetPlus_Click(object sender, RoutedEventArgs e)
+        {
+            _ph2Offset = Math.Round(_ph2Offset + 0.1, 1);
+            if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
+            PiirraPhCanvasit();
+        }
+        private void Ph2OffsetMinus_Click(object sender, RoutedEventArgs e)
+        {
+            _ph2Offset = Math.Round(_ph2Offset - 0.1, 1);
+            if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
+            PiirraPhCanvasit();
+        }
         private void SetStatus(string message, Color color)
         {
             if (StatusTextBlock != null)
