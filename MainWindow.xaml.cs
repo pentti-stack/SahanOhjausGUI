@@ -744,8 +744,8 @@ namespace SahanOhjausGUI
             double ph1O = levinKappale / 2.0 + _ph1Offset / 2.0;
             double ph2V = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
             double ph2O = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
-            return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2);
-        }return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2, levinKappale, kokonaisLeveys);
+            return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2, levinKappale, kokonaisLeveys);
+        }
         private List<double> GetLeveysValues()
         {
             var result = new List<double>();
@@ -758,7 +758,6 @@ namespace SahanOhjausGUI
                     result.Add(v);
             return result;
         }
-
         private List<double> GetPaksuusValues()
         {
             var result = new List<double>();
@@ -815,7 +814,7 @@ namespace SahanOhjausGUI
             if (Ph1Canvas != null)
             {
                 if (ph1On)
-                    iirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale, kuivaPh1, tuore1);
+                    PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale, kuivaPh1, tuore1);
                 PiirraPhLepopaikkaCanvas(Ph1Canvas, use1V, use1O, true);
             }
 
@@ -924,18 +923,7 @@ namespace SahanOhjausGUI
                 Width = Math.Max(120, pelkkaW + 20)
             };
 
-            var tuoreLbl = new TextBlock
-            {
-                Text = $"{ph1Leveys:F1} mm",
-                FontSize = 13,
-                FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(255, 210, 60)),
-                TextAlignment = TextAlignment.Center,
-                Width = Math.Max(80, pelkkaW)
-            };
-            Canvas.SetLeft(tuoreLbl, cx - tuoreLbl.Width / 2.0);
-            Canvas.SetTop(tuoreLbl, cy - 10);
-            canvas.Children.Add(tuoreLbl);
+           
             Canvas.SetLeft(mittaLbl, cx - mittaLbl.Width / 2.0);
             Canvas.SetTop(mittaLbl, arrowY + 5);
             canvas.Children.Add(mittaLbl);
@@ -990,7 +978,7 @@ namespace SahanOhjausGUI
             canvas.Children.Add(new Line { X1 = ph2VX, Y1 = pelkkaY - 10, X2 = ph2VX, Y2 = pelkkaY + pelkkaH + 10, Stroke = ph2Br, StrokeThickness = 2.5 });
             canvas.Children.Add(new Line { X1 = ph2OX, Y1 = pelkkaY - 10, X2 = ph2OX, Y2 = pelkkaY + pelkkaH + 10, Stroke = ph2Br, StrokeThickness = 2.5 });
 
-            var tuoreLbl = new TextBlock
+            var tuoreLbl2 = new TextBlock
             {
                 Text = $"{tuoreLeveysIlmanOffset:F1} mm",
                 FontSize = 14,
@@ -999,9 +987,9 @@ namespace SahanOhjausGUI
                 TextAlignment = TextAlignment.Center,
                 Width = Math.Max(80, pelkkaW)
             };
-            Canvas.SetLeft(tuoreLbl, cx - tuoreLbl.Width / 2.0);
-            Canvas.SetTop(tuoreLbl, cy - 10);
-            canvas.Children.Add(tuoreLbl);
+            Canvas.SetLeft(tuoreLbl2, cx - tuoreLbl2.Width / 2.0);
+            Canvas.SetTop(tuoreLbl2, cy - 10);
+            canvas.Children.Add(tuoreLbl2);
 
             double ph1VY = cy - ph1Leveys / 2.0 * scale;
             double ph1OY = cy + ph1Leveys / 2.0 * scale;
