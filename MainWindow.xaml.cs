@@ -81,6 +81,7 @@ namespace SahanOhjausGUI
 
         private double _ph1Offset = 0.0;
         private double _ph2Offset = 0.0;
+        private double _tukkiHalkaisija = 200.0;
 
         private double _offsetT1 = 0.0, _offsetT2 = 0.0, _offsetT3 = 0.0;
         private double _offsetT4 = 0.0, _offsetT5 = 0.0, _offsetT6 = 0.0;
@@ -841,7 +842,8 @@ namespace SahanOhjausGUI
             if (Ph2Canvas != null)
             {
                 if (ph2On)
-                    PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale, kuivaPh2, tuore2);
+                    PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale, kuivaPh2, tuore2,
+    OnJakosahaKaytossa());
                 else
                     PiirraPhLepopaikkaCanvas(Ph2Canvas, use2V, use2O, false);
             }
@@ -958,9 +960,10 @@ namespace SahanOhjausGUI
             canvas.Children.Add(otsikko);
         }
 
-        private static void PiirraPh2Canvas(Canvas canvas,
-    double ph2V, double ph2O, double ph1Leveys,
-    double halkaisija, double scale, double kuivaLeveys, double tuoreLeveysIlmanOffset)
+        private void PiirraPh2Canvas(Canvas canvas,
+      double ph2V, double ph2O, double ph1Leveys,
+      double halkaisija, double scale, double kuivaLeveys,
+      double tuoreLeveysIlmanOffset, bool jakosahaOn = false)
         {
             canvas.Children.Clear();
             double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 400;
@@ -1011,6 +1014,20 @@ namespace SahanOhjausGUI
             Canvas.SetTop(tuoreLbl2, cy - 10);
             canvas.Children.Add(tuoreLbl2);
 
+            if (jakosahaOn && _tukkiHalkaisija > 0)
+            {
+                double tukkiR2 = _tukkiHalkaisija / 2.0 * scale;
+                canvas.Children.Add(new Ellipse
+                {
+                    Width = tukkiR2 * 2,
+                    Height = tukkiR2 * 2,
+                    Fill = Brushes.Transparent,
+                    Stroke = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 6, 3 }
+                }.Also(e => { Canvas.SetLeft(e, cx - tukkiR2); Canvas.SetTop(e, cy - tukkiR2); }));
+            }
+
             double ph1VY = cy - ph1Leveys / 2.0 * scale;
             double ph1OY = cy + ph1Leveys / 2.0 * scale;
             var ph1Br = new SolidColorBrush(Color.FromRgb(255, 210, 60));
@@ -1056,6 +1073,7 @@ namespace SahanOhjausGUI
             };
             Canvas.SetLeft(otsikko, 8); Canvas.SetTop(otsikko, 6);
             canvas.Children.Add(otsikko);
+
             var tayslaatuBorder = new Border
             {
                 Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
@@ -1100,12 +1118,7 @@ namespace SahanOhjausGUI
                 double plc_T1 = teraRajat.TryGetValue(1, out var r1) ? r1.Lepopaikka : -25.0;
                 double plc_T5 = teraRajat.TryGetValue(5, out var r5) ? r5.Lepopaikka : 25.0;
 
-        plc_T1 += _offsetT1;
-        plc_T2 += _offsetT2;
-        plc_T3 += _offsetT3;
-        plc_T4 += _offsetT4;
-        plc_T5 += _offsetT5;
-        plc_T6 += _offsetT6;
+       
 
         var paksuudetVasen = new List<double>();
                 var paksuudetOikea = new List<double>();
@@ -1139,7 +1152,12 @@ namespace SahanOhjausGUI
                 
                 double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0, kuivaPh1 = 0, kuivaPh2 = 0, tuore1 = 0, tuore2 = 0;
                 if (phOn) (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2, tuore1, tuore2) = LaskePhArvot();
-
+                plc_T1 += _offsetT1;
+                plc_T2 += _offsetT2;
+                plc_T3 += _offsetT3;
+                plc_T4 += _offsetT4;
+                plc_T5 += _offsetT5;
+                plc_T6 += _offsetT6;
 
                 var rajaVaroitukset = new List<string>();
                 void TarkistaRaja(string nimi, double arvo, int teraNumero)
@@ -1203,6 +1221,7 @@ namespace SahanOhjausGUI
                 PiirraPhCanvasit();
             }
             finally { _isPiirraVisualRunning = false; }
+
         }
 
         // ── Yhdistetty laskenta ──────────────────────────────────────────────
@@ -1368,7 +1387,7 @@ namespace SahanOhjausGUI
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
             double centerY = canvasHeight / 2.0, centerX = canvasWidth / 2.0;
             double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
-            double rectHeight = canvasHeight * 0.45, rectY = centerY - rectHeight / 2.0;
+            double rectHeight = canvasHeight * 0.65, rectY = centerY - rectHeight / 2.0;
 
             canvas.Children.Add(new Rectangle { Width = canvasWidth, Height = canvasHeight, Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12)) });
             PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
@@ -1397,10 +1416,38 @@ namespace SahanOhjausGUI
                 curMm += paksuus;
                 if (i < teraJarjestys.Length)
                 {
-                    double rako = RakoT(teraJarjestys[i]); double gapX = centerX + curMm * pixelsPerMm; double gapW = rako * pixelsPerMm;
-                    canvas.Children.Add(new Rectangle { Width = gapW, Height = rectHeight, Fill = new SolidColorBrush(Color.FromArgb(160, 240, 220, 180)), Stroke = new SolidColorBrush(Color.FromRgb(150, 110, 60)), StrokeThickness = 1, StrokeDashArray = new DoubleCollection { 3, 2 } }.Also(r => { Canvas.SetLeft(r, gapX); Canvas.SetTop(r, rectY); }));
+                    double rako = RakoT(teraJarjestys[i]);
                     curMm += rako;
                 }
+                if (_tukkiHalkaisija > 0)
+                {
+                    double tukkiR = _tukkiHalkaisija / 2.0 * pixelsPerMm;
+                    canvas.Children.Add(new Ellipse
+                    {
+                        Width = tukkiR * 2,
+                        Height = tukkiR * 2,
+                        Fill = Brushes.Transparent,
+                        Stroke = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                        StrokeThickness = 1.5,
+                        StrokeDashArray = new DoubleCollection { 6, 3 }
+                    }.Also(e => { Canvas.SetLeft(e, centerX - tukkiR); Canvas.SetTop(e, centerY - tukkiR); }));
+                }
+                var tukkiBorder2 = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 6, 10, 6),
+                    BorderBrush = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                    BorderThickness = new Thickness(1)
+                };
+                var tukkiSp2 = new StackPanel();
+                tukkiSp2.Children.Add(new TextBlock { Text = "Tukki \u2205", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)), TextAlignment = TextAlignment.Center });
+                tukkiSp2.Children.Add(new TextBlock { Text = $"{_tukkiHalkaisija:F0} mm", FontSize = 15, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(210, 170, 100)), TextAlignment = TextAlignment.Center });
+                tukkiBorder2.Child = tukkiSp2;
+                Canvas.SetTop(tukkiBorder2, 8);
+                tukkiBorder2.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                Canvas.SetLeft(tukkiBorder2, canvasWidth - tukkiBorder2.DesiredSize.Width - 8);
+                canvas.Children.Add(tukkiBorder2);
             }
 
             double totalStartX = centerX - kokonaisLeveys / 2.0 * pixelsPerMm;
@@ -1448,7 +1495,7 @@ namespace SahanOhjausGUI
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
             double centerY = canvasHeight / 2.0, centerX = canvasWidth / 2.0;
             double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
-            double rectHeight = canvasHeight * 0.45, rectY = centerY - rectHeight / 2.0;
+            double rectHeight = canvasHeight * 0.65, rectY = centerY - rectHeight / 2.0;
 
             canvas.Children.Add(new Rectangle { Width = canvasWidth, Height = canvasHeight, Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12)) });
             PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
@@ -1536,6 +1583,35 @@ namespace SahanOhjausGUI
                 var vl = new TextBlock { Text = "\u25c4 Vasen saha", Foreground = new SolidColorBrush(normV), FontSize = 11, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(vl, 6); Canvas.SetTop(vl, 6); canvas.Children.Add(vl);
             }
+            if (_tukkiHalkaisija > 0)
+            {
+                double tukkiR = _tukkiHalkaisija / 2.0 * pixelsPerMm;
+                canvas.Children.Add(new Ellipse
+                {
+                    Width = tukkiR * 2,
+                    Height = tukkiR * 2,
+                    Fill = Brushes.Transparent,
+                    Stroke = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 6, 3 }
+                }.Also(e => { Canvas.SetLeft(e, centerX - tukkiR); Canvas.SetTop(e, centerY - tukkiR); }));
+            }
+            var tukkiBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 6, 10, 6),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                BorderThickness = new Thickness(1)
+            };
+            var tukkiSp = new StackPanel();
+            tukkiSp.Children.Add(new TextBlock { Text = "Tukki \u2205", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)), TextAlignment = TextAlignment.Center });
+            tukkiSp.Children.Add(new TextBlock { Text = $"{_tukkiHalkaisija:F0} mm", FontSize = 15, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(210, 170, 100)), TextAlignment = TextAlignment.Center });
+            tukkiBorder.Child = tukkiSp;
+            Canvas.SetTop(tukkiBorder, 8);
+            tukkiBorder.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(tukkiBorder, canvasWidth - tukkiBorder.DesiredSize.Width - 8);
+            canvas.Children.Add(tukkiBorder);
         }
         private void PiirraJakosahaLepopaikka(Canvas canvas,
     double plc_T1, double plc_T2, double plc_T3,
@@ -1949,6 +2025,18 @@ namespace SahanOhjausGUI
         { _offsetT6 = Math.Round(_offsetT6 + 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
         private void T6OffsetMinus_Click(object sender, RoutedEventArgs e)
         { _offsetT6 = Math.Round(_offsetT6 - 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
+        private void TukkiPlus_Click(object sender, RoutedEventArgs e)
+        {
+            _tukkiHalkaisija = Math.Round(_tukkiHalkaisija + 1.0, 0);
+            if (TukkiHalkaisijaaLabel != null) TukkiHalkaisijaaLabel.Text = $"{_tukkiHalkaisija:F0}";
+            PiirraVisual();
+        }
+        private void TukkiMinus_Click(object sender, RoutedEventArgs e)
+        {
+            _tukkiHalkaisija = Math.Round(_tukkiHalkaisija - 1.0, 0);
+            if (TukkiHalkaisijaaLabel != null) TukkiHalkaisijaaLabel.Text = $"{_tukkiHalkaisija:F0}";
+            PiirraVisual();
+        }
         private void SetStatus(string message, Color color)
         {
             if (StatusTextBlock != null)
