@@ -663,7 +663,7 @@ namespace SahanOhjausGUI
 
         // ── PH laskenta ──────────────────────────────────────────────────────
 
-        private (double ph1Vasen, double ph1Oikea, double ph2Vasen, double ph2Oikea, double kuivaPh1, double kuivaPh2) LaskePhArvot()
+        private (double ph1Vasen, double ph1Oikea, double ph2Vasen, double ph2Oikea, double kuivaPh1, double kuivaPh2, double tuore1, double tuore2) LaskePhArvot()
         {
             bool jakosahaOn = OnJakosahaKaytossa();
             double levinKappale, kokonaisLeveys;
@@ -745,8 +745,7 @@ namespace SahanOhjausGUI
             double ph2V = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
             double ph2O = kokonaisLeveys / 2.0 + _ph2Offset / 2.0;
             return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2);
-        }
-
+        }return (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2, levinKappale, kokonaisLeveys);
         private List<double> GetLeveysValues()
         {
             var result = new List<double>();
@@ -777,10 +776,9 @@ namespace SahanOhjausGUI
 
         private void PiirraPhCanvasit()
         {
-            double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0, kuivaPh1 = 0, kuivaPh2 = 0;
-
+            double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0, kuivaPh1 = 0, kuivaPh2 = 0, tuore1 = 0, tuore2 = 0;
             if (Ph1Check?.IsChecked == true || Ph2Check?.IsChecked == true)
-                (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2) = LaskePhArvot();
+                (ph1V, ph1O, ph2V, ph2O, kuivaPh1, kuivaPh2, tuore1, tuore2) = LaskePhArvot();
 
             double ph1Leveys = ph1V + ph1O;
             double ph2Leveys = ph2V + ph2O;
@@ -817,22 +815,21 @@ namespace SahanOhjausGUI
             if (Ph1Canvas != null)
             {
                 if (ph1On)
-                    PiirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale, kuivaPh1);
-                else
-                    PiirraPhLepopaikkaCanvas(Ph1Canvas, use1V, use1O, true);
+                    iirraPh1Canvas(Ph1Canvas, use1V, use1O, use2Leveys, useHalkaisija, scale, kuivaPh1, tuore1);
+                PiirraPhLepopaikkaCanvas(Ph1Canvas, use1V, use1O, true);
             }
 
             if (Ph2Canvas != null)
             {
                 if (ph2On)
-                    PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale, kuivaPh2);
+                    PiirraPh2Canvas(Ph2Canvas, use2V, use2O, use1Leveys, useHalkaisija, scale, kuivaPh2, tuore2);
                 else
                     PiirraPhLepopaikkaCanvas(Ph2Canvas, use2V, use2O, false);
             }
         }
         private static void PiirraPh1Canvas(Canvas canvas,
     double ph1V, double ph1O, double ph2Leveys,
-    double halkaisija, double scale, double kuivaLeveys)
+    double halkaisija, double scale, double kuivaLeveys, double tuoreLeveysIlmanOffset)
         {
             canvas.Children.Clear();
             double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 400;
@@ -900,6 +897,19 @@ namespace SahanOhjausGUI
             var sahaBrush = new SolidColorBrush(Color.FromRgb(255, 80, 80));
             canvas.Children.Add(new Line { X1 = ph1VX, Y1 = pelkkaY - 10, X2 = ph1VX, Y2 = pelkkaY + pelkkaH + 10, Stroke = sahaBrush, StrokeThickness = 2.5 });
             canvas.Children.Add(new Line { X1 = ph1OX, Y1 = pelkkaY - 10, X2 = ph1OX, Y2 = pelkkaY + pelkkaH + 10, Stroke = sahaBrush, StrokeThickness = 2.5 });
+
+            var tuoreLbl = new TextBlock
+            {
+                Text = $"{tuoreLeveysIlmanOffset:F1} mm",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 210, 60)),
+                TextAlignment = TextAlignment.Center,
+                Width = Math.Max(80, pelkkaW)
+            };
+            Canvas.SetLeft(tuoreLbl, cx - tuoreLbl.Width / 2.0);
+            Canvas.SetTop(tuoreLbl, cy - 10);
+            canvas.Children.Add(tuoreLbl);
             double arrowY = cy + tukkiR + 22;
             var ph1Br = new SolidColorBrush(Color.FromRgb(255, 210, 60));
             canvas.Children.Add(new Line { X1 = ph1VX, Y1 = arrowY, X2 = ph1OX, Y2 = arrowY, Stroke = ph1Br, StrokeThickness = 1 });
@@ -941,8 +951,8 @@ namespace SahanOhjausGUI
         }
 
         private static void PiirraPh2Canvas(Canvas canvas,
-            double ph2V, double ph2O, double ph1Leveys,
-            double halkaisija, double scale, double kuivaLeveys)
+    double ph2V, double ph2O, double ph1Leveys,
+    double halkaisija, double scale, double kuivaLeveys, double tuoreLeveysIlmanOffset)
         {
             canvas.Children.Clear();
             double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 400;
@@ -979,6 +989,20 @@ namespace SahanOhjausGUI
             var ph2Br = new SolidColorBrush(Color.FromRgb(60, 200, 255));
             canvas.Children.Add(new Line { X1 = ph2VX, Y1 = pelkkaY - 10, X2 = ph2VX, Y2 = pelkkaY + pelkkaH + 10, Stroke = ph2Br, StrokeThickness = 2.5 });
             canvas.Children.Add(new Line { X1 = ph2OX, Y1 = pelkkaY - 10, X2 = ph2OX, Y2 = pelkkaY + pelkkaH + 10, Stroke = ph2Br, StrokeThickness = 2.5 });
+
+            var tuoreLbl = new TextBlock
+            {
+                Text = $"{tuoreLeveysIlmanOffset:F1} mm",
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(60, 200, 255)),
+                TextAlignment = TextAlignment.Center,
+                Width = Math.Max(80, pelkkaW)
+            };
+            Canvas.SetLeft(tuoreLbl, cx - tuoreLbl.Width / 2.0);
+            Canvas.SetTop(tuoreLbl, cy - 10);
+            canvas.Children.Add(tuoreLbl);
+
             double ph1VY = cy - ph1Leveys / 2.0 * scale;
             double ph1OY = cy + ph1Leveys / 2.0 * scale;
             var ph1Br = new SolidColorBrush(Color.FromRgb(255, 210, 60));
