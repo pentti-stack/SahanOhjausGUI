@@ -43,6 +43,15 @@ namespace SahanOhjausGUI
         public double OffsetT4 { get; set; } = 0.0;
         public double OffsetT5 { get; set; } = 0.0;
         public double OffsetT6 { get; set; } = 0.0;
+        public double ProfOffsetT1 { get; set; } = 0.0;
+        public double ProfOffsetT2 { get; set; } = 0.0;
+        public double ProfOffsetT3 { get; set; } = 0.0;
+        public double ProfOffsetT4 { get; set; } = 0.0;
+        public double ProfOffsetT5 { get; set; } = 0.0;
+        public double ProfOffsetT6 { get; set; } = 0.0;
+        public double ProfOffsetT7 { get; set; } = 0.0;
+        public double ProfOffsetT8 { get; set; } = 0.0;
+        public Dictionary<int, ProfiRajatDto> ProfiRajat { get; set; } = new();
     }
 
     public class TeraParametritDto
@@ -67,6 +76,52 @@ namespace SahanOhjausGUI
         public double LepoOikea { get; set; } = 0.0;
     }
 
+    public class ProfiRajatDto
+    {
+        public double Min { get; set; } = 0.0;
+        public double Max { get; set; } = 280.0;
+        public double Lepopaikka { get; set; } = 280.0;
+    }
+
+    public class ProfiRajat
+    {
+        public double Min { get; set; } = 0.0;
+        public double Max { get; set; } = 280.0;
+        public double Lepopaikka { get; set; } = 280.0;
+    }
+
+    public class ProfilointiKappale
+    {
+        public double XmmFromCenter { get; set; }
+        public double PaksuusMm { get; set; }
+        public double LeveysMm { get; set; }
+        public Color Vari { get; set; }
+        public string Label { get; set; } = "";
+        public bool IsVasen { get; set; }
+    }
+
+    public class ProfilointiData
+    {
+        public static readonly Color[] PuuVarit = new[]
+        {
+            Color.FromRgb(139, 90, 43),
+            Color.FromRgb(160, 110, 60),
+            Color.FromRgb(120, 75, 35),
+            Color.FromRgb(175, 125, 70),
+            Color.FromRgb(145, 95, 50),
+            Color.FromRgb(130, 80, 38),
+            Color.FromRgb(155, 105, 55),
+            Color.FromRgb(170, 115, 65)
+        };
+
+        public List<ProfilointiKappale> Kappaleet { get; set; } = new();
+        public double HalfWidthMm { get; set; } = 250.0;
+        public double TukkiHalkaisija { get; set; } = 200.0;
+        public bool VasenOn { get; set; }
+        public bool OikeaOn { get; set; }
+        public bool YhdistettyTila { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         private readonly Dictionary<int, TeraParametrit> teraParametrit = new();
@@ -78,6 +133,7 @@ namespace SahanOhjausGUI
         private readonly Dictionary<int, TextBox> leveysTextBoxesYhdistetty = new();
         private readonly Dictionary<int, TeraRajat> teraRajat = new();
         private readonly Dictionary<string, PhRajat> phRajat = new();
+        private readonly Dictionary<int, ProfiRajat> profRajat = new();
 
         private double _ph1Offset = 0.0;
         private double _ph2Offset = 0.0;
@@ -85,6 +141,10 @@ namespace SahanOhjausGUI
 
         private double _offsetT1 = 0.0, _offsetT2 = 0.0, _offsetT3 = 0.0;
         private double _offsetT4 = 0.0, _offsetT5 = 0.0, _offsetT6 = 0.0;
+
+        private double _profOffsetT1 = 0.0, _profOffsetT2 = 0.0, _profOffsetT3 = 0.0;
+        private double _profOffsetT4 = 0.0, _profOffsetT5 = 0.0, _profOffsetT6 = 0.0;
+        private double _profOffsetT7 = 0.0, _profOffsetT8 = 0.0;
 
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
@@ -127,6 +187,15 @@ namespace SahanOhjausGUI
             phRajat["PH1O"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
             phRajat["PH2V"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
             phRajat["PH2O"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
+
+            profRajat[1] = new ProfiRajat { Min = 0, Max = 250, Lepopaikka = 250 };
+            profRajat[2] = new ProfiRajat { Min = -250, Max = 0, Lepopaikka = -250 };
+            profRajat[3] = new ProfiRajat { Min = 0, Max = 280, Lepopaikka = 280 };
+            profRajat[4] = new ProfiRajat { Min = -280, Max = 0, Lepopaikka = -280 };
+            profRajat[5] = new ProfiRajat { Min = 0, Max = 280, Lepopaikka = 280 };
+            profRajat[6] = new ProfiRajat { Min = -280, Max = 0, Lepopaikka = -280 };
+            profRajat[7] = new ProfiRajat { Min = 0, Max = 250, Lepopaikka = 250 };
+            profRajat[8] = new ProfiRajat { Min = -250, Max = 0, Lepopaikka = -250 };
 
             KappaleCombo.SelectionChanged -= Kappale_Changed;
             YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
@@ -251,6 +320,20 @@ namespace SahanOhjausGUI
                     {
                         LepoVasen = kvp.Value.LepoVasen,
                         LepoOikea = kvp.Value.LepoOikea
+                    }),
+                    ProfOffsetT1 = _profOffsetT1,
+                    ProfOffsetT2 = _profOffsetT2,
+                    ProfOffsetT3 = _profOffsetT3,
+                    ProfOffsetT4 = _profOffsetT4,
+                    ProfOffsetT5 = _profOffsetT5,
+                    ProfOffsetT6 = _profOffsetT6,
+                    ProfOffsetT7 = _profOffsetT7,
+                    ProfOffsetT8 = _profOffsetT8,
+                    ProfiRajat = profRajat.ToDictionary(kvp => kvp.Key, kvp => new ProfiRajatDto
+                    {
+                        Min = kvp.Value.Min,
+                        Max = kvp.Value.Max,
+                        Lepopaikka = kvp.Value.Lepopaikka
                     })
                 };
                 IO.Directory.CreateDirectory(IO.Path.GetDirectoryName(TallennusPolku)!);
@@ -295,6 +378,18 @@ namespace SahanOhjausGUI
                 _ph2Offset = data.Ph2Offset;
         _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
         _offsetT4 = data.OffsetT4; _offsetT5 = data.OffsetT5; _offsetT6 = data.OffsetT6;
+
+                _profOffsetT1 = data.ProfOffsetT1; _profOffsetT2 = data.ProfOffsetT2;
+                _profOffsetT3 = data.ProfOffsetT3; _profOffsetT4 = data.ProfOffsetT4;
+                _profOffsetT5 = data.ProfOffsetT5; _profOffsetT6 = data.ProfOffsetT6;
+                _profOffsetT7 = data.ProfOffsetT7; _profOffsetT8 = data.ProfOffsetT8;
+                foreach (var kvp in data.ProfiRajat)
+                {
+                    if (!profRajat.ContainsKey(kvp.Key)) continue;
+                    profRajat[kvp.Key].Min = kvp.Value.Min;
+                    profRajat[kvp.Key].Max = kvp.Value.Max;
+                    profRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
+                }
 
         KappaleCombo.SelectionChanged -= Kappale_Changed;
                 YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
@@ -681,7 +776,127 @@ namespace SahanOhjausGUI
             }
         }
 
-        // ── PH laskenta ──────────────────────────────────────────────────────
+        private void AvaaProfilointi_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var data = RakennaProfData();
+                var offsets = new double[] {
+                    _profOffsetT1, _profOffsetT2, _profOffsetT3, _profOffsetT4,
+                    _profOffsetT5, _profOffsetT6, _profOffsetT7, _profOffsetT8
+                };
+                var win = new ProfilointiWindow(data, offsets, profRajat) { Owner = this };
+                win.OnOffsetitChanged += (uudetOffsetit, uudetRajat) =>
+                {
+                    _profOffsetT1 = uudetOffsetit[0]; _profOffsetT2 = uudetOffsetit[1];
+                    _profOffsetT3 = uudetOffsetit[2]; _profOffsetT4 = uudetOffsetit[3];
+                    _profOffsetT5 = uudetOffsetit[4]; _profOffsetT6 = uudetOffsetit[5];
+                    _profOffsetT7 = uudetOffsetit[6]; _profOffsetT8 = uudetOffsetit[7];
+                    foreach (var kvp in uudetRajat)
+                    {
+                        if (!profRajat.ContainsKey(kvp.Key)) continue;
+                        profRajat[kvp.Key].Min = kvp.Value.Min;
+                        profRajat[kvp.Key].Max = kvp.Value.Max;
+                        profRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
+                    }
+                    TallennaTallennus();
+                    SetStatus("✓  Profilointi tallennettu", Colors.LightGreen);
+                };
+                win.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Profilointiikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                    "Virhe", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private ProfilointiData RakennaProfData()
+        {
+            double kuivausProsentti = 0;
+            if (KuivausTextBox != null)
+                double.TryParse(KuivausTextBox.Text.Replace(",", "."),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out kuivausProsentti);
+            double kerroin = 1.0 + kuivausProsentti / 100.0;
+
+            bool vasenOn = VasenSahaCheck?.IsChecked == true;
+            bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
+            bool yhdistetty = vasenOn && oikeaOn;
+
+            var pData = new ProfilointiData
+            {
+                TukkiHalkaisija = _tukkiHalkaisija,
+                VasenOn = vasenOn,
+                OikeaOn = oikeaOn,
+                YhdistettyTila = yhdistetty
+            };
+
+            double RakoT(int n) => teraParametrit.TryGetValue(n, out var t) ? t.Rako : 4.0;
+
+            if (yhdistetty)
+            {
+                var pak = GetThicknessValuesYhdistetty().Select(p => p * kerroin).ToList();
+                var lev = GetLeveysValuesYhdistetty().Select(l => l * kerroin).ToList();
+                int n = pak.Count;
+                var rakoJar = n switch { 3 => new[] { 1, 2 }, 4 => new[] { 1, 2, 4 }, 5 => new[] { 1, 3, 2, 4 }, 6 => new[] { 3, 1, 2, 4, 6 }, 7 => new[] { 5, 3, 1, 2, 4, 6 }, _ => Array.Empty<int>() };
+                double total = pak.Sum() + rakoJar.Select(t => RakoT(t)).Sum();
+                double curMm = -total / 2.0;
+                for (int i = 0; i < n; i++)
+                {
+                    double lv = lev.Count > i ? lev[i] : 0;
+                    pData.Kappaleet.Add(new ProfilointiKappale { XmmFromCenter = curMm, PaksuusMm = pak[i], LeveysMm = lv, Vari = ProfilointiData.PuuVarit[i % ProfilointiData.PuuVarit.Length], Label = $"K{i + 1}" });
+                    curMm += pak[i];
+                    if (i < rakoJar.Length) curMm += RakoT(rakoJar[i]);
+                }
+                pData.HalfWidthMm = total / 2.0;
+            }
+            else
+            {
+                double totalV = 0, totalO = 0;
+                if (vasenOn)
+                {
+                    var pak = GetThicknessValuesVasen().Select(p => p * kerroin).ToList();
+                    var lev = GetLeveysValuesVasen().Select(l => l * kerroin).ToList();
+                    int n = pak.Count;
+                    double r1 = RakoT(1), r3 = RakoT(3), r5 = RakoT(5);
+                    totalV = pak.Sum() + (n >= 2 ? r1 : 0) + (n >= 3 ? r3 : 0) + (n >= 4 ? r5 : 0);
+                    double klV = totalV / 2.0;
+                    double[] xPos = new double[4];
+                    if (n >= 4) { xPos[3] = -klV; xPos[2] = xPos[3] + pak[3] + r5; xPos[1] = xPos[2] + pak[2] + r3; xPos[0] = xPos[1] + pak[1] + r1; }
+                    else if (n == 3) { xPos[2] = -klV; xPos[1] = xPos[2] + pak[2] + r3; xPos[0] = xPos[1] + pak[1] + r1; }
+                    else if (n == 2) { xPos[1] = -klV; xPos[0] = xPos[1] + pak[1] + r1; }
+                    else { xPos[0] = -klV; }
+                    for (int i = 0; i < n; i++)
+                    {
+                        double lv = lev.Count > i ? lev[i] : 0;
+                        pData.Kappaleet.Add(new ProfilointiKappale { XmmFromCenter = xPos[i], PaksuusMm = pak[i], LeveysMm = lv, Vari = ProfilointiData.PuuVarit[i % ProfilointiData.PuuVarit.Length], Label = $"K{i + 1}", IsVasen = true });
+                    }
+                }
+                if (oikeaOn)
+                {
+                    var pak = GetThicknessValuesOikea().Select(p => p * kerroin).ToList();
+                    var lev = GetLeveysValuesOikea().Select(l => l * kerroin).ToList();
+                    int n = pak.Count;
+                    double r2 = RakoT(2), r4 = RakoT(4), r6 = RakoT(6);
+                    totalO = pak.Sum() + (n >= 2 ? r2 : 0) + (n >= 3 ? r4 : 0) + (n >= 4 ? r6 : 0);
+                    double klO = totalO / 2.0;
+                    double x5 = -klO;
+                    for (int i = 0; i < n; i++)
+                    {
+                        double lv = lev.Count > i ? lev[i] : 0;
+                        double startX = x5;
+                        if (i == 1) startX = x5 + pak[0] + r2;
+                        else if (i == 2) startX = x5 + pak[0] + r2 + pak[1] + r4;
+                        else if (i == 3) startX = x5 + pak[0] + r2 + pak[1] + r4 + pak[2] + r6;
+                        pData.Kappaleet.Add(new ProfilointiKappale { XmmFromCenter = startX, PaksuusMm = pak[i], LeveysMm = lv, Vari = ProfilointiData.PuuVarit[i % ProfilointiData.PuuVarit.Length], Label = $"K{i + 5}", IsVasen = false });
+                    }
+                }
+                pData.HalfWidthMm = Math.Max(totalV, totalO) / 2.0;
+                if (pData.HalfWidthMm < 1.0) pData.HalfWidthMm = 250.0;
+            }
+
+            return pData;
+        }
 
         private (double ph1Vasen, double ph1Oikea, double ph2Vasen, double ph2Oikea, double kuivaPh1, double kuivaPh2, double tuore1, double tuore2) LaskePhArvot()
         {

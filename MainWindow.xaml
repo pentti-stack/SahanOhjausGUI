@@ -135,7 +135,9 @@
                         Click="Laheta_Click" Margin="0,0,8,0"
                         Background="#1b5e20" BorderBrush="#388e3c"/>
                 <Button Content="&#x26A1; Ter&#xe4;asetukset" Click="AvaaTerapAsetukset_Click" Margin="0,0,8,0"/>
-                <Button Content="&#x1F512; Terien rajat" Click="AvaaRajatAsetukset_Click"/>
+                <Button Content="&#x1F512; Terien rajat" Click="AvaaRajatAsetukset_Click" Margin="0,0,8,0"/>
+                <Button Content="&#x1F4D0; Profilointi" Click="AvaaProfilointi_Click"
+                        Background="#4a148c" BorderBrush="#7b1fa2"/>
             </StackPanel>
         </Grid>
 
@@ -269,17 +271,30 @@
                     </Grid.ColumnDefinitions>
                     <ScrollViewer Grid.Column="0" Background="#1e1e1e">
                         <StackPanel Margin="10">
-                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6">
-                                <TextBlock Text="&#x1F4D0; Profilointi &#x2014; tulossa"
-                                           Foreground="#B39DDB" FontWeight="Bold"/>
+                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="&#x1F4D0; Profilointi"
+                                               Foreground="#B39DDB" FontWeight="Bold" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Avaa profilointikkuna yläpalkin napista tai alta."
+                                               FontSize="11" Foreground="#aaa" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <Button Content="&#x1F4D0; Avaa profilointiikkuna"
+                                            Click="AvaaProfilointi_Click"
+                                            Background="#4a148c" BorderBrush="#7b1fa2"
+                                            Foreground="White" Padding="8,6" FontWeight="Bold"/>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
-                    <Canvas x:Name="ProfilointiCanvas" Grid.Column="1">
-                        <TextBlock Canvas.Left="20" Canvas.Top="20"
-                                   Text="Profilointi &#x2014; tulossa"
-                                   Foreground="#B39DDB" FontSize="16" FontWeight="Bold"/>
-                    </Canvas>
+                    <Border Grid.Column="1" Background="#141414">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="&#x1F4D0;" FontSize="48" HorizontalAlignment="Center" Foreground="#B39DDB"/>
+                            <TextBlock Text="Profilointi" FontSize="20" FontWeight="Bold"
+                                       HorizontalAlignment="Center" Foreground="#B39DDB" Margin="0,8,0,4"/>
+                            <TextBlock Text="Avaa profilointiikkuna yläpalkin tai vasen paneelin napista."
+                                       FontSize="13" Foreground="#888" TextWrapping="Wrap"
+                                       TextAlignment="Center" MaxWidth="400" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </TabItem>
             <!-- JAKOSAHA -->
