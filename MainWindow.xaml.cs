@@ -1699,13 +1699,13 @@ namespace SahanOhjausGUI
 
             // ── Compute profile positions ─────────────────────────────────────
             // T1 (right green): plcT1 is negative → negate to place on right
-            double profT1 = -_currentPlcT1 + _profOffsetT1;
+            double t1Pos = -_currentPlcT1 + _profOffsetT1;
             // T2 (left red): plcT2 is negative → already on left
-            double profT2 = _currentPlcT2 + _profOffsetT2;
+            double t2Pos = _currentPlcT2 + _profOffsetT2;
 
             // T7/T8 guides (25mm wide × 50mm tall)
-            double profT7 = profT1 + 25.0 + _profOffsetT7;
-            double profT8 = profT2 - 25.0 + _profOffsetT8; // _profOffsetT8 ≤ 0 = further left
+            double t7Pos = t1Pos + 25.0 + _profOffsetT7;
+            double t8Pos = t2Pos - 25.0 + _profOffsetT8; // _profOffsetT8 ≤ 0 = further left
 
             // Kappaleen korkeus = max leveys from current pieces (kuivauskerroin already included)
             double korkeus = _currentLeveydet.Count > 0
@@ -1783,7 +1783,7 @@ namespace SahanOhjausGUI
             }
 
             // ── T7 guide (right, gray rectangle 25mm wide × 50mm tall) ───────
-            double t7X = cx + profT7 * scale;
+            double t7X = cx + t7Pos * scale;
             double guideW = 25.0 * scale;
             double guideH = 50.0 * scale;
             if (t7X > 0 && t7X < W)
@@ -1797,7 +1797,7 @@ namespace SahanOhjausGUI
                 }.Also(r => { Canvas.SetLeft(r, t7X); Canvas.SetTop(r, cy - guideH / 2.0); }));
                 var t7Lbl = new TextBlock
                 {
-                    Text = $"T7\n{profT7:F1}",
+                    Text = $"T7\n{t7Pos:F1}",
                     FontSize = 9,
                     Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180))
                 };
@@ -1807,7 +1807,7 @@ namespace SahanOhjausGUI
             }
 
             // ── T8 guide (left, gray rectangle 25mm wide × 50mm tall) ────────
-            double t8X = cx + profT8 * scale;
+            double t8X = cx + t8Pos * scale;
             if (t8X > 0 && t8X < W)
             {
                 canvas.Children.Add(new Rectangle
@@ -1819,7 +1819,7 @@ namespace SahanOhjausGUI
                 }.Also(r => { Canvas.SetLeft(r, t8X - guideW); Canvas.SetTop(r, cy - guideH / 2.0); }));
                 var t8Lbl = new TextBlock
                 {
-                    Text = $"T8\n{profT8:F1}",
+                    Text = $"T8\n{t8Pos:F1}",
                     FontSize = 9,
                     Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
                     TextAlignment = TextAlignment.Right,
@@ -1831,8 +1831,8 @@ namespace SahanOhjausGUI
             }
 
             // ── T3 (right top, blue horizontal line from T1 to right) ─────────
-            double t1X = cx + profT1 * scale;
-            double t2X = cx + profT2 * scale;
+            double t1X = cx + t1Pos * scale;
+            double t2X = cx + t2Pos * scale;
             double t3Y = cy - profT3Y * scale;
             double t4Y = cy - profT4Y * scale;
             double t5Y = cy - profT5Y * scale;
@@ -1928,7 +1928,7 @@ namespace SahanOhjausGUI
                 });
                 var lbl = new TextBlock
                 {
-                    Text = $"T1\n{profT1:F1}",
+                    Text = $"T1\n{t1Pos:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80))
@@ -1948,7 +1948,7 @@ namespace SahanOhjausGUI
                 });
                 var lbl = new TextBlock
                 {
-                    Text = $"T2\n{profT2:F1}",
+                    Text = $"T2\n{t2Pos:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
@@ -2058,7 +2058,7 @@ namespace SahanOhjausGUI
             canvas.Children.Clear();
             double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
-            double centerY = canvasHeight / 2.0, centerX = canvasWidth / 2.0;
+            double centerX = canvasWidth / 2.0, centerY = canvasHeight / 2.0;
             double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
             double rectHeight = canvasHeight * 0.40, rectY = centerY - rectHeight / 2.0;
 
@@ -2246,15 +2246,15 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(tb);
             }
 
-            var otsikkoLepo = new TextBlock
+            var lepoTitle = new TextBlock
             {
                 Text = "Lepopaikat",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
                 Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100))
             };
-            Canvas.SetLeft(otsikkoLepo, centerX - 40); Canvas.SetTop(otsikkoLepo, 6);
-            canvas.Children.Add(otsikkoLepo);
+            Canvas.SetLeft(lepoTitle, centerX - 40); Canvas.SetTop(lepoTitle, 6);
+            canvas.Children.Add(lepoTitle);
         }
         private void PiirraPhLepopaikkaCanvas(Canvas canvas,
     double lepoV, double lepoO, bool isPh1)
