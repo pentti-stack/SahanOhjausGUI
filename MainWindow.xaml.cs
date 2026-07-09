@@ -1955,7 +1955,7 @@ namespace SahanOhjausGUI
             }
 
             double t1Pos = profT1 + _profOffsetT1;
-            double t2Pos = -profT2 + _profOffsetT2;
+            double t2Pos = profT2 + _profOffsetT2;
             double t7Pos = t1Pos + profT7 + _profOffsetT7;
             double t8Pos = t2Pos - profT8 + _profOffsetT8;
             double profT3Y = profT3 + _profOffsetT3;
@@ -2100,12 +2100,12 @@ namespace SahanOhjausGUI
 
             // ── T3 (right top, blue horizontal line from T1 to right) ─────────
             double t1X = cx + t1Pos * scale;
-            double t2X = cx + t2Pos * scale;
-            double t3Y = cy - profT3Y * scale;
-            double t4Y = cy - profT4Y * scale;
-            double t5Y = cy - profT5Y * scale;
-            double t6Y = cy - profT6Y * scale;
-
+            double t2X = cx - t2Pos * scale;
+            double zeroY = cy + (korkeus / 2.0) * scale;
+            double t3Y = zeroY - profT3Y * scale;
+            double t4Y = zeroY - profT4Y * scale;
+            double t5Y = zeroY - profT5Y * scale;
+            double t6Y = zeroY - profT6Y * scale;
             if (t3Y > 10 && t3Y < H - 10)
             {
                 canvas.Children.Add(new Line
