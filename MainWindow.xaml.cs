@@ -43,6 +43,7 @@ namespace SahanOhjausGUI
         public double OffsetT4 { get; set; } = 0.0;
         public double OffsetT5 { get; set; } = 0.0;
         public double OffsetT6 { get; set; } = 0.0;
+        public double TukkiHalkaisija { get; set; } = 200.0;  // ← LISÄÄ
     }
 
     public class TeraParametritDto
@@ -234,9 +235,10 @@ namespace SahanOhjausGUI
                     OffsetT4 = _offsetT4,
                     OffsetT5 = _offsetT5,
                     OffsetT6 = _offsetT6,
+                    TukkiHalkaisija = _tukkiHalkaisija,
 
 
-        PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
+                    PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
                     PhKokonaisLeveys = PhKokonaisLeveysBox?.Text ?? "600",
                     PhKuivaus = PhKuivausBox?.Text ?? "0",
                     TurvaEtaisyys = turvaEtaisyys,
@@ -296,7 +298,24 @@ namespace SahanOhjausGUI
         _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
         _offsetT4 = data.OffsetT4; _offsetT5 = data.OffsetT5; _offsetT6 = data.OffsetT6;
 
-        KappaleCombo.SelectionChanged -= Kappale_Changed;
+
+                _tukkiHalkaisija = data.TukkiHalkaisija > 0 ? data.TukkiHalkaisija : 200.0;  // ← LISÄÄ
+
+                // ← LISÄÄ TÄMÄ LOHKO:
+                Dispatcher.InvokeAsync(() =>
+                {
+                    if (T1OffsetLabel != null) T1OffsetLabel.Text = $"{_offsetT1:F1}";
+                    if (T2OffsetLabel != null) T2OffsetLabel.Text = $"{_offsetT2:F1}";
+                    if (T3OffsetLabel != null) T3OffsetLabel.Text = $"{_offsetT3:F1}";
+                    if (T4OffsetLabel != null) T4OffsetLabel.Text = $"{_offsetT4:F1}";
+                    if (T5OffsetLabel != null) T5OffsetLabel.Text = $"{_offsetT5:F1}";
+                    if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}";
+                    if (TukkiHalkaisijaaLabel != null) TukkiHalkaisijaaLabel.Text = $"{_tukkiHalkaisija:F0}";
+                    if (Ph1OffsetLabel != null) Ph1OffsetLabel.Text = $"{_ph1Offset:F1} mm";
+                    if (Ph2OffsetLabel != null) Ph2OffsetLabel.Text = $"{_ph2Offset:F1} mm";
+                }, System.Windows.Threading.DispatcherPriority.Loaded);
+
+                KappaleCombo.SelectionChanged -= Kappale_Changed;
                 YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
                 VasenSahaCheck.Checked -= SahaValinta_Changed; VasenSahaCheck.Unchecked -= SahaValinta_Changed;
                 OikeaSahaCheck.Checked -= SahaValinta_Changed; OikeaSahaCheck.Unchecked -= SahaValinta_Changed;
@@ -600,7 +619,7 @@ namespace SahanOhjausGUI
             PiirraVisual();
         }
 
-        private void Laheta_Click(object sender, RoutedEventArgs e)
+        private async void Laheta_Click(object sender, RoutedEventArgs e)
         {
             if (StatusTextBlock?.Text.StartsWith("⚠") == true)
             {
@@ -608,7 +627,59 @@ namespace SahanOhjausGUI
                     "Lähetys estetty", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            SetStatus("✓  Lähetetty logiikkaan", Colors.LightGreen);
+            try
+            {
+                // Laske viimeisimmät arvot
+                double plc_T4 = teraRajat.TryGetValue(4, out var r4) ? r4.Lepopaikka : 340.0;
+                double plc_T2 = teraRajat.TryGetValue(2, out var r2) ? r2.Lepopaikka : -25.0;
+                double plc_T6 = teraRajat.TryGetValue(6, out var r6) ? r6.Lepopaikka : 25.0;
+                double plc_T3 = teraRajat.TryGetValue(3, out var r3) ? r3.Lepopaikka : 340.0;
+                double plc_T1 = teraRajat.TryGetValue(1, out var r1) ? r1.Lepopaikka : -25.0;
+                double plc_T5 = teraRajat.TryGetValue(5, out var r5) ? r5.Lepopaikka : 25.0;
+
+                bool jakosahaOn = OnJakosahaKaytossa();
+                bool yhdistetty = OnYhdistettyTila();
+                double.TryParse(KuivausTextBox?.Text.Replace(",", ".") ?? "0",
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out double kuivausProsentti);
+                double kuivausKerroin = 1.0 + kuivausProsentti / 100.0;
+
+                if (jakosahaOn)
+                {
+                    if (yhdistetty)
+                    {
+                        var paksuudetYhd = GetThicknessValuesYhdistetty().Select(p => p * kuivausKerroin).ToList();
+                        if (paksuudetYhd.Count > 0)
+                            LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6);
+                    }
+                    else
+                    {
+                        var paksuudetOikea = GetThicknessValuesOikea().Select(p => p * kuivausKerroin).ToList();
+                        var paksuudetVasen = GetThicknessValuesVasen().Select(p => p * kuivausKerroin).ToList();
+                        if (OikeaSahaCheck?.IsChecked == true && paksuudetOikea.Count > 0)
+                            LaskeOikeaPuoli(paksuudetOikea, GetHalkaisuTeraOikea(), ref plc_T4, ref plc_T2, ref plc_T6);
+                        if (VasenSahaCheck?.IsChecked == true && paksuudetVasen.Count > 0)
+                            LaskeVasenPuoli(paksuudetVasen, GetHalkaisuTeraVasen(), ref plc_T3, ref plc_T1, ref plc_T5);
+                    }
+                }
+
+                plc_T1 += _offsetT1; plc_T2 += _offsetT2; plc_T3 += _offsetT3;
+                plc_T4 += _offsetT4; plc_T5 += _offsetT5; plc_T6 += _offsetT6;
+
+                // PH-arvot
+                double ph1V = 0, ph1O = 0, ph2V = 0, ph2O = 0;
+                if (OnPhKaytossa())
+                    (ph1V, ph1O, ph2V, ph2O, _, _, _, _) = LaskePhArvot();
+
+                await LahetaArvot(plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6,
+                                  ph1V, ph1O, ph2V, ph2O);
+
+                SetStatus("✓ Lähetetty logiikkaan", Colors.LightGreen);
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"⚠ Yhteysvirhe: {ex.Message}", Colors.OrangeRed);
+            }
         }
 
         private void AvaaTerapAsetukset_Click(object sender, RoutedEventArgs e)
@@ -2036,6 +2107,26 @@ namespace SahanOhjausGUI
             _tukkiHalkaisija = Math.Round(_tukkiHalkaisija - 1.0, 0);
             if (TukkiHalkaisijaaLabel != null) TukkiHalkaisijaaLabel.Text = $"{_tukkiHalkaisija:F0}";
             PiirraVisual();
+        }
+
+        private async Task LahetaArvot(
+    double t1, double t2, double t3,
+    double t4, double t5, double t6,
+    double ph1V, double ph1O, double ph2V, double ph2O)
+        {
+            // S7.Net esimerkki — kommentoi pois kun oikea yhteys lisätään
+            // await _plc.WriteAsync("DB1.DBD0",  (float)t1);
+            // await _plc.WriteAsync("DB1.DBD4",  (float)t2);
+            // await _plc.WriteAsync("DB1.DBD8",  (float)t3);
+            // await _plc.WriteAsync("DB1.DBD12", (float)t4);
+            // await _plc.WriteAsync("DB1.DBD16", (float)t5);
+            // await _plc.WriteAsync("DB1.DBD20", (float)t6);
+            // await _plc.WriteAsync("DB1.DBD24", (float)ph1V);
+            // await _plc.WriteAsync("DB1.DBD28", (float)ph1O);
+            // await _plc.WriteAsync("DB1.DBD32", (float)ph2V);
+            // await _plc.WriteAsync("DB1.DBD36", (float)ph2O);
+
+            await Task.CompletedTask; // ← poista kun oikea yhteys lisätään
         }
         private void SetStatus(string message, Color color)
         {
