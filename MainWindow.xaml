@@ -267,19 +267,137 @@
                         <ColumnDefinition Width="210"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <ScrollViewer Grid.Column="0" Background="#1e1e1e">
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Background="#1e1e1e">
                         <StackPanel Margin="10">
-                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6">
-                                <TextBlock Text="&#x1F4D0; Profilointi &#x2014; tulossa"
-                                           Foreground="#B39DDB" FontWeight="Bold"/>
+                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="&#x1F4D0; Profilointi" FontWeight="Bold"
+                                               Foreground="#B39DDB" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Ter&#xe4;offsetit:" FontSize="11"
+                                               Foreground="#aaa" Margin="0,0,0,4"/>
+
+                                    <!-- T1 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T1" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#4CAF50" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT1OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT1OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT1OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T2 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T2" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#F44336" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT2OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT2OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT2OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T3 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T3" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#2196F3" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT3OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT3OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT3OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T4 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T4" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#00BCD4" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT4OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT4OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT4OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T5 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T5" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#FFEB3B" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT5OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT5OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT5OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T6 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T6" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#E0E0E0" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT6OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT6OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT6OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T7 -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <TextBlock Text="T7" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#9E9E9E" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT7OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT7OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT7OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+
+                                    <!-- T8 -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="T8" Width="20" VerticalAlignment="Center"
+                                                   Foreground="#9E9E9E" FontWeight="Bold"/>
+                                        <Button Content="&#x2212;" Width="22" Height="22"
+                                                Click="ProfT8OffsetMinus_Click" FontSize="13"/>
+                                        <TextBlock x:Name="ProfT8OffsetLabel" Text="0,0" Width="40"
+                                                   TextAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
+                                        <Button Content="+" Width="22" Height="22"
+                                                Click="ProfT8OffsetPlus_Click" FontSize="13"/>
+                                        <TextBlock Text="mm" VerticalAlignment="Center"
+                                                   Margin="4,0,0,0" Foreground="#aaa" FontSize="10"/>
+                                    </StackPanel>
+                                </StackPanel>
                             </Border>
+
+                            <Button Content="&#x26A1; L&#xe4;het&#xe4;" Click="ProfLaheta_Click"
+                                    Background="#1b5e20" BorderBrush="#388e3c"/>
                         </StackPanel>
                     </ScrollViewer>
-                    <Canvas x:Name="ProfilointiCanvas" Grid.Column="1">
-                        <TextBlock Canvas.Left="20" Canvas.Top="20"
-                                   Text="Profilointi &#x2014; tulossa"
-                                   Foreground="#B39DDB" FontSize="16" FontWeight="Bold"/>
-                    </Canvas>
+
+                    <Canvas x:Name="ProfilointiCanvas" Grid.Column="1"
+                            SizeChanged="ProfilointiCanvas_SizeChanged"/>
                 </Grid>
             </TabItem>
             <!-- JAKOSAHA -->
