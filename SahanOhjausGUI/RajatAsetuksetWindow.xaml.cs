@@ -26,6 +26,24 @@ namespace SahanOhjausGUI
         public double Min { get; set; } = 0.0;
         public double Max { get; set; } = 300.0;
         public double Lepopaikka { get; set; } = 0.0;
+
+        public static readonly string[] KaikkiAvaimet =
+        {
+            "ProfT1", "ProfT2", "ProfT3", "ProfT4", "ProfT5", "ProfT6", "ProfT7", "ProfT8"
+        };
+
+        public static ProfilointiRaja LuoOletus(string key) => key switch
+        {
+            "ProfT1" => new ProfilointiRaja { Min = 0.0, Max = 250.0, Lepopaikka = 0.0 },
+            "ProfT2" => new ProfilointiRaja { Min = 0.0, Max = 250.0, Lepopaikka = 0.0 },
+            "ProfT3" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT4" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT5" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT6" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT7" => new ProfilointiRaja { Min = 0.0, Max = 275.0, Lepopaikka = 0.0 },
+            "ProfT8" => new ProfilointiRaja { Min = 0.0, Max = 275.0, Lepopaikka = 0.0 },
+            _ => new ProfilointiRaja()
+        };
     }
 
     public partial class RajatAsetuksetWindow : Window
@@ -62,16 +80,16 @@ namespace SahanOhjausGUI
             ("PH2O", "PH2  \u25b6 Oikea", Color.FromRgb( 80, 200, 255), false),
         };
 
-        private static readonly (string key, string nimi, Color vari, double min, double max, double lepo)[] ProfilointiInfo =
+        private static readonly (string key, string nimi, Color vari)[] ProfilointiInfo =
         {
-            ("ProfT1", "ProfT1 \u25b6 Oikea", Color.FromRgb(76, 175, 80), 0.0, 250.0, 0.0),
-            ("ProfT2", "ProfT2 \u25c0 Vasen", Color.FromRgb(244, 67, 54), 0.0, 250.0, 0.0),
-            ("ProfT3", "ProfT3 \u2195 Yl\u00e4", Color.FromRgb(33, 150, 243), 0.0, 300.0, 0.0),
-            ("ProfT4", "ProfT4 \u2195 Ala", Color.FromRgb(0, 188, 212), 0.0, 300.0, 0.0),
-            ("ProfT5", "ProfT5 \u2195 Yl\u00e4", Color.FromRgb(255, 235, 59), 0.0, 300.0, 0.0),
-            ("ProfT6", "ProfT6 \u2195 Ala", Color.FromRgb(220, 220, 220), 0.0, 300.0, 0.0),
-            ("ProfT7", "ProfT7 \u25b6 Ohjuri", Color.FromRgb(180, 180, 180), 0.0, 275.0, 0.0),
-            ("ProfT8", "ProfT8 \u25c0 Ohjuri", Color.FromRgb(180, 180, 180), 0.0, 275.0, 0.0),
+            ("ProfT1", "ProfT1 \u25b6 Oikea", Color.FromRgb(76, 175, 80)),
+            ("ProfT2", "ProfT2 \u25c0 Vasen", Color.FromRgb(244, 67, 54)),
+            ("ProfT3", "ProfT3 \u2195 Yl\u00e4", Color.FromRgb(33, 150, 243)),
+            ("ProfT4", "ProfT4 \u2195 Ala", Color.FromRgb(0, 188, 212)),
+            ("ProfT5", "ProfT5 \u2195 Yl\u00e4", Color.FromRgb(255, 235, 59)),
+            ("ProfT6", "ProfT6 \u2195 Ala", Color.FromRgb(220, 220, 220)),
+            ("ProfT7", "ProfT7 \u25b6 Ohjuri", Color.FromRgb(180, 180, 180)),
+            ("ProfT8", "ProfT8 \u25c0 Ohjuri", Color.FromRgb(180, 180, 180)),
         };
 
         public RajatAsetuksetWindow(Dictionary<int, TeraRajat> nykyisetRajat,
@@ -154,10 +172,10 @@ namespace SahanOhjausGUI
             });
             TeratPanel.Children.Add(LuoOtsikkoRivi4("Terä", "Min (mm)", "Max (mm)", "Lepopaikka (mm)"));
 
-            foreach (var (key, nimi, vari, min, max, lepo) in ProfilointiInfo)
+            foreach (var (key, nimi, vari) in ProfilointiInfo)
             {
                 if (!profilointiRajat.ContainsKey(key))
-                    profilointiRajat[key] = new ProfilointiRaja { Min = min, Max = max, Lepopaikka = lepo };
+                    profilointiRajat[key] = ProfilointiRaja.LuoOletus(key);
 
                 var minBox = LuoTextBox(profilointiRajat[key].Min.ToString("F1", CultureInfo.InvariantCulture));
                 var maxBox = LuoTextBox(profilointiRajat[key].Max.ToString("F1", CultureInfo.InvariantCulture));

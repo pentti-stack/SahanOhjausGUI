@@ -122,6 +122,11 @@ namespace SahanOhjausGUI
 
         private const double Vaisto_Sisaterä = -140.0;
         private const double Vaisto_Ulkoterä = 140.0;
+        private const double DefaultProfilointiRako = 4.0;
+        private const double DefaultProfilointiLeveys = 100.0;
+
+        private double GetProfilointiRako(int teraNumero) =>
+            teraParametrit.TryGetValue(teraNumero, out var t) ? t.Rako : DefaultProfilointiRako;
 
         private static readonly string TallennusPolku =
             IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -154,14 +159,8 @@ namespace SahanOhjausGUI
             teraRajat[5] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
             teraRajat[6] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
 
-            profilointiRajat["ProfT1"] = new ProfilointiRaja { Min = 0, Max = 250, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT2"] = new ProfilointiRaja { Min = 0, Max = 250, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT3"] = new ProfilointiRaja { Min = 0, Max = 300, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT4"] = new ProfilointiRaja { Min = 0, Max = 300, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT5"] = new ProfilointiRaja { Min = 0, Max = 300, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT6"] = new ProfilointiRaja { Min = 0, Max = 300, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT7"] = new ProfilointiRaja { Min = 0, Max = 275, Lepopaikka = 0.0 };
-            profilointiRajat["ProfT8"] = new ProfilointiRaja { Min = 0, Max = 275, Lepopaikka = 0.0 };
+            foreach (var key in ProfilointiRaja.KaikkiAvaimet)
+                profilointiRajat[key] = ProfilointiRaja.LuoOletus(key);
 
             phRajat["PH1V"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
             phRajat["PH1O"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
@@ -1873,11 +1872,9 @@ namespace SahanOhjausGUI
             }
 
             int n = paksuudet.Count;
-            double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
-
-            double rako1 = n >= 2 ? RakoT(2) : 4.0;
-            double rako2 = n >= 3 ? RakoT(4) : 4.0;
-            double rako3 = n >= 4 ? RakoT(6) : 4.0;
+            double rako1 = n >= 2 ? GetProfilointiRako(2) : DefaultProfilointiRako;
+            double rako2 = n >= 3 ? GetProfilointiRako(4) : DefaultProfilointiRako;
+            double rako3 = n >= 4 ? GetProfilointiRako(6) : DefaultProfilointiRako;
 
             double kokonaisLeveys = paksuudet.Sum()
                 + (n >= 2 ? rako1 : 0)
@@ -1889,13 +1886,13 @@ namespace SahanOhjausGUI
             double[] leftEdge = new double[n];
             double[] rightEdge = new double[n];
             double cur = -kl;
-            double[] raot = new double[] { rako1, rako2, rako3 };
+            double[] raot = new[] { rako1, rako2, rako3 };
             for (int i = 0; i < n; i++)
             {
                 leftEdge[i] = cur;
                 rightEdge[i] = cur + paksuudet[i];
                 if (i < n - 1)
-                    cur += paksuudet[i] + (i < raot.Length ? raot[i] : 4.0);
+                    cur += paksuudet[i] + (i < raot.Length ? raot[i] : DefaultProfilointiRako);
             }
 
             int t1RefIdx = n >= 3 ? n - 2 : n - 1;
@@ -1904,8 +1901,8 @@ namespace SahanOhjausGUI
             profT2 = Math.Abs(leftEdge[t2RefIdx]);
 
             double maxLev = leveydet.Count > 0
-                ? leveydet.Where(v => v > 0).DefaultIfEmpty(100.0).Max()
-                : 100.0;
+                ? leveydet.Where(v => v > 0).DefaultIfEmpty(DefaultProfilointiLeveys).Max()
+                : DefaultProfilointiLeveys;
             double uloinLev = leveydet.Count >= 1 ? leveydet[0] : maxLev;
             if (uloinLev <= 0) uloinLev = maxLev;
 
@@ -2005,12 +2002,11 @@ namespace SahanOhjausGUI
             if (_currentPaksuudet.Count > 0)
             {
                 int n = _currentPaksuudet.Count;
-                double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
                 double[] raot = new[]
                 {
-                    n >= 2 ? RakoT(2) : 0.0,
-                    n >= 3 ? RakoT(4) : 0.0,
-                    n >= 4 ? RakoT(6) : 0.0
+                    n >= 2 ? GetProfilointiRako(2) : 0.0,
+                    n >= 3 ? GetProfilointiRako(4) : 0.0,
+                    n >= 4 ? GetProfilointiRako(6) : 0.0
                 };
                 double totalPaksuus = _currentPaksuudet.Sum() + raot.Take(Math.Max(0, n - 1)).Sum();
                 double startMm = -totalPaksuus / 2.0;
@@ -2030,7 +2026,10 @@ namespace SahanOhjausGUI
                         Stroke = new SolidColorBrush(PuuReuna),
                         StrokeThickness = 1
                     }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, cy - pieceH / 2.0); }));
-                    startMm += p + (i < _currentPaksuudet.Count - 1 ? (i < raot.Length ? raot[i] : 4.0) : 0.0);
+                    double palaRako = 0.0;
+                    if (i < _currentPaksuudet.Count - 1)
+                        palaRako = i < raot.Length ? raot[i] : DefaultProfilointiRako;
+                    startMm += p + palaRako;
                 }
             }
 
