@@ -838,7 +838,16 @@ namespace SahanOhjausGUI
                 var pak = GetThicknessValuesYhdistetty().Select(p => p * kerroin).ToList();
                 var lev = GetLeveysValuesYhdistetty().Select(l => l * kerroin).ToList();
                 int n = pak.Count;
-                var rakoJar = n switch { 3 => new[] { 1, 2 }, 4 => new[] { 1, 2, 4 }, 5 => new[] { 1, 3, 2, 4 }, 6 => new[] { 3, 1, 2, 4, 6 }, 7 => new[] { 5, 3, 1, 2, 4, 6 }, _ => Array.Empty<int>() };
+                // rakoJar: saw gap blade indices per piece count (matches jakosaha ordering)
+                var rakoJar = n switch
+                {
+                    3 => new[] { 1, 2 },
+                    4 => new[] { 1, 2, 4 },
+                    5 => new[] { 1, 3, 2, 4 },
+                    6 => new[] { 3, 1, 2, 4, 6 },
+                    7 => new[] { 5, 3, 1, 2, 4, 6 },
+                    _ => Array.Empty<int>()
+                };
                 double total = pak.Sum() + rakoJar.Select(t => RakoT(t)).Sum();
                 double curMm = -total / 2.0;
                 for (int i = 0; i < n; i++)
