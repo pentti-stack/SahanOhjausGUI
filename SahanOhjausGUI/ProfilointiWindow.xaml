@@ -1,0 +1,261 @@
+<Window x:Class="SahanOhjausGUI.ProfilointiWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Profilointi" Height="740" Width="1280"
+        Background="#1a1a1a" WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#3a3a3a"/>
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#4a4a4a"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#5a5a5a"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#e0e0e0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="215"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- LEFT PANEL – offset controls -->
+        <Border Grid.Column="0" Background="#1e1e1e" BorderBrush="#333" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="8">
+                        <TextBlock Text="&#x1F4D0; Profilointi" FontSize="15" FontWeight="Bold"
+                                   Foreground="#B39DDB" Margin="0,4,0,10"/>
+
+                        <!-- T1 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T1  (oikea pystysaha)" Foreground="#81C784" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T1ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT1Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT1Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT1Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T2 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T2  (vasen pystysaha)" Foreground="#EF9A9A" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T2ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT2Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT2Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT2Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T3 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T3  (oikea yläterä)" Foreground="#90CAF9" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T3ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT3Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT3Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT3Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T4 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T4  (oikea alaterä)" Foreground="#80DEEA" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T4ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT4Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT4Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT4Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T5 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T5  (vasen yläterä)" Foreground="#FFE082" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T5ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT5Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT5Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT5Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T6 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T6  (vasen alaterä)" Foreground="#FFF9C4" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T6ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT6Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT6Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT6Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T7 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T7  (oikea ohjuri)" Foreground="#BDBDBD" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T7ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT7Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT7Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT7Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- T8 -->
+                        <Border Background="#2a2a2a" CornerRadius="5" Padding="7,5" Margin="0,0,0,5">
+                            <StackPanel>
+                                <TextBlock Text="T8  (vasen ohjuri)" Foreground="#BDBDBD" FontWeight="Bold" FontSize="11"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="T8ArvoLabel" Grid.Column="0" Text="0.0 mm"
+                                               Foreground="#adf" FontSize="12" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="-" Width="24" Height="24" Margin="0,0,2,0"
+                                            Click="ProfT8Minus_Click"/>
+                                    <Button Grid.Column="2" Content="+" Width="24" Height="24"
+                                            Click="ProfT8Plus_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="ProfOffsetT8Label" Text="Offset: 0.0 mm"
+                                           Foreground="#888" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Status / warning -->
+                        <TextBlock x:Name="ProfStatusLabel" Text="" Foreground="#FFA726"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+
+                        <!-- Lähetä -->
+                        <Button Content="📤 Lähetä" Height="36"
+                                Background="#2e7d32" BorderBrush="#43a047"
+                                FontWeight="Bold" FontSize="14" Margin="0,10,0,4"
+                                Click="Laheta_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- RIGHT PANEL – canvas + value strip -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="44"/>
+            </Grid.RowDefinitions>
+
+            <Canvas x:Name="ProfCanvas" Grid.Row="0" Background="#111111"
+                    SizeChanged="ProfCanvas_SizeChanged"/>
+
+            <!-- Bottom strip: T values -->
+            <Border Grid.Row="1" Background="#1e1e1e" BorderBrush="#333" BorderThickness="0,1,0,0">
+                <WrapPanel x:Name="TArvoStrip" VerticalAlignment="Center" Margin="8,4"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
