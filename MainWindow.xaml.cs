@@ -43,6 +43,14 @@ namespace SahanOhjausGUI
         public double OffsetT4 { get; set; } = 0.0;
         public double OffsetT5 { get; set; } = 0.0;
         public double OffsetT6 { get; set; } = 0.0;
+        public double ProfOffsetT1 { get; set; } = 0.0;
+        public double ProfOffsetT2 { get; set; } = 0.0;
+        public double ProfOffsetT3 { get; set; } = 0.0;
+        public double ProfOffsetT4 { get; set; } = 0.0;
+        public double ProfOffsetT5 { get; set; } = 0.0;
+        public double ProfOffsetT6 { get; set; } = 0.0;
+        public double ProfOffsetT7 { get; set; } = 0.0;
+        public double ProfOffsetT8 { get; set; } = 0.0;
     }
 
     public class TeraParametritDto
@@ -85,6 +93,16 @@ namespace SahanOhjausGUI
 
         private double _offsetT1 = 0.0, _offsetT2 = 0.0, _offsetT3 = 0.0;
         private double _offsetT4 = 0.0, _offsetT5 = 0.0, _offsetT6 = 0.0;
+
+        private double _profOffsetT1 = 0.0, _profOffsetT2 = 0.0;
+        private double _profOffsetT3 = 0.0, _profOffsetT4 = 0.0;
+        private double _profOffsetT5 = 0.0, _profOffsetT6 = 0.0;
+        private double _profOffsetT7 = 0.0, _profOffsetT8 = 0.0;
+
+        // Stored from PiirraVisual for use by PiirraProfilointiCanvas
+        private double _currentPlcT1 = -25.0, _currentPlcT2 = -25.0;
+        private List<double> _currentPaksuudet = new();
+        private List<double> _currentLeveydet = new();
 
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
@@ -234,6 +252,14 @@ namespace SahanOhjausGUI
                     OffsetT4 = _offsetT4,
                     OffsetT5 = _offsetT5,
                     OffsetT6 = _offsetT6,
+                    ProfOffsetT1 = _profOffsetT1,
+                    ProfOffsetT2 = _profOffsetT2,
+                    ProfOffsetT3 = _profOffsetT3,
+                    ProfOffsetT4 = _profOffsetT4,
+                    ProfOffsetT5 = _profOffsetT5,
+                    ProfOffsetT6 = _profOffsetT6,
+                    ProfOffsetT7 = _profOffsetT7,
+                    ProfOffsetT8 = _profOffsetT8,
 
 
         PhLevinKappale = PhLevinKappaleBox?.Text ?? "150",
@@ -295,6 +321,18 @@ namespace SahanOhjausGUI
                 _ph2Offset = data.Ph2Offset;
         _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
         _offsetT4 = data.OffsetT4; _offsetT5 = data.OffsetT5; _offsetT6 = data.OffsetT6;
+        _profOffsetT1 = data.ProfOffsetT1; _profOffsetT2 = data.ProfOffsetT2;
+        _profOffsetT3 = data.ProfOffsetT3; _profOffsetT4 = data.ProfOffsetT4;
+        _profOffsetT5 = data.ProfOffsetT5; _profOffsetT6 = data.ProfOffsetT6;
+        _profOffsetT7 = data.ProfOffsetT7; _profOffsetT8 = data.ProfOffsetT8;
+        if (ProfT1OffsetLabel != null) ProfT1OffsetLabel.Text = $"{_profOffsetT1:F1}";
+        if (ProfT2OffsetLabel != null) ProfT2OffsetLabel.Text = $"{_profOffsetT2:F1}";
+        if (ProfT3OffsetLabel != null) ProfT3OffsetLabel.Text = $"{_profOffsetT3:F1}";
+        if (ProfT4OffsetLabel != null) ProfT4OffsetLabel.Text = $"{_profOffsetT4:F1}";
+        if (ProfT5OffsetLabel != null) ProfT5OffsetLabel.Text = $"{_profOffsetT5:F1}";
+        if (ProfT6OffsetLabel != null) ProfT6OffsetLabel.Text = $"{_profOffsetT6:F1}";
+        if (ProfT7OffsetLabel != null) ProfT7OffsetLabel.Text = $"{_profOffsetT7:F1}";
+        if (ProfT8OffsetLabel != null) ProfT8OffsetLabel.Text = $"{_profOffsetT8:F1}";
 
         KappaleCombo.SelectionChanged -= Kappale_Changed;
                 YhdistettyCombo.SelectionChanged -= YhdistettyKappale_Changed;
@@ -551,8 +589,14 @@ namespace SahanOhjausGUI
         private void Halkaisu_Changed(object sender, SelectionChangedEventArgs e) => PiirraVisual();
         private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e) => PiirraVisual();
         private void Ph_Changed(object sender, TextChangedEventArgs e) => PiirraVisual();
-        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) => PiirraPhCanvasit();
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) { PiirraPhCanvasit(); PiirraProfilointiCanvas(); }
         private void PhCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => PiirraPhCanvasit();
+        private void ProfilointiCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => PiirraProfilointiCanvas();
+
+        private void ProfLaheta_Click(object sender, RoutedEventArgs e)
+        {
+            SetStatus("✓  Profilointi lähetetty logiikkaan", Colors.LightGreen);
+        }
 
         private void PhValinta_Changed(object sender, RoutedEventArgs e)
         {
@@ -1219,6 +1263,26 @@ namespace SahanOhjausGUI
                 }
 
                 PiirraPhCanvasit();
+
+                // Store for profile canvas
+                _currentPlcT1 = plc_T1;
+                _currentPlcT2 = plc_T2;
+                if (yhdistetty)
+                {
+                    _currentPaksuudet = new List<double>(paksuudetYhd);
+                    _currentLeveydet = new List<double>(leveydetYhd);
+                }
+                else if (vasenOn)
+                {
+                    _currentPaksuudet = new List<double>(paksuudetVasen);
+                    _currentLeveydet = new List<double>(leveydetVasen);
+                }
+                else
+                {
+                    _currentPaksuudet = new List<double>(paksuudetOikea);
+                    _currentLeveydet = new List<double>(leveydetOikea);
+                }
+                PiirraProfilointiCanvas();
             }
             finally { _isPiirraVisualRunning = false; }
 
@@ -1613,90 +1677,380 @@ namespace SahanOhjausGUI
             Canvas.SetLeft(tukkiBorder, canvasWidth - tukkiBorder.DesiredSize.Width - 8);
             canvas.Children.Add(tukkiBorder);
         }
-        private void PiirraJakosahaLepopaikka(Canvas canvas,
-    double plc_T1, double plc_T2, double plc_T3,
-    double plc_T4, double plc_T5, double plc_T6)
+
+        // ── Profilointi canvas (edestäpäin) ───────────────────────────────────
+
+        private void PiirraProfilointiCanvas()
         {
+            if (ProfilointiCanvas == null) return;
+            var canvas = ProfilointiCanvas;
             canvas.Children.Clear();
-            double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
-            double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
-            double centerX = canvasWidth / 2.0, centerY = canvasHeight / 2.0;
-            double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
-            double rectHeight = canvasHeight * 0.45, rectY = centerY - rectHeight / 2.0;
 
-            canvas.Children.Add(new Rectangle
-            {
-                Width = canvasWidth,
-                Height = canvasHeight,
-                Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12))
-            });
+            double W = canvas.ActualWidth > 20 ? canvas.ActualWidth : 600;
+            double H = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
+            double cx = W / 2.0, cy = H / 2.0;
 
-            PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
+            // Uniform scale: fit ±300 mm into available space
+            double scale = Math.Min((W / 2.0 - 50) / 300.0, (H / 2.0 - 55) / 300.0);
+            if (scale <= 0) scale = 0.5;
 
+            // Black background
+            canvas.Children.Add(new Rectangle { Width = W, Height = H, Fill = Brushes.Black });
+
+            // ── Compute profile positions ─────────────────────────────────────
+            // T1 (right green): plcT1 is negative → negate to place on right
+            double t1Pos = -_currentPlcT1 + _profOffsetT1;
+            // T2 (left red): plcT2 is negative → already on left
+            double t2Pos = _currentPlcT2 + _profOffsetT2;
+
+            // T7/T8 guides (25mm wide × 50mm tall)
+            double t7Pos = t1Pos + 25.0 + _profOffsetT7;
+            double t8Pos = t2Pos - 25.0 + _profOffsetT8; // _profOffsetT8 ≤ 0 = further left
+
+            // Kappaleen korkeus = max leveys from current pieces (kuivauskerroin already included)
+            double korkeus = _currentLeveydet.Count > 0
+                ? _currentLeveydet.Where(v => v > 0).DefaultIfEmpty(100.0).Max()
+                : 100.0;
+            if (korkeus <= 0) korkeus = 100.0;
+
+            // T3-T6 Y positions in mm from center (positive = up)
+            double profT3Y = korkeus / 2.0 + _profOffsetT3;          // right top
+            double profT4Y = -(korkeus / 2.0) - _profOffsetT4;       // right bottom (offset ≤ 0 → deeper)
+            double profT5Y = korkeus / 2.0 + _profOffsetT5;          // left top
+            double profT6Y = -(korkeus / 2.0) - _profOffsetT6;       // left bottom
+
+            // ── Horizontal scale (X axis) ─────────────────────────────────────
+            PiirraProfilointiHorizAsteikko(canvas, W, H, cx, scale);
+
+            // ── Vertical scale (Y axis) ───────────────────────────────────────
+            PiirraProfilointiVertAsteikko(canvas, W, H, cy, scale);
+
+            // ── Zero level (green dashed horizontal) ─────────────────────────
             canvas.Children.Add(new Line
             {
-                X1 = centerX,
-                Y1 = 20,
-                X2 = centerX,
-                Y2 = canvasHeight - 30,
-                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
-                StrokeThickness = 1.5,
-                StrokeDashArray = new DoubleCollection { 6, 3 }
+                X1 = 30, Y1 = cy, X2 = W - 10, Y2 = cy,
+                Stroke = new SolidColorBrush(Color.FromRgb(0, 180, 0)),
+                StrokeThickness = 1,
+                StrokeDashArray = new DoubleCollection { 4, 3 }
             });
 
-            var lepo = new SolidColorBrush(Color.FromRgb(100, 100, 100));
-
-            // Vasen puoli — T3, T1, T5
-            double t3X = centerX - plc_T3 * pixelsPerMm;
-            double t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
-            double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm;
-
-            // Oikea puoli — T4, T2, T6
-            double t4X = centerX + plc_T4 * pixelsPerMm;
-            double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
-            double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
-
-            foreach (var (x, label) in new[] {
-        (t5X, $"T5\n{plc_T5:F1}"),
-        (t3X, $"T3\n{plc_T3:F1}"),
-        (t1X, $"T1\n{plc_T1:F1}"),
-        (t2X, $"T2\n{plc_T2:F1}"),
-        (t4X, $"T4\n{plc_T4:F1}"),
-        (t6X, $"T6\n{plc_T6:F1}") })
+            // ── Centerline (blue dashed vertical) ────────────────────────────
+            canvas.Children.Add(new Line
             {
-                if (x < 10 || x > canvasWidth - 10) continue;
-                canvas.Children.Add(new Line
+                X1 = cx, Y1 = 20, X2 = cx, Y2 = H - 30,
+                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                StrokeThickness = 1,
+                StrokeDashArray = new DoubleCollection { 4, 3 }
+            });
+
+            // ── Draw pieces (front view: width=paksuus, height=leveys) ────────
+            if (_currentPaksuudet.Count > 0)
+            {
+                double totalPaksuus = _currentPaksuudet.Sum();
+                double startMm = -totalPaksuus / 2.0;
+                for (int i = 0; i < _currentPaksuudet.Count; i++)
                 {
-                    X1 = x,
-                    Y1 = rectY - 20,
-                    X2 = x,
-                    Y2 = rectY + rectHeight + 20,
-                    Stroke = lepo,
-                    StrokeThickness = 1.5,
-                    StrokeDashArray = new DoubleCollection { 4, 3 }
-                });
-                bool right = x >= centerX;
-                var tb = new TextBlock
-                {
-                    Text = label,
-                    FontSize = 10,
-                    Foreground = lepo,
-                    TextAlignment = right ? TextAlignment.Left : TextAlignment.Right
-                };
-                Canvas.SetLeft(tb, right ? x + 4 : x - 44);
-                Canvas.SetTop(tb, rectY - 38);
-                canvas.Children.Add(tb);
+                    double p = _currentPaksuudet[i];
+                    double l = (i < _currentLeveydet.Count && _currentLeveydet[i] > 0) ? _currentLeveydet[i] : korkeus;
+                    Color c = PuuVarit[i % PuuVarit.Length];
+                    double pieceX = cx + startMm * scale;
+                    double pieceW = p * scale;
+                    double pieceH = l * scale;
+                    canvas.Children.Add(new Rectangle
+                    {
+                        Width = Math.Max(1, pieceW),
+                        Height = Math.Max(1, pieceH),
+                        Fill = new SolidColorBrush(Color.FromArgb(210, c.R, c.G, c.B)),
+                        Stroke = new SolidColorBrush(PuuReuna),
+                        StrokeThickness = 1
+                    }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, cy - pieceH / 2.0); }));
+                    startMm += p;
+                }
             }
 
+            // ── Log circle (gold dashed) ──────────────────────────────────────
+            if (_tukkiHalkaisija > 0)
+            {
+                double tukkiR = _tukkiHalkaisija / 2.0 * scale;
+                canvas.Children.Add(new Ellipse
+                {
+                    Width = tukkiR * 2, Height = tukkiR * 2,
+                    Fill = Brushes.Transparent,
+                    Stroke = new SolidColorBrush(Color.FromRgb(212, 168, 67)),
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 6, 3 }
+                }.Also(e => { Canvas.SetLeft(e, cx - tukkiR); Canvas.SetTop(e, cy - tukkiR); }));
+            }
+
+            // ── T7 guide (right, gray rectangle 25mm wide × 50mm tall) ───────
+            double t7X = cx + t7Pos * scale;
+            double guideW = 25.0 * scale;
+            double guideH = 50.0 * scale;
+            if (t7X > 0 && t7X < W)
+            {
+                canvas.Children.Add(new Rectangle
+                {
+                    Width = Math.Max(2, guideW), Height = Math.Max(2, guideH),
+                    Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
+                    Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    StrokeThickness = 1
+                }.Also(r => { Canvas.SetLeft(r, t7X); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                var t7Lbl = new TextBlock
+                {
+                    Text = $"T7\n{t7Pos:F1}",
+                    FontSize = 9,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180))
+                };
+                Canvas.SetLeft(t7Lbl, t7X + 2);
+                Canvas.SetTop(t7Lbl, cy - guideH / 2.0 - 22);
+                canvas.Children.Add(t7Lbl);
+            }
+
+            // ── T8 guide (left, gray rectangle 25mm wide × 50mm tall) ────────
+            double t8X = cx + t8Pos * scale;
+            if (t8X > 0 && t8X < W)
+            {
+                canvas.Children.Add(new Rectangle
+                {
+                    Width = Math.Max(2, guideW), Height = Math.Max(2, guideH),
+                    Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
+                    Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    StrokeThickness = 1
+                }.Also(r => { Canvas.SetLeft(r, t8X - guideW); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                var t8Lbl = new TextBlock
+                {
+                    Text = $"T8\n{t8Pos:F1}",
+                    FontSize = 9,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    TextAlignment = TextAlignment.Right,
+                    Width = 44
+                };
+                Canvas.SetLeft(t8Lbl, t8X - guideW - 44);
+                Canvas.SetTop(t8Lbl, cy - guideH / 2.0 - 22);
+                canvas.Children.Add(t8Lbl);
+            }
+
+            // ── T3 (right top, blue horizontal line from T1 to right) ─────────
+            double t1X = cx + t1Pos * scale;
+            double t2X = cx + t2Pos * scale;
+            double t3Y = cy - profT3Y * scale;
+            double t4Y = cy - profT4Y * scale;
+            double t5Y = cy - profT5Y * scale;
+            double t6Y = cy - profT6Y * scale;
+
+            if (t3Y > 10 && t3Y < H - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = t1X, Y1 = t3Y, X2 = W - 10, Y2 = t3Y,
+                    Stroke = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T3  {profT3Y:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(33, 150, 243))
+                };
+                Canvas.SetLeft(lbl, W - 70); Canvas.SetTop(lbl, t3Y - 16);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── T4 (right bottom, cyan horizontal line from T1 to right) ──────
+            if (t4Y > 10 && t4Y < H - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = t1X, Y1 = t4Y, X2 = W - 10, Y2 = t4Y,
+                    Stroke = new SolidColorBrush(Color.FromRgb(0, 188, 212)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T4  {profT4Y:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(0, 188, 212))
+                };
+                Canvas.SetLeft(lbl, W - 70); Canvas.SetTop(lbl, t4Y + 4);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── T5 (left top, yellow horizontal line from left to T2) ─────────
+            if (t5Y > 10 && t5Y < H - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = 30, Y1 = t5Y, X2 = t2X, Y2 = t5Y,
+                    Stroke = new SolidColorBrush(Color.FromRgb(255, 235, 59)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T5  {profT5Y:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(255, 235, 59))
+                };
+                Canvas.SetLeft(lbl, 32); Canvas.SetTop(lbl, t5Y - 16);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── T6 (left bottom, light gray horizontal line from left to T2) ──
+            if (t6Y > 10 && t6Y < H - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = 30, Y1 = t6Y, X2 = t2X, Y2 = t6Y,
+                    Stroke = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T6  {profT6Y:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220))
+                };
+                Canvas.SetLeft(lbl, 32); Canvas.SetTop(lbl, t6Y + 4);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── T1 (right, green vertical line) ──────────────────────────────
+            if (t1X > 10 && t1X < W - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = t1X, Y1 = 20, X2 = t1X, Y2 = H - 35,
+                    Stroke = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T1\n{t1Pos:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+                };
+                Canvas.SetLeft(lbl, t1X + 4); Canvas.SetTop(lbl, 4);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── T2 (left, red vertical line) ──────────────────────────────────
+            if (t2X > 10 && t2X < W - 10)
+            {
+                canvas.Children.Add(new Line
+                {
+                    X1 = t2X, Y1 = 20, X2 = t2X, Y2 = H - 35,
+                    Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                    StrokeThickness = 2.5
+                });
+                var lbl = new TextBlock
+                {
+                    Text = $"T2\n{t2Pos:F1}",
+                    FontSize = 10,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                    TextAlignment = TextAlignment.Right,
+                    Width = 44
+                };
+                Canvas.SetLeft(lbl, t2X - 44); Canvas.SetTop(lbl, 4);
+                canvas.Children.Add(lbl);
+            }
+
+            // ── Title ─────────────────────────────────────────────────────────
             var otsikko = new TextBlock
             {
-                Text = "Lepopaikat",
+                Text = "\U0001F4D0 Profilointi \u2014 edest\u00e4",
                 FontSize = 12,
                 FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                Foreground = new SolidColorBrush(Color.FromRgb(179, 157, 219))
             };
-            Canvas.SetLeft(otsikko, centerX - 40); Canvas.SetTop(otsikko, 6);
+            Canvas.SetLeft(otsikko, cx - 80); Canvas.SetTop(otsikko, 4);
             canvas.Children.Add(otsikko);
+        }
+
+        private void PiirraProfilointiHorizAsteikko(Canvas canvas, double W, double H,
+            double cx, double scale)
+        {
+            double axisY = H - 25;
+            canvas.Children.Add(new Line
+            {
+                X1 = 30, Y1 = axisY, X2 = W - 10, Y2 = axisY,
+                Stroke = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+                StrokeThickness = 1
+            });
+            for (int mm = 0; mm <= 300; mm += 10)
+            {
+                bool isMajor = mm % 100 == 0, isMedium = mm % 50 == 0;
+                double tickH = isMajor ? 12 : isMedium ? 7 : 3;
+                foreach (int sign in (mm == 0 ? new[] { 1 } : new[] { 1, -1 }))
+                {
+                    double x = cx + sign * mm * scale;
+                    if (x < 10 || x > W - 5) continue;
+                    canvas.Children.Add(new Line
+                    {
+                        X1 = x, Y1 = axisY, X2 = x, Y2 = axisY - tickH,
+                        Stroke = new SolidColorBrush(isMajor ? Color.FromRgb(150, 150, 150) : Color.FromRgb(70, 70, 70)),
+                        StrokeThickness = 1
+                    });
+                    if (isMajor)
+                    {
+                        var lbl = new TextBlock
+                        {
+                            Text = (sign * mm).ToString(),
+                            FontSize = 9,
+                            Foreground = new SolidColorBrush(Color.FromRgb(130, 130, 130)),
+                            TextAlignment = TextAlignment.Center,
+                            Width = 40
+                        };
+                        Canvas.SetLeft(lbl, x - 20); Canvas.SetTop(lbl, axisY - 24);
+                        canvas.Children.Add(lbl);
+                    }
+                }
+            }
+        }
+
+        private void PiirraProfilointiVertAsteikko(Canvas canvas, double W, double H,
+            double cy, double scale)
+        {
+            double axisX = 28;
+            canvas.Children.Add(new Line
+            {
+                X1 = axisX, Y1 = 15, X2 = axisX, Y2 = H - 25,
+                Stroke = new SolidColorBrush(Color.FromRgb(70, 70, 70)),
+                StrokeThickness = 1
+            });
+            for (int mm = 0; mm <= 300; mm += 10)
+            {
+                bool isMajor = mm % 100 == 0, isMedium = mm % 50 == 0;
+                double tickW = isMajor ? 10 : isMedium ? 6 : 3;
+                foreach (int sign in (mm == 0 ? new[] { 1 } : new[] { 1, -1 }))
+                {
+                    double y = cy - sign * mm * scale;
+                    if (y < 10 || y > H - 28) continue;
+                    canvas.Children.Add(new Line
+                    {
+                        X1 = axisX, Y1 = y, X2 = axisX + tickW, Y2 = y,
+                        Stroke = new SolidColorBrush(isMajor ? Color.FromRgb(150, 150, 150) : Color.FromRgb(70, 70, 70)),
+                        StrokeThickness = 1
+                    });
+                    if (isMajor && mm > 0)
+                    {
+                        var lbl = new TextBlock
+                        {
+                            Text = (sign * mm).ToString(),
+                            FontSize = 9,
+                            Foreground = new SolidColorBrush(Color.FromRgb(130, 130, 130)),
+                            TextAlignment = TextAlignment.Right,
+                            Width = 26
+                        };
+                        Canvas.SetLeft(lbl, 0); Canvas.SetTop(lbl, y - 7);
+                        canvas.Children.Add(lbl);
+                    }
+                }
+            }
         }
         private void PiirraPhCanvas(Canvas canvas,
       double ph1V, double ph1O, double ph2V, double ph2O)
@@ -1704,7 +2058,7 @@ namespace SahanOhjausGUI
             canvas.Children.Clear();
             double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
             double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
-            double centerY = canvasHeight / 2.0, centerX = canvasWidth / 2.0;
+            double centerX = canvasWidth / 2.0, centerY = canvasHeight / 2.0;
             double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
             double rectHeight = canvasHeight * 0.40, rectY = centerY - rectHeight / 2.0;
 
@@ -1819,6 +2173,88 @@ namespace SahanOhjausGUI
             };
             Canvas.SetLeft(otsikko, centerX - 120); Canvas.SetTop(otsikko, 6);
             canvas.Children.Add(otsikko);
+        }
+        private void PiirraJakosahaLepopaikka(Canvas canvas,
+    double plc_T1, double plc_T2, double plc_T3,
+    double plc_T4, double plc_T5, double plc_T6)
+        {
+            canvas.Children.Clear();
+            double canvasWidth = canvas.ActualWidth > 20 ? canvas.ActualWidth : 900;
+            double canvasHeight = canvas.ActualHeight > 20 ? canvas.ActualHeight : 400;
+            double centerX = canvasWidth / 2.0, centerY = canvasHeight / 2.0;
+            double pixelsPerMm = (canvasWidth / 2.0 - 20) / 350.0;
+            double rectHeight = canvasHeight * 0.45, rectY = centerY - rectHeight / 2.0;
+
+            canvas.Children.Add(new Rectangle
+            {
+                Width = canvasWidth,
+                Height = canvasHeight,
+                Fill = new SolidColorBrush(Color.FromRgb(18, 15, 12))
+            });
+
+            PiirraAsteikko(canvas, canvasWidth, canvasHeight, centerX, pixelsPerMm);
+
+            canvas.Children.Add(new Line
+            {
+                X1 = centerX,
+                Y1 = 20,
+                X2 = centerX,
+                Y2 = canvasHeight - 30,
+                Stroke = new SolidColorBrush(Color.FromRgb(79, 195, 247)),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 6, 3 }
+            });
+
+            var lepo = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+
+            double t3X = centerX - plc_T3 * pixelsPerMm;
+            double t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
+            double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm;
+            double t4X = centerX + plc_T4 * pixelsPerMm;
+            double t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
+            double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
+
+            foreach (var (x, label) in new[] {
+        (t5X, $"T5\n{plc_T5:F1}"),
+        (t3X, $"T3\n{plc_T3:F1}"),
+        (t1X, $"T1\n{plc_T1:F1}"),
+        (t2X, $"T2\n{plc_T2:F1}"),
+        (t4X, $"T4\n{plc_T4:F1}"),
+        (t6X, $"T6\n{plc_T6:F1}") })
+            {
+                if (x < 10 || x > canvasWidth - 10) continue;
+                canvas.Children.Add(new Line
+                {
+                    X1 = x,
+                    Y1 = rectY - 20,
+                    X2 = x,
+                    Y2 = rectY + rectHeight + 20,
+                    Stroke = lepo,
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 4, 3 }
+                });
+                bool right = x >= centerX;
+                var tb = new TextBlock
+                {
+                    Text = label,
+                    FontSize = 10,
+                    Foreground = lepo,
+                    TextAlignment = right ? TextAlignment.Left : TextAlignment.Right
+                };
+                Canvas.SetLeft(tb, right ? x + 4 : x - 44);
+                Canvas.SetTop(tb, rectY - 38);
+                canvas.Children.Add(tb);
+            }
+
+            var lepoTitle = new TextBlock
+            {
+                Text = "Lepopaikat",
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100))
+            };
+            Canvas.SetLeft(lepoTitle, centerX - 40); Canvas.SetTop(lepoTitle, 6);
+            canvas.Children.Add(lepoTitle);
         }
         private void PiirraPhLepopaikkaCanvas(Canvas canvas,
     double lepoV, double lepoO, bool isPh1)
@@ -2025,6 +2461,62 @@ namespace SahanOhjausGUI
         { _offsetT6 = Math.Round(_offsetT6 + 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
         private void T6OffsetMinus_Click(object sender, RoutedEventArgs e)
         { _offsetT6 = Math.Round(_offsetT6 - 0.1, 1); if (T6OffsetLabel != null) T6OffsetLabel.Text = $"{_offsetT6:F1}"; PiirraVisual(); }
+
+        // ── Profilointi-offsetit ──────────────────────────────────────────────
+
+        private void ProfOffsetChange(ref double field, double delta, double min, double max,
+            TextBlock? label, string varoitusNimi)
+        {
+            double newVal = Math.Round(field + delta, 1);
+            if (newVal < min || newVal > max)
+            {
+                SetStatus($"\u26a0  {varoitusNimi}: raja [{min:F0}\u2026{max:F0}] mm", Colors.OrangeRed);
+                return;
+            }
+            field = newVal;
+            if (label != null) label.Text = $"{field:F1}";
+            PiirraProfilointiCanvas();
+        }
+
+        private void ProfT1OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT1, 0.1, 0, 250, ProfT1OffsetLabel, "T1 prof"); }
+        private void ProfT1OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT1, -0.1, 0, 250, ProfT1OffsetLabel, "T1 prof"); }
+
+        private void ProfT2OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT2, 0.1, -250, 0, ProfT2OffsetLabel, "T2 prof"); }
+        private void ProfT2OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT2, -0.1, -250, 0, ProfT2OffsetLabel, "T2 prof"); }
+
+        private void ProfT3OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT3, 0.1, 0, 280, ProfT3OffsetLabel, "T3 prof"); }
+        private void ProfT3OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT3, -0.1, 0, 280, ProfT3OffsetLabel, "T3 prof"); }
+
+        private void ProfT4OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT4, 0.1, -280, 0, ProfT4OffsetLabel, "T4 prof"); }
+        private void ProfT4OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT4, -0.1, -280, 0, ProfT4OffsetLabel, "T4 prof"); }
+
+        private void ProfT5OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT5, 0.1, 0, 280, ProfT5OffsetLabel, "T5 prof"); }
+        private void ProfT5OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT5, -0.1, 0, 280, ProfT5OffsetLabel, "T5 prof"); }
+
+        private void ProfT6OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT6, 0.1, -280, 0, ProfT6OffsetLabel, "T6 prof"); }
+        private void ProfT6OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT6, -0.1, -280, 0, ProfT6OffsetLabel, "T6 prof"); }
+
+        private void ProfT7OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT7, 0.1, 0, 275, ProfT7OffsetLabel, "T7 prof"); }
+        private void ProfT7OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT7, -0.1, 0, 275, ProfT7OffsetLabel, "T7 prof"); }
+
+        private void ProfT8OffsetPlus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT8, 0.1, -275, 0, ProfT8OffsetLabel, "T8 prof"); }
+        private void ProfT8OffsetMinus_Click(object sender, RoutedEventArgs e)
+        { ProfOffsetChange(ref _profOffsetT8, -0.1, -275, 0, ProfT8OffsetLabel, "T8 prof"); }
         private void TukkiPlus_Click(object sender, RoutedEventArgs e)
         {
             _tukkiHalkaisija = Math.Round(_tukkiHalkaisija + 1.0, 0);
