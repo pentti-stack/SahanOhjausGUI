@@ -21,17 +21,45 @@ namespace SahanOhjausGUI
         public double LepoOikea { get; set; } = 0.0;
     }
 
+    public class ProfilointiRaja
+    {
+        public double Min { get; set; } = 0.0;
+        public double Max { get; set; } = 300.0;
+        public double Lepopaikka { get; set; } = 0.0;
+
+        public static readonly string[] KaikkiAvaimet =
+        {
+            "ProfT1", "ProfT2", "ProfT3", "ProfT4", "ProfT5", "ProfT6", "ProfT7", "ProfT8"
+        };
+
+        public static ProfilointiRaja LuoOletus(string key) => key switch
+        {
+            "ProfT1" => new ProfilointiRaja { Min = 0.0, Max = 250.0, Lepopaikka = 0.0 },
+            "ProfT2" => new ProfilointiRaja { Min = 0.0, Max = 250.0, Lepopaikka = 0.0 },
+            "ProfT3" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT4" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT5" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT6" => new ProfilointiRaja { Min = 0.0, Max = 300.0, Lepopaikka = 0.0 },
+            "ProfT7" => new ProfilointiRaja { Min = 0.0, Max = 275.0, Lepopaikka = 0.0 },
+            "ProfT8" => new ProfilointiRaja { Min = 0.0, Max = 275.0, Lepopaikka = 0.0 },
+            _ => new ProfilointiRaja()
+        };
+    }
+
     public partial class RajatAsetuksetWindow : Window
     {
         private readonly Dictionary<int, TeraRajat> rajat;
+        private readonly Dictionary<string, ProfilointiRaja> profilointiRajat;
         private readonly Dictionary<string, PhRajat> phRajat;
         private double turvaEtaisyys;
 
         private readonly Dictionary<int, (TextBox min, TextBox max, TextBox lepopaikka, TextBox vaisto)> textBoxes = new();
+        private readonly Dictionary<string, (TextBox min, TextBox max, TextBox lepopaikka)> profilointiTextBoxes = new();
         private readonly Dictionary<string, TextBox> phBoxes = new();
         private TextBox? turvaTb;
 
         public event Action<Dictionary<int, TeraRajat>>? OnRajatChanged;
+        public event Action<Dictionary<string, ProfilointiRaja>>? OnProfilointiRajatChanged;
         public event Action<Dictionary<string, PhRajat>, double>? OnPhRajatChanged;
 
         private static readonly (int numero, string nimi, Color vari)[] TeraInfo =
@@ -52,15 +80,30 @@ namespace SahanOhjausGUI
             ("PH2O", "PH2  \u25b6 Oikea", Color.FromRgb( 80, 200, 255), false),
         };
 
+        private static readonly (string key, string nimi, Color vari)[] ProfilointiInfo =
+        {
+            ("ProfT1", "ProfT1 \u25b6 Oikea", Color.FromRgb(76, 175, 80)),
+            ("ProfT2", "ProfT2 \u25c0 Vasen", Color.FromRgb(244, 67, 54)),
+            ("ProfT3", "ProfT3 \u2195 Yl\u00e4", Color.FromRgb(33, 150, 243)),
+            ("ProfT4", "ProfT4 \u2195 Ala", Color.FromRgb(0, 188, 212)),
+            ("ProfT5", "ProfT5 \u2195 Yl\u00e4", Color.FromRgb(255, 235, 59)),
+            ("ProfT6", "ProfT6 \u2195 Ala", Color.FromRgb(220, 220, 220)),
+            ("ProfT7", "ProfT7 \u25b6 Ohjuri", Color.FromRgb(180, 180, 180)),
+            ("ProfT8", "ProfT8 \u25c0 Ohjuri", Color.FromRgb(180, 180, 180)),
+        };
+
         public RajatAsetuksetWindow(Dictionary<int, TeraRajat> nykyisetRajat,
+            Dictionary<string, ProfilointiRaja> nykyisetProfilointiRajat,
             Dictionary<string, PhRajat> nykyisetPhRajat, double nykyinenTurva)
         {
             InitializeComponent();
             rajat = new Dictionary<int, TeraRajat>(nykyisetRajat);
+            profilointiRajat = new Dictionary<string, ProfilointiRaja>(nykyisetProfilointiRajat);
             phRajat = new Dictionary<string, PhRajat>(nykyisetPhRajat);
             turvaEtaisyys = nykyinenTurva;
             LuoPhRivit();
             LuoTeraRivit();
+            LuoProfilointiRivit();
             LuoTurvaRivi();
         }
 
@@ -113,6 +156,32 @@ namespace SahanOhjausGUI
                 var lepoBox = LuoTextBox(arvo.ToString("F1", CultureInfo.InvariantCulture));
                 TeratPanel.Children.Add(LuoYksikenttaRivi(nimi, vari, lepoBox));
                 phBoxes[key] = lepoBox;
+            }
+        }
+
+        private void LuoProfilointiRivit()
+        {
+            TeratPanel.Children.Add(new Border { Height = 12 });
+            TeratPanel.Children.Add(new TextBlock
+            {
+                Text = "📐 Profilointi — terien rajat",
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(179, 157, 219)),
+                Margin = new Thickness(0, 0, 0, 6)
+            });
+            TeratPanel.Children.Add(LuoOtsikkoRivi4("Terä", "Min (mm)", "Max (mm)", "Lepopaikka (mm)"));
+
+            foreach (var (key, nimi, vari) in ProfilointiInfo)
+            {
+                if (!profilointiRajat.ContainsKey(key))
+                    profilointiRajat[key] = ProfilointiRaja.LuoOletus(key);
+
+                var minBox = LuoTextBox(profilointiRajat[key].Min.ToString("F1", CultureInfo.InvariantCulture));
+                var maxBox = LuoTextBox(profilointiRajat[key].Max.ToString("F1", CultureInfo.InvariantCulture));
+                var lepoBox = LuoTextBox(profilointiRajat[key].Lepopaikka.ToString("F1", CultureInfo.InvariantCulture));
+                TeratPanel.Children.Add(LuoKolmikenttaRivi(nimi, vari, minBox, maxBox, lepoBox));
+                profilointiTextBoxes[key] = (minBox, maxBox, lepoBox);
             }
         }
 
@@ -207,6 +276,32 @@ namespace SahanOhjausGUI
             return new Border { Child = grid };
         }
 
+        private static Border LuoOtsikkoRivi4(string col0, string col1, string col2, string col3)
+        {
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            void Add(int col, string text)
+            {
+                var tb = new TextBlock
+                {
+                    Text = text,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    HorizontalAlignment = col == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 4)
+                };
+                Grid.SetColumn(tb, col); grid.Children.Add(tb);
+            }
+            Add(0, col0); Add(1, col1); Add(3, col2); Add(5, col3);
+            return new Border { Child = grid };
+        }
+
         private static Border LuoNelikenttaRivi(string nimi, Color vari,
             TextBox b1, TextBox b2, TextBox b3, TextBox b4)
         {
@@ -270,6 +365,37 @@ namespace SahanOhjausGUI
             return border;
         }
 
+        private static Border LuoKolmikenttaRivi(string nimi, Color vari, TextBox b1, TextBox b2, TextBox b3)
+        {
+            var border = new Border
+            {
+                Margin = new Thickness(0, 0, 0, 6),
+                Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 8, 10, 8)
+            };
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var lbl = new TextBlock
+            {
+                Text = nimi,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(vari),
+                FontSize = 12,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(lbl, 0); Grid.SetColumn(b1, 1); Grid.SetColumn(b2, 3); Grid.SetColumn(b3, 5);
+            grid.Children.Add(lbl); grid.Children.Add(b1); grid.Children.Add(b2); grid.Children.Add(b3);
+            border.Child = grid;
+            return border;
+        }
+
         private static TextBox LuoTextBox(string arvo) => new TextBox
         {
             Text = arvo,
@@ -279,6 +405,7 @@ namespace SahanOhjausGUI
         private void Tallenna_Click(object sender, RoutedEventArgs e)
         {
             var paivitetyt = new Dictionary<int, TeraRajat>();
+            var paivitetytProfilointi = new Dictionary<string, ProfilointiRaja>();
             var paivitetytPh = new Dictionary<string, PhRajat>();
             bool virhe = false;
 
@@ -302,6 +429,25 @@ namespace SahanOhjausGUI
                 if (!minOk || !maxOk || !lepoOk || !vaistoOk || !rangeOk) { virhe = true; continue; }
                 paivitetyt[kvp.Key] = new TeraRajat
                 { Min = minVal, Max = maxVal, Lepopaikka = lepoVal, Vaisto = vaistoVal };
+            }
+
+            foreach (var kvp in profilointiTextBoxes)
+            {
+                bool minOk = double.TryParse(kvp.Value.min.Text.Replace(",", "."),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out double minVal);
+                bool maxOk = double.TryParse(kvp.Value.max.Text.Replace(",", "."),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out double maxVal);
+                bool lepoOk = double.TryParse(kvp.Value.lepopaikka.Text.Replace(",", "."),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out double lepoVal);
+
+                bool rangeOk = minOk && maxOk && minVal < maxVal;
+                kvp.Value.min.BorderBrush = minOk && rangeOk ? Brushes.Gray : Brushes.OrangeRed;
+                kvp.Value.max.BorderBrush = maxOk && rangeOk ? Brushes.Gray : Brushes.OrangeRed;
+                kvp.Value.lepopaikka.BorderBrush = lepoOk ? Brushes.Gray : Brushes.OrangeRed;
+
+                if (!minOk || !maxOk || !lepoOk || !rangeOk) { virhe = true; continue; }
+                paivitetytProfilointi[kvp.Key] = new ProfilointiRaja
+                { Min = minVal, Max = maxVal, Lepopaikka = lepoVal };
             }
 
             foreach (var (key, _, _, kaytaVasen) in PhInfo)
@@ -336,6 +482,7 @@ namespace SahanOhjausGUI
             }
 
             OnRajatChanged?.Invoke(paivitetyt);
+            OnProfilointiRajatChanged?.Invoke(paivitetytProfilointi);
             OnPhRajatChanged?.Invoke(paivitetytPh, turvaVal);
             Close();
         }

@@ -33,6 +33,7 @@ namespace SahanOhjausGUI
         public string PhKokonaisLeveys { get; set; } = "600";
         public string PhKuivaus { get; set; } = "0";
         public Dictionary<int, TeraRajatDto> TeraRajat { get; set; } = new();
+        public Dictionary<string, ProfilointiRajaDto> ProfilointiRajat { get; set; } = new();
         public Dictionary<string, PhRajatDto> PhRajat { get; set; } = new();
         public double Ph1Offset { get; set; } = 0.0;
         public double Ph2Offset { get; set; } = 0.0;
@@ -71,6 +72,13 @@ namespace SahanOhjausGUI
         public double Vaisto { get; set; } = -140.0;
     }
 
+    public class ProfilointiRajaDto
+    {
+        public double Min { get; set; }
+        public double Max { get; set; }
+        public double Lepopaikka { get; set; }
+    }
+
     public class PhRajatDto
     {
         public double LepoVasen { get; set; } = 0.0;
@@ -87,6 +95,7 @@ namespace SahanOhjausGUI
         private readonly Dictionary<int, TextBox> leveysTextBoxesOikea = new();
         private readonly Dictionary<int, TextBox> leveysTextBoxesYhdistetty = new();
         private readonly Dictionary<int, TeraRajat> teraRajat = new();
+        private readonly Dictionary<string, ProfilointiRaja> profilointiRajat = new();
         private readonly Dictionary<string, PhRajat> phRajat = new();
 
         private double _ph1Offset = 0.0;
@@ -105,7 +114,6 @@ namespace SahanOhjausGUI
         private int _yhdistettyT2RefKappale = 0;  // 0 = automaattinen
 
         // Stored from PiirraVisual for use by PiirraProfilointiCanvas
-        private double _currentPlcT1 = -25.0, _currentPlcT2 = -25.0;
         private List<double> _currentPaksuudet = new();
         private List<double> _currentLeveydet = new();
 
@@ -114,6 +122,11 @@ namespace SahanOhjausGUI
 
         private const double Vaisto_Sisaterä = -140.0;
         private const double Vaisto_Ulkoterä = 140.0;
+        private const double DefaultProfilointiRako = 4.0;
+        private const double DefaultProfilointiLeveys = 100.0;
+
+        private double GetProfilointiRako(int teraNumero) =>
+            teraParametrit.TryGetValue(teraNumero, out var t) ? t.Rako : DefaultProfilointiRako;
 
         private static readonly string TallennusPolku =
             IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -145,6 +158,9 @@ namespace SahanOhjausGUI
             teraRajat[4] = new TeraRajat { Min = -18.5, Max = 340, Lepopaikka = 340.0, Vaisto = 140.0 };
             teraRajat[5] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
             teraRajat[6] = new TeraRajat { Min = 21.7, Max = 146, Lepopaikka = 25.0, Vaisto = 140.0 };
+
+            foreach (var key in ProfilointiRaja.KaikkiAvaimet)
+                profilointiRajat[key] = ProfilointiRaja.LuoOletus(key);
 
             phRajat["PH1V"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
             phRajat["PH1O"] = new PhRajat { LepoVasen = 0.0, LepoOikea = 0.0 };
@@ -280,6 +296,12 @@ namespace SahanOhjausGUI
                         Lepopaikka = kvp.Value.Lepopaikka,
                         Vaisto = kvp.Value.Vaisto
                     }),
+                    ProfilointiRajat = profilointiRajat.ToDictionary(kvp => kvp.Key, kvp => new ProfilointiRajaDto
+                    {
+                        Min = kvp.Value.Min,
+                        Max = kvp.Value.Max,
+                        Lepopaikka = kvp.Value.Lepopaikka
+                    }),
                     PhRajat = phRajat.ToDictionary(kvp => kvp.Key, kvp => new PhRajatDto
                     {
                         LepoVasen = kvp.Value.LepoVasen,
@@ -321,6 +343,14 @@ namespace SahanOhjausGUI
                     if (!phRajat.ContainsKey(kvp.Key)) continue;
                     phRajat[kvp.Key].LepoVasen = kvp.Value.LepoVasen;
                     phRajat[kvp.Key].LepoOikea = kvp.Value.LepoOikea;
+                }
+                foreach (var kvp in data.ProfilointiRajat)
+                {
+                    if (!profilointiRajat.ContainsKey(kvp.Key))
+                        profilointiRajat[kvp.Key] = new ProfilointiRaja();
+                    profilointiRajat[kvp.Key].Min = kvp.Value.Min;
+                    profilointiRajat[kvp.Key].Max = kvp.Value.Max;
+                    profilointiRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
                 }
 
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
@@ -796,7 +826,7 @@ namespace SahanOhjausGUI
         {
             try
             {
-                var rajatWindow = new RajatAsetuksetWindow(teraRajat, phRajat, turvaEtaisyys) { Owner = this };
+                var rajatWindow = new RajatAsetuksetWindow(teraRajat, profilointiRajat, phRajat, turvaEtaisyys) { Owner = this };
                 rajatWindow.OnRajatChanged += paivitetyt =>
                 {
                     foreach (var kvp in paivitetyt)
@@ -807,6 +837,19 @@ namespace SahanOhjausGUI
                     }
                     PiirraVisual();
                     SetStatus("✓  Rajasetukset päivitetty", Colors.LightGreen);
+                };
+                rajatWindow.OnProfilointiRajatChanged += paivitetyt =>
+                {
+                    foreach (var kvp in paivitetyt)
+                    {
+                        if (!profilointiRajat.ContainsKey(kvp.Key))
+                            profilointiRajat[kvp.Key] = new ProfilointiRaja();
+                        profilointiRajat[kvp.Key].Min = kvp.Value.Min;
+                        profilointiRajat[kvp.Key].Max = kvp.Value.Max;
+                        profilointiRajat[kvp.Key].Lepopaikka = kvp.Value.Lepopaikka;
+                    }
+                    PiirraProfilointiCanvas();
+                    SetStatus("✓  Profiloinnin rajasetukset päivitetty", Colors.LightGreen);
                 };
                 rajatWindow.OnPhRajatChanged += (paivitetytPh, uusiTurva) =>
                 {
@@ -1370,8 +1413,6 @@ namespace SahanOhjausGUI
                 PiirraPhCanvasit();
 
                 // Store for profile canvas
-                _currentPlcT1 = plc_T1;
-                _currentPlcT2 = plc_T2;
                 if (yhdistetty)
                 {
                     _currentPaksuudet = new List<double>(paksuudetYhd);
@@ -1815,6 +1856,66 @@ namespace SahanOhjausGUI
             canvas.Children.Add(tukkiBorder);
         }
 
+        // ── Profilointi laskenta ───────────────────────────────────────────────
+
+        private void LaskeProfilointiArvot(
+            List<double> paksuudet, List<double> leveydet,
+            out double profT1, out double profT2,
+            out double profT3, out double profT4,
+            out double profT5, out double profT6,
+            out double profT7, out double profT8)
+        {
+            if (paksuudet == null || paksuudet.Count == 0)
+            {
+                profT1 = profT2 = profT3 = profT4 = profT5 = profT6 = profT7 = profT8 = 0;
+                return;
+            }
+
+            int n = paksuudet.Count;
+            double rako1 = n >= 2 ? GetProfilointiRako(2) : DefaultProfilointiRako;
+            double rako2 = n >= 3 ? GetProfilointiRako(4) : DefaultProfilointiRako;
+            double rako3 = n >= 4 ? GetProfilointiRako(6) : DefaultProfilointiRako;
+
+            double kokonaisLeveys = paksuudet.Sum()
+                + (n >= 2 ? rako1 : 0)
+                + (n >= 3 ? rako2 : 0)
+                + (n >= 4 ? rako3 : 0);
+
+            double kl = kokonaisLeveys / 2.0;
+
+            double[] leftEdge = new double[n];
+            double[] rightEdge = new double[n];
+            double cur = -kl;
+            double[] raot = new[] { rako1, rako2, rako3 };
+            for (int i = 0; i < n; i++)
+            {
+                leftEdge[i] = cur;
+                rightEdge[i] = cur + paksuudet[i];
+                if (i < n - 1)
+                    cur += paksuudet[i] + (i < raot.Length ? raot[i] : DefaultProfilointiRako);
+            }
+
+            int t1RefIdx = n >= 3 ? n - 2 : n - 1;
+            int t2RefIdx = n >= 3 ? 1 : 0;
+            profT1 = rightEdge[t1RefIdx];
+            profT2 = Math.Abs(leftEdge[t2RefIdx]);
+
+            double maxLev = leveydet.Count > 0
+                ? leveydet.Where(v => v > 0).DefaultIfEmpty(DefaultProfilointiLeveys).Max()
+                : DefaultProfilointiLeveys;
+            double uloinLev = leveydet.Count >= 1 ? leveydet[0] : maxLev;
+            if (uloinLev <= 0) uloinLev = maxLev;
+
+            double offset = (maxLev - uloinLev) / 2.0;
+            profT3 = offset + uloinLev;
+            profT4 = offset;
+            profT5 = profT3;
+            profT6 = profT4;
+
+            profT7 = rightEdge[n - 1] - profT1;
+            profT8 = Math.Abs(leftEdge[0]) - profT2;
+        }
+
         // ── Profilointi canvas (edestäpäin) ───────────────────────────────────
 
         private void PiirraProfilointiCanvas()
@@ -1835,26 +1936,37 @@ namespace SahanOhjausGUI
             canvas.Children.Add(new Rectangle { Width = W, Height = H, Fill = Brushes.Black });
 
             // ── Compute profile positions ─────────────────────────────────────
-            // T1 (right green): plcT1 is negative → negate to place on right
-            double t1Pos = -_currentPlcT1 + _profOffsetT1;
-            // T2 (left red): plcT2 is negative → already on left
-            double t2Pos = _currentPlcT2 + _profOffsetT2;
+            LaskeProfilointiArvot(_currentPaksuudet, _currentLeveydet,
+                out double profT1, out double profT2,
+                out double profT3, out double profT4,
+                out double profT5, out double profT6,
+                out double profT7, out double profT8);
 
-            // T7/T8 guides (25mm wide × 50mm tall)
-            double t7Pos = t1Pos + 25.0 + _profOffsetT7;
-            double t8Pos = t2Pos - 25.0 + _profOffsetT8; // _profOffsetT8 ≤ 0 = further left
+            if (_currentPaksuudet.Count == 0)
+            {
+                profT1 = profilointiRajat.TryGetValue("ProfT1", out var p1) ? p1.Lepopaikka : 0.0;
+                profT2 = profilointiRajat.TryGetValue("ProfT2", out var p2) ? p2.Lepopaikka : 0.0;
+                profT3 = profilointiRajat.TryGetValue("ProfT3", out var p3) ? p3.Lepopaikka : 0.0;
+                profT4 = profilointiRajat.TryGetValue("ProfT4", out var p4) ? p4.Lepopaikka : 0.0;
+                profT5 = profilointiRajat.TryGetValue("ProfT5", out var p5) ? p5.Lepopaikka : 0.0;
+                profT6 = profilointiRajat.TryGetValue("ProfT6", out var p6) ? p6.Lepopaikka : 0.0;
+                profT7 = profilointiRajat.TryGetValue("ProfT7", out var p7) ? p7.Lepopaikka : 0.0;
+                profT8 = profilointiRajat.TryGetValue("ProfT8", out var p8) ? p8.Lepopaikka : 0.0;
+            }
 
-            // Kappaleen korkeus = max leveys from current pieces (kuivauskerroin already included)
+            double t1Pos = profT1 + _profOffsetT1;
+            double t2Pos = -_currentPlcT2 + _profOffsetT2;
+            double t7Pos = t1Pos + profT7 + _profOffsetT7;
+            double t8Pos = t2Pos - profT8 + _profOffsetT8;
+            double profT3Y = profT3 + _profOffsetT3;
+            double profT4Y = profT4 + _profOffsetT4;
+            double profT5Y = profT5 + _profOffsetT5;
+            double profT6Y = profT6 + _profOffsetT6;
+
             double korkeus = _currentLeveydet.Count > 0
                 ? _currentLeveydet.Where(v => v > 0).DefaultIfEmpty(100.0).Max()
                 : 100.0;
             if (korkeus <= 0) korkeus = 100.0;
-
-            // T3-T6 Y positions in mm from center (positive = up)
-            double profT3Y = korkeus / 2.0 + _profOffsetT3;          // right top
-            double profT4Y = -(korkeus / 2.0) - _profOffsetT4;       // right bottom (offset ≤ 0 → deeper)
-            double profT5Y = korkeus / 2.0 + _profOffsetT5;          // left top
-            double profT6Y = -(korkeus / 2.0) - _profOffsetT6;       // left bottom
 
             // ── Horizontal scale (X axis) ─────────────────────────────────────
             PiirraProfilointiHorizAsteikko(canvas, W, H, cx, scale);
@@ -1889,7 +2001,14 @@ namespace SahanOhjausGUI
             // ── Draw pieces (front view: width=paksuus, height=leveys) ────────
             if (_currentPaksuudet.Count > 0)
             {
-                double totalPaksuus = _currentPaksuudet.Sum();
+                int n = _currentPaksuudet.Count;
+                double[] raot = new[]
+                {
+                    n >= 2 ? GetProfilointiRako(2) : 0.0,
+                    n >= 3 ? GetProfilointiRako(4) : 0.0,
+                    n >= 4 ? GetProfilointiRako(6) : 0.0
+                };
+                double totalPaksuus = _currentPaksuudet.Sum() + raot.Take(Math.Max(0, n - 1)).Sum();
                 double startMm = -totalPaksuus / 2.0;
                 for (int i = 0; i < _currentPaksuudet.Count; i++)
                 {
@@ -1906,8 +2025,11 @@ namespace SahanOhjausGUI
                         Fill = new SolidColorBrush(Color.FromArgb(210, c.R, c.G, c.B)),
                         Stroke = new SolidColorBrush(PuuReuna),
                         StrokeThickness = 1
-                    }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, cy - pieceH / 2.0); }));
-                    startMm += p;
+                    }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, zeroY - pieceH); }));
+                    double palaRako = 0.0;
+                    if (i < _currentPaksuudet.Count - 1)
+                        palaRako = i < raot.Length ? raot[i] : DefaultProfilointiRako;
+                    startMm += p + palaRako;
                 }
             }
 
@@ -1979,10 +2101,11 @@ namespace SahanOhjausGUI
             // ── T3 (right top, blue horizontal line from T1 to right) ─────────
             double t1X = cx + t1Pos * scale;
             double t2X = cx + t2Pos * scale;
-            double t3Y = cy - profT3Y * scale;
-            double t4Y = cy - profT4Y * scale;
-            double t5Y = cy - profT5Y * scale;
-            double t6Y = cy - profT6Y * scale;
+            double zeroY = cy + (korkeus / 2.0) * scale;  // 0-taso = kappaleiden alapinta
+            double t3Y = zeroY - profT3Y * scale;
+            double t4Y = zeroY - profT4Y * scale;
+            double t5Y = zeroY - profT5Y * scale;
+            double t6Y = zeroY - profT6Y * scale;
 
             if (t3Y > 10 && t3Y < H - 10)
             {
