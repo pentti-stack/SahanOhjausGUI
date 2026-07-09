@@ -51,6 +51,8 @@ namespace SahanOhjausGUI
         public double ProfOffsetT6 { get; set; } = 0.0;
         public double ProfOffsetT7 { get; set; } = 0.0;
         public double ProfOffsetT8 { get; set; } = 0.0;
+        public int YhdistettyT1RefKappale { get; set; } = 0;  // 0 = automaattinen default
+        public int YhdistettyT2RefKappale { get; set; } = 0;  // 0 = automaattinen default
     }
 
     public class TeraParametritDto
@@ -98,6 +100,9 @@ namespace SahanOhjausGUI
         private double _profOffsetT3 = 0.0, _profOffsetT4 = 0.0;
         private double _profOffsetT5 = 0.0, _profOffsetT6 = 0.0;
         private double _profOffsetT7 = 0.0, _profOffsetT8 = 0.0;
+
+        private int _yhdistettyT1RefKappale = 0;  // 0 = automaattinen
+        private int _yhdistettyT2RefKappale = 0;  // 0 = automaattinen
 
         // Stored from PiirraVisual for use by PiirraProfilointiCanvas
         private double _currentPlcT1 = -25.0, _currentPlcT2 = -25.0;
@@ -266,6 +271,8 @@ namespace SahanOhjausGUI
                     PhKokonaisLeveys = PhKokonaisLeveysBox?.Text ?? "600",
                     PhKuivaus = PhKuivausBox?.Text ?? "0",
                     TurvaEtaisyys = turvaEtaisyys,
+                    YhdistettyT1RefKappale = _yhdistettyT1RefKappale,
+                    YhdistettyT2RefKappale = _yhdistettyT2RefKappale,
                     TeraRajat = teraRajat.ToDictionary(kvp => kvp.Key, kvp => new TeraRajatDto
                     {
                         Min = kvp.Value.Min,
@@ -317,6 +324,8 @@ namespace SahanOhjausGUI
                 }
 
                 turvaEtaisyys = data.TurvaEtaisyys > 0 ? data.TurvaEtaisyys : 15.0;
+                _yhdistettyT1RefKappale = data.YhdistettyT1RefKappale;
+                _yhdistettyT2RefKappale = data.YhdistettyT2RefKappale;
                 _ph1Offset = data.Ph1Offset;
                 _ph2Offset = data.Ph2Offset;
                 _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
@@ -475,6 +484,101 @@ namespace SahanOhjausGUI
                 paksuusTextBoxesYhdistetty[i] = paksuusTb;
                 leveysTextBoxesYhdistetty[i] = leveysTb;
             }
+
+            if (count >= 5)
+            {
+                var refBorder = new Border
+                {
+                    Margin = new Thickness(0, 8, 0, 0),
+                    Background = new SolidColorBrush(Color.FromRgb(40, 40, 40)),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(8, 6, 8, 6)
+                };
+                var refStack = new StackPanel();
+                refStack.Children.Add(new TextBlock
+                {
+                    Text = "Profiloinnin referenssikappale:",
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    Margin = new Thickness(0, 0, 0, 4)
+                });
+
+                int defIdx = (count == 7) ? 3 : 2; // K4 for 7kpl, K3 for 5/6kpl (0-based)
+
+                // T1 reference row
+                var t1Grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+                t1Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+                t1Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                var t1Lbl = new TextBlock
+                {
+                    Text = "T1 ref:",
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var t1Combo = new ComboBox
+                {
+                    Height = 26,
+                    FontSize = 11,
+                    Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
+                    Foreground = Brushes.White
+                };
+                for (int i = 1; i <= count; i++)
+                    t1Combo.Items.Add(new ComboBoxItem { Content = $"K{i}" });
+                int t1Sel = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= count)
+                    ? _yhdistettyT1RefKappale - 1
+                    : defIdx;
+                t1Combo.SelectedIndex = t1Sel;
+                t1Combo.SelectionChanged += (s, e) =>
+                {
+                    _yhdistettyT1RefKappale = t1Combo.SelectedIndex + 1;
+                    PiirraVisual();
+                };
+
+                Grid.SetColumn(t1Lbl, 0); Grid.SetColumn(t1Combo, 1);
+                t1Grid.Children.Add(t1Lbl); t1Grid.Children.Add(t1Combo);
+                refStack.Children.Add(t1Grid);
+
+                // T2 reference row
+                var t2Grid = new Grid();
+                t2Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+                t2Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                var t2Lbl = new TextBlock
+                {
+                    Text = "T2 ref:",
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(107, 203, 119)),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                var t2Combo = new ComboBox
+                {
+                    Height = 26,
+                    FontSize = 11,
+                    Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
+                    Foreground = Brushes.White
+                };
+                for (int i = 1; i <= count; i++)
+                    t2Combo.Items.Add(new ComboBoxItem { Content = $"K{i}" });
+                int t2Sel = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= count)
+                    ? _yhdistettyT2RefKappale - 1
+                    : defIdx;
+                t2Combo.SelectedIndex = t2Sel;
+                t2Combo.SelectionChanged += (s, e) =>
+                {
+                    _yhdistettyT2RefKappale = t2Combo.SelectedIndex + 1;
+                    PiirraVisual();
+                };
+
+                Grid.SetColumn(t2Lbl, 0); Grid.SetColumn(t2Combo, 1);
+                t2Grid.Children.Add(t2Lbl); t2Grid.Children.Add(t2Combo);
+                refStack.Children.Add(t2Grid);
+
+                refBorder.Child = refStack;
+                root.Children.Add(refBorder);
+            }
+
             PaksuusPanel.Children.Add(root);
         }
 
@@ -1178,7 +1282,8 @@ namespace SahanOhjausGUI
                         paksuudetYhd = GetThicknessValuesYhdistetty().Select(p => p * kuivausKerroin).ToList();
                         leveydetYhd = GetLeveysValuesYhdistetty().Select(l => l * kuivausKerroin).ToList();
                         if (paksuudetYhd.Count > 0)
-                            LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6);
+                            LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6,
+                                _yhdistettyT1RefKappale, _yhdistettyT2RefKappale);
                     }
                     else
                     {
@@ -1292,7 +1397,8 @@ namespace SahanOhjausGUI
 
         private void LaskeYhdistetty(List<double> paksuudet,
             ref double plc_T1, ref double plc_T2, ref double plc_T3,
-            ref double plc_T4, ref double plc_T5, ref double plc_T6)
+            ref double plc_T4, ref double plc_T5, ref double plc_T6,
+            int t1RefKappale = 0, int t2RefKappale = 0)
         {
             int n = paksuudet.Count;
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
@@ -1307,9 +1413,40 @@ namespace SahanOhjausGUI
 
             if (n == 3) { double kl = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2]) / 2.0; plc_T1 = VaistoT(1); plc_T2 = VaistoT(2); plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1)); plc_T4 = (paksuudet[0] + r1 + paksuudet[1] + r2 / 2.0 - kl) + OffsetT(2) + Math.Abs(VaistoT(2)); plc_T5 = VaistoT(5); plc_T6 = VaistoT(6); return; }
             if (n == 4) { double kl = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 + paksuudet[3]) / 2.0; double rakoT4 = (paksuudet[0] + r1 + paksuudet[1] + r2 + paksuudet[2] + r4 / 2.0) - kl; plc_T1 = VaistoT(1); plc_T2 = LaskeSivuTeraPlc(paksuudet[2], r2, r4, OffsetT(2), OffsetT(4)); plc_T3 = (kl - paksuudet[0] - r1 / 2.0) + OffsetT(1) + Math.Abs(VaistoT(1)); plc_T4 = rakoT4 + OffsetT(4); plc_T5 = VaistoT(5); plc_T6 = VaistoT(6); return; }
-            if (n == 5) { double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4]) / 2.0; plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3); plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4); plc_T1 = LaskeSivuTeraPlc(paksuudet[1], r1, r3, OffsetT(1), OffsetT(3)); plc_T2 = LaskeSivuTeraPlc(paksuudet[3], r2, r4, OffsetT(2), OffsetT(4)); plc_T5 = VaistoT(5); plc_T6 = VaistoT(6); return; }
-            if (n == 6) { double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4] + r6 + paksuudet[5]) / 2.0; plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3); plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4); plc_T1 = LaskeSivuTeraPlc(paksuudet[1], r1, r3, OffsetT(1), OffsetT(3)); plc_T2 = LaskeSivuTeraPlc(paksuudet[3], r2, r4, OffsetT(2), OffsetT(4)); plc_T5 = VaistoT(5); plc_T6 = LaskeUlkoTeraPlc(paksuudet[4], r6, r4, OffsetT(6), OffsetT(4)); return; }
-            if (n == 7) { double kl = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0; plc_T3 = kl - (paksuudet[0] + r5 + paksuudet[1] + r3 / 2.0) + OffsetT(3); plc_T4 = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0) - kl + OffsetT(4); plc_T1 = LaskeSivuTeraPlc(paksuudet[2], r1, r3, OffsetT(1), OffsetT(3)); plc_T2 = LaskeSivuTeraPlc(paksuudet[4], r2, r4, OffsetT(2), OffsetT(4)); plc_T5 = LaskeUlkoTeraPlc(paksuudet[1], r5, r3, OffsetT(5), OffsetT(3)); plc_T6 = LaskeUlkoTeraPlc(paksuudet[5], r6, r4, OffsetT(6), OffsetT(4)); return; }
+            if (n == 5)
+            {
+                double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4]) / 2.0;
+                plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3);
+                plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4);
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 2;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 2;
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = VaistoT(5); plc_T6 = VaistoT(6); return;
+            }
+            if (n == 6)
+            {
+                double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4] + r6 + paksuudet[5]) / 2.0;
+                plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3);
+                plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4);
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 2;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 2;
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = VaistoT(5); plc_T6 = LaskeUlkoTeraPlc(paksuudet[4], r6, r4, OffsetT(6), OffsetT(4)); return;
+            }
+            if (n == 7)
+            {
+                double kl = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0;
+                plc_T3 = kl - (paksuudet[0] + r5 + paksuudet[1] + r3 / 2.0) + OffsetT(3);
+                plc_T4 = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0) - kl + OffsetT(4);
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 3;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 3;
+                plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
+                plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
+                plc_T5 = LaskeUlkoTeraPlc(paksuudet[1], r5, r3, OffsetT(5), OffsetT(3));
+                plc_T6 = LaskeUlkoTeraPlc(paksuudet[5], r6, r4, OffsetT(6), OffsetT(4)); return;
+            }
 
             int puolikas = n / 2; bool parillinenN = n % 2 == 0;
             var pVasen = paksuudet.Take(puolikas).ToList();
