@@ -976,6 +976,12 @@ namespace SahanOhjausGUI
             }
         }
 
+        private void AvaaWinCC_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new WinCCIntegrationWindow { Owner = this };
+            win.Show();
+        }
+
         // ── PH laskenta ──────────────────────────────────────────────────────
 
         private (double ph1Vasen, double ph1Oikea, double ph2Vasen, double ph2Oikea, double kuivaPh1, double kuivaPh2, double tuore1, double tuore2) LaskePhArvot()
