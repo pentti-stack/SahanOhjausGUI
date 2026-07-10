@@ -1539,11 +1539,10 @@ namespace SahanOhjausGUI
         }
 
         // ── Yhdistetty laskenta ──────────────────────────────────────────────
-
         private void LaskeYhdistetty(List<double> paksuudet,
-            ref double plc_T1, ref double plc_T2, ref double plc_T3,
-            ref double plc_T4, ref double plc_T5, ref double plc_T6,
-            int t1RefKappale = 0, int t2RefKappale = 0)
+                   ref double plc_T1, ref double plc_T2, ref double plc_T3,
+                   ref double plc_T4, ref double plc_T5, ref double plc_T6,
+                   int t1RefKappale = 0, int t2RefKappale = 0)
         {
             int n = paksuudet.Count;
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
@@ -2475,7 +2474,7 @@ namespace SahanOhjausGUI
 
             if (Prof_Value != null)
                 Prof_Value.Text = profKaytossa
-                    ? $"Prof:  T1:{t1Pos:F1}  T2:{t2Pos:F1}  T3:{profT3Y:F1}  T4:{profT4Y:F1}"
+                    ?  $"Profilointi T1:{t1Pos:F1}  T2:{t2Pos:F1}  T3:{profT3Y:F1}  T4:{profT4Y:F1}  T5:{profT5Y:F1}  T6:{profT6Y:F1}  T7:{t7Pos:F1}  T8:{t8Pos:F1}"
                     : "Prof: ei käyt.";
 
             // ── Title ─────────────────────────────────────────────────────────
