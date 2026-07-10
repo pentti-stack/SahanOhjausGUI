@@ -1929,7 +1929,7 @@ namespace SahanOhjausGUI
             double cx = W / 2.0, cy = H / 2.0;
 
             // Uniform scale: fit ±300 mm into available space
-            double scale = Math.Min((W / 2.0 - 50) / 300.0, (H / 2.0 - 55) / 300.0);
+            double scale = Math.Min((W / 2.0 - 50) / 240.0, (H - 55) / 360.0);
             if (scale <= 0) scale = 0.5;
 
             // Black background
@@ -2114,7 +2114,7 @@ namespace SahanOhjausGUI
                 {
                     X1 = t1X,
                     Y1 = t3Y,
-                    X2 = t1X + 80,
+                    X2 = t1X + 120,
                     Y2 = t3Y,
                     Stroke = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
                     StrokeThickness = 2.5
@@ -2126,7 +2126,7 @@ namespace SahanOhjausGUI
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(33, 150, 243))
                 };
-                Canvas.SetLeft(lbl, t1X + 80); Canvas.SetTop(lbl, t3Y - 16);
+                Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t3Y - 16);
                 canvas.Children.Add(lbl);
             }
 
@@ -2137,7 +2137,7 @@ namespace SahanOhjausGUI
                 {
                     X1 = t1X,
                     Y1 = t4Y,
-                    X2 = t1X + 80,
+                    X2 = t1X + 120,
                     Y2 = t4Y,
                     Stroke = new SolidColorBrush(Color.FromRgb(0, 188, 212)),
                     StrokeThickness = 2.5
@@ -2149,7 +2149,7 @@ namespace SahanOhjausGUI
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(0, 188, 212))
                 };
-                Canvas.SetLeft(lbl, t1X + 80); Canvas.SetTop(lbl, t4Y + 4);
+                Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t4Y + 4);
                 canvas.Children.Add(lbl);
             }
 
@@ -2158,7 +2158,7 @@ namespace SahanOhjausGUI
             {
                 canvas.Children.Add(new Line
                 {
-                    X1 = t2X - 80,
+                    X1 = t2X - 120,
                     Y1 = t5Y,
                     X2 = t2X,
                     Y2 = t5Y,
@@ -2172,7 +2172,7 @@ namespace SahanOhjausGUI
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(255, 235, 59))
                 };
-                Canvas.SetLeft(lbl, t2X - 120); Canvas.SetTop(lbl, t5Y - 16);
+                Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t5Y - 16);
                 canvas.Children.Add(lbl);
             }
 
@@ -2181,7 +2181,7 @@ namespace SahanOhjausGUI
             {
                 canvas.Children.Add(new Line
                 {
-                    X1 = t2X - 80,
+                    X1 = t2X - 120,
                     Y1 = t6Y,
                     X2 = t2X,
                     Y2 = t6Y,
@@ -2195,7 +2195,7 @@ namespace SahanOhjausGUI
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220))
                 };
-                Canvas.SetLeft(lbl, t2X - 120); Canvas.SetTop(lbl, t6Y + 4);
+                Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t6Y + 4);
                 canvas.Children.Add(lbl);
             }
 
@@ -2205,9 +2205,9 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(new Line
                 {
                     X1 = t1X,
-                    Y1 = t3Y - 80,
+                    Y1 = t3Y - 120,
                     X2 = t1X,
-                    Y2 = t4Y + 80,
+                    Y2 = t4Y + 120,
                     Stroke = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
                     StrokeThickness = 2.5
 
@@ -2222,7 +2222,7 @@ namespace SahanOhjausGUI
                     FontWeight = FontWeights.Bold,
                     Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80))
                 };
-                Canvas.SetLeft(lbl, t1X + 4); Canvas.SetTop(lbl, t3Y - 120); 
+                Canvas.SetLeft(lbl, t1X + 4); Canvas.SetTop(lbl, t3Y - 160); 
                 canvas.Children.Add(lbl);
             }
 
@@ -2232,9 +2232,9 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(new Line
                 {
                     X1 = t2X,
-                    Y1 = t5Y - 80,
+                    Y1 = t5Y - 120,
                     X2 = t2X,
-                    Y2 = t6Y + 80,
+                    Y2 = t6Y + 120,
                     Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
                     StrokeThickness = 2.5
                 });
@@ -2247,7 +2247,7 @@ namespace SahanOhjausGUI
                     TextAlignment = TextAlignment.Right,
                     Width = 44
                 };
-                Canvas.SetLeft(lbl, t2X - 44); Canvas.SetTop(lbl, t5Y - 120);
+                Canvas.SetLeft(lbl, t2X - 44); Canvas.SetTop(lbl, t5Y - 160);
                 canvas.Children.Add(lbl);
             }
 
