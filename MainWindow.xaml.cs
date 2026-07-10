@@ -978,6 +978,20 @@ namespace SahanOhjausGUI
             }
         }
 
+        private void AvaaWinCCIntegration_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var w = new WinCCIntegrationWindow { Owner = this };
+                w.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"WinCC-integraatioikkuna kaatui:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                    "Virhe", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         // ── PH laskenta ──────────────────────────────────────────────────────
 
         private (double ph1Vasen, double ph1Oikea, double ph2Vasen, double ph2Oikea, double kuivaPh1, double kuivaPh2, double tuore1, double tuore2) LaskePhArvot()
