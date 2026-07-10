@@ -270,6 +270,22 @@
 
                     <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Background="#1e1e1e">
                         <StackPanel Margin="10">
+
+                            <!-- Käytössä / Ei käytössä -->
+                            <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                                <CheckBox x:Name="ProfilointiCheck" Content="K&#xe4;yt&#xf6;ss&#xe4;"
+                                          IsChecked="True"
+                                          Checked="ProfilointiValinta_Changed"
+                                          Unchecked="ProfilointiValinta_Changed"
+                                          Foreground="#B39DDB" FontWeight="Bold"/>
+                            </Border>
+
+                            <!-- Referenssikappale (näkyy vain yhdistetyssä tilassa) -->
+                            <Border x:Name="ProfRefPanel" Background="#2d2d2d" CornerRadius="6"
+                                    Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
+                                <StackPanel x:Name="ProfRefStack"/>
+                            </Border>
+
                             <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="&#x1F4D0; Profilointi" FontWeight="Bold"
@@ -391,8 +407,6 @@
                                 </StackPanel>
                             </Border>
 
-                            <Button Content="&#x26A1; L&#xe4;het&#xe4;" Click="ProfLaheta_Click"
-                                    Background="#1b5e20" BorderBrush="#388e3c"/>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -400,6 +414,7 @@
                             SizeChanged="ProfilointiCanvas_SizeChanged"/>
                 </Grid>
             </TabItem>
+
             <!-- JAKOSAHA -->
             <TabItem Header="&#x2699; Jakosaha">
                 <Grid>
