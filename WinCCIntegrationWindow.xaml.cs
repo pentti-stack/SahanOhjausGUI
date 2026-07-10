@@ -373,16 +373,18 @@ namespace SahanOhjausGUI
         private readonly double[] _setPoints = new double[18];
         // Nykyiset Actual-arvot
         private readonly double[] _actuals = new double[18];
+        // Yhteinen lukko SetPoint/Actual-taulukoille
+        private readonly object _dataLock = new();
 
         // Taustasäie
         private Thread? _pollingThread;
         private volatile bool _pollingActive;
         private readonly object _connectorLock = new();
 
-        // Heartbeat-laskuri
+        // Heartbeat-laskuri (käytetään Interlocked)
         private int _heartbeatCounter;
 
-        // Hälytyssana
+        // Hälytyssana (käytetään Interlocked)
         private int _alarmWord;
 
         // Hälytysten TextBoxit asetussivulla
@@ -503,7 +505,7 @@ namespace SahanOhjausGUI
         {
             ServerNimiTextBox.Text = _settings.ServerName;
             TagPrefixTextBox.Text = _settings.TagPrefix;
-            VersionARadio.IsChecked = _settings.Version != "B";
+            VersionARadio.IsChecked = _settings.Version == "A";
             VersionBRadio.IsChecked = _settings.Version == "B";
             SimulaattoriCheckBox.IsChecked = _settings.UseSimulator;
 
@@ -529,12 +531,15 @@ namespace SahanOhjausGUI
             var ph = new System.Collections.ObjectModel.ObservableCollection<SetPointItem>();
             var prof = new System.Collections.ObjectModel.ObservableCollection<SetPointItem>();
 
+            double[] sp;
+            lock (_dataLock) { sp = (double[])_setPoints.Clone(); }
+
             for (int i = 0; i < 18; i++)
             {
                 var item = new SetPointItem
                 {
                     Name = Axes[i].Display + ":",
-                    ValueStr = _setPoints[i].ToString("F2", CultureInfo.InvariantCulture)
+                    ValueStr = sp[i].ToString("F2", CultureInfo.InvariantCulture)
                 };
                 if (i < 6) jakosaha.Add(item);
                 else if (i < 10) ph.Add(item);
@@ -632,13 +637,17 @@ namespace SahanOhjausGUI
 
             Task.Run(() =>
             {
+                // Ota snapshot SetPoint-arvoista lukolla ennen lähetystä
+                double[] sp;
+                lock (_dataLock) { sp = (double[])_setPoints.Clone(); }
+
                 var errors = new List<string>();
 
                 // Kirjoita 18 SetPoint-tagia
                 for (int i = 0; i < 18; i++)
                 {
                     var tagName = TagName(Axes[i].TagBase + "_SetPoint");
-                    if (!connector.WriteTag(tagName, _setPoints[i]))
+                    if (!connector.WriteTag(tagName, sp[i]))
                         errors.Add(tagName);
                 }
 
@@ -722,22 +731,29 @@ namespace SahanOhjausGUI
                 // Lue Actual-arvot
                 if (connector != null && connector.IsConnected)
                 {
+                    var newActuals = new double[18];
                     for (int i = 0; i < 18; i++)
                     {
+                        double current;
+                        lock (_dataLock) { current = _actuals[i]; }
                         var v = connector.ReadTag(TagName(Axes[i].TagBase + "_Actual"));
-                        _actuals[i] = v ?? _actuals[i];
+                        newActuals[i] = v ?? current;
+                    }
+                    lock (_dataLock)
+                    {
+                        for (int i = 0; i < 18; i++) _actuals[i] = newActuals[i];
                     }
 
                     // Lue hälytyssana
                     var alarmVal = connector.ReadTag(TagName("Alarm_Word"));
-                    _alarmWord = alarmVal.HasValue ? (int)alarmVal.Value : 0;
+                    Interlocked.Exchange(ref _alarmWord, alarmVal.HasValue ? (int)alarmVal.Value : 0);
 
                     // Heartbeat sekunnin välein
                     if (sw.ElapsedMilliseconds - lastHeartbeatMs >= 1000)
                     {
                         lastHeartbeatMs = sw.ElapsedMilliseconds;
-                        _heartbeatCounter++;
-                        connector.WriteTag(TagName("HB_Counter"), _heartbeatCounter);
+                        var hb = Interlocked.Increment(ref _heartbeatCounter);
+                        connector.WriteTag(TagName("HB_Counter"), hb);
                     }
                 }
 
@@ -764,22 +780,30 @@ namespace SahanOhjausGUI
 
             // Päivitysaika
             PaivitysaikaTeksti.Text = DateTime.Now.ToString("HH:mm:ss.fff");
-            HeartbeatTeksti.Text = _heartbeatCounter.ToString();
+            HeartbeatTeksti.Text = Interlocked.CompareExchange(ref _heartbeatCounter, 0, 0).ToString();
+
+            // Ota snapshot taulukoista UI-säikeessä
+            double[] sp, act;
+            lock (_dataLock)
+            {
+                sp = (double[])_setPoints.Clone();
+                act = (double[])_actuals.Clone();
+            }
 
             // Rivit
             int valmiit = 0;
             for (int i = 0; i < 18; i++)
             {
-                var sp = _setPoints[i];
-                var act = _actuals[i];
-                var diff = sp - act;
+                var spVal = sp[i];
+                var actVal = act[i];
+                var diff = spVal - actVal;
                 var ok = Math.Abs(diff) < 0.2;
                 if (ok) valmiit++;
 
                 var rivi = _akseliRivit[i];
                 rivi.AkseliNimi = Axes[i].Display;
-                rivi.SetPoint = sp.ToString("F2", CultureInfo.InvariantCulture);
-                rivi.Actual = connected ? act.ToString("F2", CultureInfo.InvariantCulture) : "—";
+                rivi.SetPoint = spVal.ToString("F2", CultureInfo.InvariantCulture);
+                rivi.Actual = connected ? actVal.ToString("F2", CultureInfo.InvariantCulture) : "—";
                 rivi.Erotus = connected ? diff.ToString("F2", CultureInfo.InvariantCulture) : "—";
                 rivi.Tila = connected ? (ok ? "OK" : "VIRHE") : "—";
                 rivi.TilaVari = connected
@@ -827,13 +851,14 @@ namespace SahanOhjausGUI
         // ─────────────────────────────────────────────────────────────────────
         private void PaivitaHalytykset()
         {
-            AlarmWordHex.Text = $"0x{_alarmWord:X4}";
-            AlarmWordDec.Text = _alarmWord.ToString();
+            var alarm = Interlocked.CompareExchange(ref _alarmWord, 0, 0);
+            AlarmWordHex.Text = $"0x{alarm:X4}";
+            AlarmWordDec.Text = alarm.ToString();
 
             var rivit = new System.Collections.ObjectModel.ObservableCollection<HalytysRivi>();
             for (int bit = 0; bit < 16; bit++)
             {
-                bool active = (_alarmWord & (1 << bit)) != 0;
+                bool active = (alarm & (1 << bit)) != 0;
                 if (!active) continue;
 
                 string text = _settings.AlarmTexts.TryGetValue(bit, out var t) ? t
@@ -872,12 +897,15 @@ namespace SahanOhjausGUI
             IReadOnlyList<double> pintahakkurit, // PH1V, PH1O, PH2V, PH2O (4 kpl)
             IReadOnlyList<double> profilointi)   // Prof_T1–Prof_T8 (8 kpl)
         {
-            for (int i = 0; i < Math.Min(6, jakosaha.Count); i++)
-                _setPoints[i] = jakosaha[i];
-            for (int i = 0; i < Math.Min(4, pintahakkurit.Count); i++)
-                _setPoints[6 + i] = pintahakkurit[i];
-            for (int i = 0; i < Math.Min(8, profilointi.Count); i++)
-                _setPoints[10 + i] = profilointi[i];
+            lock (_dataLock)
+            {
+                for (int i = 0; i < Math.Min(6, jakosaha.Count); i++)
+                    _setPoints[i] = jakosaha[i];
+                for (int i = 0; i < Math.Min(4, pintahakkurit.Count); i++)
+                    _setPoints[6 + i] = pintahakkurit[i];
+                for (int i = 0; i < Math.Min(8, profilointi.Count); i++)
+                    _setPoints[10 + i] = profilointi[i];
+            }
 
             Dispatcher.InvokeAsync(PaivitaSetPointListat);
         }
