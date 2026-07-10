@@ -396,6 +396,16 @@ namespace SahanOhjausGUI
         // DataGrid-rivit
         private readonly ObservableCollection<AkseliRivi> _akseliRivit = new();
 
+        // Vakiot
+        private const double PollingCycleSeconds = 0.150;  // 150 ms
+        private const int PollingCycleMs = 150;
+        private const int PollingMinWaitMs = 10;
+        private const double PositionToleranceMm = 0.2;
+        private const double SimulationSpeedMmPerSec = 10.0;
+        private const int AlarmLabelWidth = 56;
+        private const int AlarmTextBoxWidth = 160;
+        private const int AlarmTextBoxHeight = 24;
+
         // ─────────────────────────────────────────────────────────────────────
         public WinCCIntegrationWindow()
         {
@@ -425,15 +435,15 @@ namespace SahanOhjausGUI
                 var lbl = new System.Windows.Controls.TextBlock
                 {
                     Text = $"Bitti {i}:",
-                    Width = 56,
+                    Width = AlarmLabelWidth,
                     VerticalAlignment = VerticalAlignment.Center,
                     Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
                     FontSize = 11
                 };
                 var tb = new System.Windows.Controls.TextBox
                 {
-                    Width = 160,
-                    Height = 24,
+                    Width = AlarmTextBoxWidth,
+                    Height = AlarmTextBoxHeight,
                     FontSize = 11,
                     Margin = new Thickness(4, 0, 8, 0)
                 };
@@ -725,7 +735,7 @@ namespace SahanOhjausGUI
                 // Simulaation askel
                 if (sim != null)
                 {
-                    sim.StepSimulation(0.150); // n. 150ms sykli
+                    sim.StepSimulation(PollingCycleSeconds); // n. 150ms sykli
                 }
 
                 // Lue Actual-arvot
@@ -762,7 +772,7 @@ namespace SahanOhjausGUI
 
                 // Odota loppuun n. 150ms sykli
                 var elapsed = (int)(sw.ElapsedMilliseconds - loopStart);
-                var wait = Math.Max(10, 150 - elapsed);
+                var wait = Math.Max(PollingMinWaitMs, PollingCycleMs - elapsed);
                 Thread.Sleep(wait);
             }
         }
@@ -797,7 +807,7 @@ namespace SahanOhjausGUI
                 var spVal = sp[i];
                 var actVal = act[i];
                 var diff = spVal - actVal;
-                var ok = Math.Abs(diff) < 0.2;
+                var ok = Math.Abs(diff) < PositionToleranceMm;
                 if (ok) valmiit++;
 
                 var rivi = _akseliRivit[i];
@@ -840,7 +850,7 @@ namespace SahanOhjausGUI
                 ValmistusTeksti.Foreground = new SolidColorBrush(Color.FromRgb(136, 136, 136));
             }
 
-            ToleranceTeksti.Text = $"Toleranssi: ±0.2 mm | Akselit paikassaan: {valmiit} / 18";
+            ToleranceTeksti.Text = $"Toleranssi: ±{PositionToleranceMm:F1} mm | Akselit paikassaan: {valmiit} / 18";
 
             // Hälytykset
             PaivitaHalytykset();
