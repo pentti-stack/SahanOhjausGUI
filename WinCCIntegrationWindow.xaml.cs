@@ -255,7 +255,11 @@ namespace SahanOhjausGUI
     public class WinCCSimulator : IWinCCConnector
     {
         // Actual-arvot liukuvat kohti SetPoint-arvoja nopeudella 10 mm/s.
-        // Päivityssykli 100 ms → liike max 1 mm per sykli.
+        // Päivityssykli SimIntervalMs → liike max SimStepMm per sykli.
+
+        private const int    SimIntervalMs = 100;           // 100 ms per sykli
+        private const double SimSpeedMmS   = 10.0;          // 10 mm/s
+        private const double SimStepMm     = SimSpeedMmS * (SimIntervalMs / 1000.0); // 1 mm
 
         private readonly Dictionary<string, double> _tags = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _lock = new();
@@ -265,7 +269,7 @@ namespace SahanOhjausGUI
 
         public bool Connect()
         {
-            _moveTimer = new Timer(SimulateMovement, null, 0, 100);
+            _moveTimer = new Timer(SimulateMovement, null, 0, SimIntervalMs);
             return true;
         }
 
@@ -298,8 +302,7 @@ namespace SahanOhjausGUI
                     double sp = _tags[key];
                     double current = _tags.TryGetValue(actualKey, out double a) ? a : sp;
                     double diff = sp - current;
-                    const double step = 1.0; // 10 mm/s × 0.1 s = 1 mm
-                    _tags[actualKey] = Math.Abs(diff) <= step ? sp : current + Math.Sign(diff) * step;
+                    _tags[actualKey] = Math.Abs(diff) <= SimStepMm ? sp : current + Math.Sign(diff) * SimStepMm;
                 }
             }
         }
@@ -328,7 +331,14 @@ namespace SahanOhjausGUI
             get => _setPoint;
             set
             {
-                if (Math.Abs(_setPoint - value) > 1e-9) { _setPoint = value; Notify(nameof(SetPoint)); Notify(nameof(Difference)); Notify(nameof(IsOk)); Notify(nameof(StatusText)); }
+                if (Math.Abs(_setPoint - value) > 1e-9)
+                {
+                    _setPoint = value;
+                    Notify(nameof(SetPoint));
+                    Notify(nameof(Difference));
+                    Notify(nameof(IsOk));
+                    Notify(nameof(StatusText));
+                }
             }
         }
 
@@ -338,7 +348,14 @@ namespace SahanOhjausGUI
             get => _actual;
             set
             {
-                if (Math.Abs(_actual - value) > 1e-9) { _actual = value; Notify(nameof(Actual)); Notify(nameof(Difference)); Notify(nameof(IsOk)); Notify(nameof(StatusText)); }
+                if (Math.Abs(_actual - value) > 1e-9)
+                {
+                    _actual = value;
+                    Notify(nameof(Actual));
+                    Notify(nameof(Difference));
+                    Notify(nameof(IsOk));
+                    Notify(nameof(StatusText));
+                }
             }
         }
 
@@ -426,21 +443,10 @@ namespace SahanOhjausGUI
             }
         }
 
-        // Päivittää taginnimet prefixin vaihtuessa (ei rakenna uudelleen koko listaa)
-        private void RebuildTagNames()
-        {
-            // AxisDefs indeksit ovat vakioidut — uudelleenrakennetaan vain taginnimet
-            // käyttämällä reflection-free-lähestymistapaa
-            for (int i = 0; i < _axes.Count; i++)
-            {
-                var def = AxisDefs[i];
-                // SetPointTag ja ActualTag ovat init-only, joten uusi instanssi tarvitaan
-                // vain jos prefix muuttuu. Tässä se tehdään BuildAxes-metodilla.
-            }
-            // Täydellinen uudelleenrakennus — taginnimet sisältävät prefixin runtime-tasolla
-            // Riittää tallentaa prefix asetuksiin; taginimet muodostetaan dynaamisesti
-            // yhteys-/pollingioperaatioissa.
-        }
+        // Taginnimet muodostetaan dynaamisesti yhteys-/pollausoperaatioissa
+        // käyttämällä FullTag()-metodia: prefix + tagBase + "_SetPoint" / "_Actual".
+        // Koska SetPointTag- ja ActualTag-kentät ovat init-only (ei sisällä prefixiä),
+        // uusi BuildAxes()-kutsu ei ole tarpeen pelkän prefixin vaihtuessa.
 
         // Palauttaa täyden tagnimen: Prefix + tagBase + "_SetPoint" / "_Actual"
         private string FullTag(string tagBase, bool isSetPoint) =>
@@ -584,7 +590,10 @@ namespace SahanOhjausGUI
                 int ok = 0, fail = 0;
                 foreach (var (tag, sp) in axisSnapshot)
                 {
-                    if (_connector.WriteTag(prefix + tag, sp)) ok++; else fail++;
+                    if (_connector.WriteTag(prefix + tag, sp))
+                        ok++;
+                    else
+                        fail++;
                 }
 
                 // Nosta New_Data_Ready -bitti hetkellisesti
@@ -655,7 +664,11 @@ namespace SahanOhjausGUI
 
                 foreach (var a in _axes)
                 {
-                    if (!a.IsOk) { allOk = false; failCount++; }
+                    if (!a.IsOk)
+                    {
+                        allOk = false;
+                        failCount++;
+                    }
                 }
 
                 PaivitaValmisIndicator(allOk, failCount);
