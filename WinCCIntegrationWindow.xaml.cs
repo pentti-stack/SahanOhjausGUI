@@ -471,8 +471,9 @@ namespace SahanOhjausGUI
                     _settings = JsonSerializer.Deserialize<WinCCSettings>(json) ?? new WinCCSettings();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"WinCC settings load failed, using defaults: {ex.Message}");
                 _settings = new WinCCSettings();
             }
         }
@@ -735,7 +736,7 @@ namespace SahanOhjausGUI
                 // Simulaation askel
                 if (sim != null)
                 {
-                    sim.StepSimulation(PollingCycleSeconds); // n. 150ms sykli
+                    sim.StepSimulation(PollingCycleSeconds); // noin 150 ms sykli
                 }
 
                 // Lue Actual-arvot
