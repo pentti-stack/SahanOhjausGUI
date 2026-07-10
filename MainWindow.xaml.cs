@@ -570,7 +570,7 @@ namespace SahanOhjausGUI
                 t1Combo.SelectionChanged += (s, e) =>
                 {
                     _yhdistettyT1RefKappale = t1Combo.SelectedIndex + 1;
-                    PiirraVisual();
+                    PiirraProfilointiCanvas();  // ← vain profilointi päivittyy
                 };
 
                 Grid.SetColumn(t1Lbl, 0); Grid.SetColumn(t1Combo, 1);
@@ -605,7 +605,7 @@ namespace SahanOhjausGUI
                 t2Combo.SelectionChanged += (s, e) =>
                 {
                     _yhdistettyT2RefKappale = t2Combo.SelectedIndex + 1;
-                    PiirraVisual();
+                    PiirraProfilointiCanvas();  // ← vain profilointi
                 };
 
                 Grid.SetColumn(t2Lbl, 0); Grid.SetColumn(t2Combo, 1);
@@ -1539,10 +1539,10 @@ namespace SahanOhjausGUI
         }
 
         // ── Yhdistetty laskenta ──────────────────────────────────────────────
-        private void LaskeYhdistetty(List<double> paksuudet,
-                   ref double plc_T1, ref double plc_T2, ref double plc_T3,
-                   ref double plc_T4, ref double plc_T5, ref double plc_T6,
-                   int t1RefKappale = 0, int t2RefKappale = 0)
+ private void LaskeYhdistetty(List<double> paksuudet,
+            ref double plc_T1, ref double plc_T2, ref double plc_T3,
+            ref double plc_T4, ref double plc_T5, ref double plc_T6,
+            int t1RefKappale = 0, int t2RefKappale = 0)
         {
             int n = paksuudet.Count;
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
@@ -2933,21 +2933,21 @@ namespace SahanOhjausGUI
         {
             int count = GetSelectedPieceCount(); var result = new List<double>();
             for (int i = 1; i <= count; i++)
-            { if (paksuusTextBoxesVasen.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); else result.Add(30.0); }
+            { if (paksuusTextBoxesVasen.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); }
             return result;
         }
         private List<double> GetThicknessValuesOikea()
         {
             int count = GetSelectedPieceCount(); var result = new List<double>();
             for (int i = 5; i < 5 + count; i++)
-            { if (paksuusTextBoxesOikea.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); else result.Add(30.0); }
+            { if (paksuusTextBoxesOikea.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); }
             return result;
         }
         private List<double> GetThicknessValuesYhdistetty()
         {
             int count = GetSelectedYhdistettyCount(); var result = new List<double>();
             for (int i = 1; i <= count; i++)
-            { if (paksuusTextBoxesYhdistetty.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); else result.Add(30.0); }
+            { if (paksuusTextBoxesYhdistetty.TryGetValue(i, out var tb) && double.TryParse(tb.Text.Replace(",", "."), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) && v > 0) result.Add(v); }
             return result;
         }
         private List<double> GetLeveysValuesVasen()
