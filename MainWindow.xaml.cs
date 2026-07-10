@@ -29,6 +29,7 @@ namespace SahanOhjausGUI
         public bool OikeaOn { get; set; } = true;
         public bool Ph1On { get; set; } = false;
         public bool Ph2On { get; set; } = false;
+        public bool ProfilointiOn { get; set; } = true;
         public string PhLevinKappale { get; set; } = "150";
         public string PhKokonaisLeveys { get; set; } = "600";
         public string PhKuivaus { get; set; } = "0";
@@ -117,6 +118,7 @@ namespace SahanOhjausGUI
         private List<double> _currentPaksuudet = new();
         private List<double> _currentLeveydet = new();
 
+        private bool _profilointiOn = true;
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
 
@@ -265,6 +267,7 @@ namespace SahanOhjausGUI
                     OikeaOn = OikeaSahaCheck?.IsChecked == true,
                     Ph1On = Ph1Check?.IsChecked == true,
                     Ph2On = Ph2Check?.IsChecked == true,
+                    ProfilointiOn = _profilointiOn,
                     Ph1Offset = _ph1Offset,
                     Ph2Offset = _ph2Offset,
                     OffsetT1 = _offsetT1,
@@ -389,6 +392,8 @@ namespace SahanOhjausGUI
                 if (OikeaSahaCheck != null) OikeaSahaCheck.IsChecked = data.OikeaOn;
                 if (Ph1Check != null) Ph1Check.IsChecked = data.Ph1On;
                 if (Ph2Check != null) Ph2Check.IsChecked = data.Ph2On;
+                _profilointiOn = data.ProfilointiOn;
+                if (ProfilointiCheck != null) ProfilointiCheck.IsChecked = _profilointiOn;
                 if (PhLevinKappaleBox != null) PhLevinKappaleBox.Text = data.PhLevinKappale;
                 if (PhKokonaisLeveysBox != null) PhKokonaisLeveysBox.Text = data.PhKokonaisLeveys;
                 if (PhKuivausBox != null) PhKuivausBox.Text = data.PhKuivaus;
@@ -451,6 +456,8 @@ namespace SahanOhjausGUI
 
             if (OnYhdistettyTila()) LuoYhdistettyKontrollit();
             else LuoErillisetKontrollit();
+
+            PaivitaProfRefPanel();
         }
 
         private void LuoErillisetKontrollit()
@@ -533,7 +540,7 @@ namespace SahanOhjausGUI
                     Margin = new Thickness(0, 0, 0, 4)
                 });
 
-                int defIdx = (count == 7) ? 3 : 2; // K4 for 7kpl, K3 for 5/6kpl (0-based)
+                int defIdx = (count == 7) ? 3 : 2; // 0-based index: 3=>K4 for 7kpl, 2=>K3 for 5/6kpl
 
                 // T1 reference row
                 var t1Grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
@@ -610,6 +617,95 @@ namespace SahanOhjausGUI
             }
 
             PaksuusPanel.Children.Add(root);
+        }
+
+        private void PaivitaProfRefPanel()
+        {
+            if (ProfRefPanel == null || ProfRefStack == null) return;
+
+            int count = GetSelectedYhdistettyCount();
+            bool nayta = OnYhdistettyTila() && count >= 5;
+            ProfRefPanel.Visibility = nayta ? Visibility.Visible : Visibility.Collapsed;
+            ProfRefStack.Children.Clear();
+            if (!nayta) return;
+
+            ProfRefStack.Children.Add(new TextBlock
+            {
+                Text = "Profiloinnin referenssikappale:",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+
+            int defIdx = (count == 7) ? 3 : 2; // 0-based index: 3=>K4 for 7kpl, 2=>K3 for 5/6kpl
+
+            var t1Grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+            t1Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+            t1Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var t1Lbl = new TextBlock
+            {
+                Text = "T1 ref:",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(255, 107, 107)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var t1Combo = new ComboBox
+            {
+                Height = 26,
+                FontSize = 11,
+                Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
+                Foreground = Brushes.White
+            };
+            for (int i = 1; i <= count; i++)
+                t1Combo.Items.Add(new ComboBoxItem { Content = $"K{i}" });
+            int t1Sel = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= count)
+                ? _yhdistettyT1RefKappale - 1
+                : defIdx;
+            t1Combo.SelectedIndex = t1Sel;
+            t1Combo.SelectionChanged += (_, __) =>
+            {
+                _yhdistettyT1RefKappale = t1Combo.SelectedIndex + 1;
+                PiirraProfilointiCanvas();
+            };
+            Grid.SetColumn(t1Lbl, 0);
+            Grid.SetColumn(t1Combo, 1);
+            t1Grid.Children.Add(t1Lbl);
+            t1Grid.Children.Add(t1Combo);
+            ProfRefStack.Children.Add(t1Grid);
+
+            var t2Grid = new Grid();
+            t2Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
+            t2Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            var t2Lbl = new TextBlock
+            {
+                Text = "T2 ref:",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(107, 203, 119)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var t2Combo = new ComboBox
+            {
+                Height = 26,
+                FontSize = 11,
+                Background = new SolidColorBrush(Color.FromRgb(50, 50, 50)),
+                Foreground = Brushes.White
+            };
+            for (int i = 1; i <= count; i++)
+                t2Combo.Items.Add(new ComboBoxItem { Content = $"K{i}" });
+            int t2Sel = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= count)
+                ? _yhdistettyT2RefKappale - 1
+                : defIdx;
+            t2Combo.SelectedIndex = t2Sel;
+            t2Combo.SelectionChanged += (_, __) =>
+            {
+                _yhdistettyT2RefKappale = t2Combo.SelectedIndex + 1;
+                PiirraProfilointiCanvas();
+            };
+            Grid.SetColumn(t2Lbl, 0);
+            Grid.SetColumn(t2Combo, 1);
+            t2Grid.Children.Add(t2Lbl);
+            t2Grid.Children.Add(t2Combo);
+            ProfRefStack.Children.Add(t2Grid);
         }
 
         private (Border card, TextBox paksuusTb, TextBox leveysTb) LuoPaksuusKorttiKapea(string otsikko, int tagId)
@@ -739,6 +835,12 @@ namespace SahanOhjausGUI
             PiirraPhCanvasit();
         }
 
+        private void ProfilointiValinta_Changed(object sender, RoutedEventArgs e)
+        {
+            _profilointiOn = ProfilointiCheck?.IsChecked == true;
+            PiirraProfilointiCanvas();
+        }
+
         private void SahaValinta_Changed(object sender, RoutedEventArgs e)
         {
             if (HalkaisuVasenPanel != null)
@@ -747,6 +849,7 @@ namespace SahanOhjausGUI
                 HalkaisuOikeaPanel.Visibility = OikeaSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             PaivitaNakymat();
             LuoParametriKontrollit();
+            PaivitaProfRefPanel();
             PaivitaPhLukitus();
             PiirraVisual();
         }
@@ -775,6 +878,7 @@ namespace SahanOhjausGUI
         {
             if (YhdistettyInfo != null) YhdistettyInfo.Text = $"{GetSelectedYhdistettyCount()} kpl";
             LuoParametriKontrollit();
+            PaivitaProfRefPanel();
             PiirraVisual();
         }
 
@@ -1934,6 +2038,7 @@ namespace SahanOhjausGUI
 
             // Black background
             canvas.Children.Add(new Rectangle { Width = W, Height = H, Fill = Brushes.Black });
+            bool profKaytossa = _profilointiOn;
 
             // ── Compute profile positions ─────────────────────────────────────
             LaskeProfilointiArvot(_currentPaksuudet, _currentLeveydet,
@@ -1942,7 +2047,7 @@ namespace SahanOhjausGUI
                 out double profT5, out double profT6,
                 out double profT7, out double profT8);
 
-            if (_currentPaksuudet.Count == 0)
+            if (_currentPaksuudet.Count == 0 || !profKaytossa)
             {
                 profT1 = profilointiRajat.TryGetValue("ProfT1", out var p1) ? p1.Lepopaikka : 0.0;
                 profT2 = profilointiRajat.TryGetValue("ProfT2", out var p2) ? p2.Lepopaikka : 0.0;
@@ -1954,21 +2059,35 @@ namespace SahanOhjausGUI
                 profT8 = profilointiRajat.TryGetValue("ProfT8", out var p8) ? p8.Lepopaikka : 0.0;
             }
 
-            double t1Pos = profT1 + _profOffsetT1;
-            double t2Pos = profT2 + _profOffsetT2;
-            double t7Pos = t1Pos + profT7 + _profOffsetT7;
-            double t8Pos = t2Pos + profT8 + _profOffsetT8;
-            double profT3Y = profT3 + _profOffsetT3;
-            double profT4Y = profT4 + _profOffsetT4;
-            double profT5Y = profT5 + _profOffsetT5;
-            double profT6Y = profT6 + _profOffsetT6;
+            double t1Pos = profKaytossa ? profT1 + _profOffsetT1 : profT1;
+            double t2Pos = profKaytossa ? profT2 + _profOffsetT2 : profT2;
+            double t7Pos = profKaytossa ? t1Pos + profT7 + _profOffsetT7 : profT7;
+            double t8Pos = profKaytossa ? t2Pos + profT8 + _profOffsetT8 : profT8;
+            double profT3Y = profKaytossa ? profT3 + _profOffsetT3 : profT3;
+            double profT4Y = profKaytossa ? profT4 + _profOffsetT4 : profT4;
+            double profT5Y = profKaytossa ? profT5 + _profOffsetT5 : profT5;
+            double profT6Y = profKaytossa ? profT6 + _profOffsetT6 : profT6;
 
             double korkeus = _currentLeveydet.Count > 0
                 ? _currentLeveydet.Where(v => v > 0).DefaultIfEmpty(100.0).Max()
                 : 100.0;
             if (korkeus <= 0) korkeus = 100.0;
             double zeroY = cy + (korkeus / 2.0) * scale;
-       
+
+            bool RajaYlitetty(string avain, double arvo)
+            {
+                if (!profilointiRajat.TryGetValue(avain, out var raja)) return false;
+                return arvo < raja.Min || arvo > raja.Max;
+            }
+
+            bool t1RajaYli = profKaytossa && RajaYlitetty("ProfT1", t1Pos);
+            bool t2RajaYli = profKaytossa && RajaYlitetty("ProfT2", t2Pos);
+            bool t3RajaYli = profKaytossa && RajaYlitetty("ProfT3", profT3Y);
+            bool t4RajaYli = profKaytossa && RajaYlitetty("ProfT4", profT4Y);
+            bool t5RajaYli = profKaytossa && RajaYlitetty("ProfT5", profT5Y);
+            bool t6RajaYli = profKaytossa && RajaYlitetty("ProfT6", profT6Y);
+            bool t7RajaYli = profKaytossa && RajaYlitetty("ProfT7", t7Pos);
+            bool t8RajaYli = profKaytossa && RajaYlitetty("ProfT8", t8Pos);
 
             // ── Horizontal scale (X axis) ─────────────────────────────────────
             PiirraProfilointiHorizAsteikko(canvas, W, H, cx, scale);
@@ -1987,6 +2106,20 @@ namespace SahanOhjausGUI
                 StrokeThickness = 1,
                 StrokeDashArray = new DoubleCollection { 4, 3 }
             });
+
+            if (!profKaytossa)
+            {
+                var eiKaytossa = new TextBlock
+                {
+                    Text = "Ei käytössä",
+                    FontSize = 14,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(170, 170, 170))
+                };
+                Canvas.SetLeft(eiKaytossa, 36);
+                Canvas.SetTop(eiKaytossa, 10);
+                canvas.Children.Add(eiKaytossa);
+            }
 
             // ── Centerline (blue dashed vertical) ────────────────────────────
             canvas.Children.Add(new Line
@@ -2056,19 +2189,37 @@ namespace SahanOhjausGUI
             double guideH = 40.0 * scale;
             if (t7X > 0 && t7X < W)
             {
-                canvas.Children.Add(new Rectangle
+                if (profKaytossa)
                 {
-                    Width = Math.Max(2, guideW),
-                    Height = Math.Max(2, guideH),
-                    Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
-                    Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                    StrokeThickness = 1
-                }.Also(r => { Canvas.SetLeft(r, t7X); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                    canvas.Children.Add(new Rectangle
+                    {
+                        Width = Math.Max(2, guideW),
+                        Height = Math.Max(2, guideH),
+                        Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
+                        Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                        StrokeThickness = 1
+                    }.Also(r => { Canvas.SetLeft(r, t7X); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                }
+                else
+                {
+                    canvas.Children.Add(new Line
+                    {
+                        X1 = t7X,
+                        Y1 = 20,
+                        X2 = t7X,
+                        Y2 = H - 30,
+                        Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                        StrokeThickness = 2,
+                        StrokeDashArray = new DoubleCollection { 4, 3 }
+                    });
+                }
                 var t7Lbl = new TextBlock
                 {
                     Text = $"T7\n{t7Pos:F1}",
                     FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180))
+                    Foreground = profKaytossa
+                        ? t7RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(180, 180, 180))
+                        : new SolidColorBrush(Color.FromRgb(100, 100, 100))
                 };
                 Canvas.SetLeft(t7Lbl, t7X + 2);
                 Canvas.SetTop(t7Lbl, cy - guideH / 2.0 - 22);
@@ -2079,19 +2230,37 @@ namespace SahanOhjausGUI
             double t8X = cx - t8Pos * scale;
             if (t8X > 0 && t8X < W)
             {
-                canvas.Children.Add(new Rectangle
+                if (profKaytossa)
                 {
-                    Width = Math.Max(2, guideW),
-                    Height = Math.Max(2, guideH),
-                    Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
-                    Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
-                    StrokeThickness = 1
-                }.Also(r => { Canvas.SetLeft(r, t8X - guideW); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                    canvas.Children.Add(new Rectangle
+                    {
+                        Width = Math.Max(2, guideW),
+                        Height = Math.Max(2, guideH),
+                        Fill = new SolidColorBrush(Color.FromArgb(160, 100, 100, 100)),
+                        Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                        StrokeThickness = 1
+                    }.Also(r => { Canvas.SetLeft(r, t8X - guideW); Canvas.SetTop(r, cy - guideH / 2.0); }));
+                }
+                else
+                {
+                    canvas.Children.Add(new Line
+                    {
+                        X1 = t8X,
+                        Y1 = 20,
+                        X2 = t8X,
+                        Y2 = H - 30,
+                        Stroke = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                        StrokeThickness = 2,
+                        StrokeDashArray = new DoubleCollection { 4, 3 }
+                    });
+                }
                 var t8Lbl = new TextBlock
                 {
                     Text = $"T8\n{t8Pos:F1}",
                     FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(180, 180, 180)),
+                    Foreground = profKaytossa
+                        ? t8RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(180, 180, 180))
+                        : new SolidColorBrush(Color.FromRgb(100, 100, 100)),
                     TextAlignment = TextAlignment.Right,
                     Width = 44
                 };
@@ -2116,15 +2285,22 @@ namespace SahanOhjausGUI
                     Y1 = t3Y,
                     X2 = t1X + 120,
                     Y2 = t3Y,
-                    Stroke = new SolidColorBrush(Color.FromRgb(33, 150, 243)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t3RajaYli
+                            ? Brushes.OrangeRed
+                            : new SolidColorBrush(Color.FromRgb(33, 150, 243)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
                     Text = $"T3  {profT3Y:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(33, 150, 243))
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t3RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(33, 150, 243))
                 };
                 Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t3Y - 16);
                 canvas.Children.Add(lbl);
@@ -2139,15 +2315,20 @@ namespace SahanOhjausGUI
                     Y1 = t4Y,
                     X2 = t1X + 120,
                     Y2 = t4Y,
-                    Stroke = new SolidColorBrush(Color.FromRgb(0, 188, 212)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t4RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(0, 188, 212)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
                     Text = $"T4  {profT4Y:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(0, 188, 212))
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t4RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(0, 188, 212))
                 };
                 Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t4Y + 4);
                 canvas.Children.Add(lbl);
@@ -2162,15 +2343,20 @@ namespace SahanOhjausGUI
                     Y1 = t5Y,
                     X2 = t2X,
                     Y2 = t5Y,
-                    Stroke = new SolidColorBrush(Color.FromRgb(255, 235, 59)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t5RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(255, 235, 59)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
                     Text = $"T5  {profT5Y:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(255, 235, 59))
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t5RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(255, 235, 59))
                 };
                 Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t5Y - 16);
                 canvas.Children.Add(lbl);
@@ -2185,15 +2371,20 @@ namespace SahanOhjausGUI
                     Y1 = t6Y,
                     X2 = t2X,
                     Y2 = t6Y,
-                    Stroke = new SolidColorBrush(Color.FromRgb(220, 220, 220)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t6RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(220, 220, 220)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
                     Text = $"T6  {profT6Y:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(220, 220, 220))
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t6RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(220, 220, 220))
                 };
                 Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t6Y + 4);
                 canvas.Children.Add(lbl);
@@ -2208,8 +2399,11 @@ namespace SahanOhjausGUI
                     Y1 = t3Y - 120,
                     X2 = t1X,
                     Y2 = t4Y + 120,
-                    Stroke = new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t1RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
 
 
                 }
@@ -2220,7 +2414,9 @@ namespace SahanOhjausGUI
                     Text = $"T1\n{t1Pos:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80))
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t1RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(76, 175, 80))
                 };
                 Canvas.SetLeft(lbl, t1X + 4); Canvas.SetTop(lbl, t3Y - 160); 
                 canvas.Children.Add(lbl);
@@ -2235,21 +2431,52 @@ namespace SahanOhjausGUI
                     Y1 = t5Y - 120,
                     X2 = t2X,
                     Y2 = t6Y + 120,
-                    Stroke = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                    StrokeThickness = 2.5
+                    Stroke = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t2RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                    StrokeThickness = 2.5,
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
                     Text = $"T2\n{t2Pos:F1}",
                     FontSize = 10,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                    Foreground = !profKaytossa
+                        ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
+                        : t2RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(244, 67, 54)),
                     TextAlignment = TextAlignment.Right,
                     Width = 44
                 };
                 Canvas.SetLeft(lbl, t2X - 44); Canvas.SetTop(lbl, t5Y - 160);
                 canvas.Children.Add(lbl);
             }
+
+            if (profKaytossa)
+            {
+                var profVaroitukset = new List<string>();
+                void TarkistaProfRaja(string nimi, double arvo, string avain)
+                {
+                    if (!profilointiRajat.TryGetValue(avain, out var raja)) return;
+                    if (arvo < raja.Min || arvo > raja.Max)
+                        profVaroitukset.Add($"{nimi}: {arvo:F1} (raja {raja.Min:F1}…{raja.Max:F1})");
+                }
+                TarkistaProfRaja("ProfT1", t1Pos, "ProfT1");
+                TarkistaProfRaja("ProfT2", t2Pos, "ProfT2");
+                TarkistaProfRaja("ProfT3", profT3Y, "ProfT3");
+                TarkistaProfRaja("ProfT4", profT4Y, "ProfT4");
+                TarkistaProfRaja("ProfT5", profT5Y, "ProfT5");
+                TarkistaProfRaja("ProfT6", profT6Y, "ProfT6");
+                TarkistaProfRaja("ProfT7", t7Pos, "ProfT7");
+                TarkistaProfRaja("ProfT8", t8Pos, "ProfT8");
+                if (profVaroitukset.Count > 0)
+                    SetStatus($"⚠  Prof raja ylitetty: {string.Join("  |  ", profVaroitukset)}", Colors.OrangeRed);
+            }
+
+            if (Prof_Value != null)
+                Prof_Value.Text = profKaytossa
+                    ? $"Prof:  T1:{t1Pos:F1}  T2:{t2Pos:F1}  T3:{profT3Y:F1}  T4:{profT4Y:F1}"
+                    : "Prof: ei käyt.";
 
             // ── Title ─────────────────────────────────────────────────────────
             var otsikko = new TextBlock
