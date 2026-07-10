@@ -540,7 +540,7 @@ namespace SahanOhjausGUI
                     Margin = new Thickness(0, 0, 0, 4)
                 });
 
-                int defIdx = (count == 7) ? 3 : 2; // K4 for 7kpl, K3 for 5/6kpl (0-based)
+                int defIdx = (count == 7) ? 3 : 2; // 0-based index: 3=>K4 for 7kpl, 2=>K3 for 5/6kpl
 
                 // T1 reference row
                 var t1Grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
@@ -637,7 +637,7 @@ namespace SahanOhjausGUI
                 Margin = new Thickness(0, 0, 0, 4)
             });
 
-            int defIdx = (count == 7) ? 3 : 2; // K4 for 7kpl, K3 for 5/6kpl (0-based)
+            int defIdx = (count == 7) ? 3 : 2; // 0-based index: 3=>K4 for 7kpl, 2=>K3 for 5/6kpl
 
             var t1Grid = new Grid { Margin = new Thickness(0, 0, 0, 4) };
             t1Grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
@@ -2291,7 +2291,7 @@ namespace SahanOhjausGUI
                             ? Brushes.OrangeRed
                             : new SolidColorBrush(Color.FromRgb(33, 150, 243)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
@@ -2319,7 +2319,7 @@ namespace SahanOhjausGUI
                         ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
                         : t4RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(0, 188, 212)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
@@ -2347,7 +2347,7 @@ namespace SahanOhjausGUI
                         ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
                         : t5RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(255, 235, 59)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
@@ -2375,7 +2375,7 @@ namespace SahanOhjausGUI
                         ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
                         : t6RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(220, 220, 220)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
@@ -2403,7 +2403,7 @@ namespace SahanOhjausGUI
                         ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
                         : t1RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(76, 175, 80)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
 
 
                 }
@@ -2435,7 +2435,7 @@ namespace SahanOhjausGUI
                         ? new SolidColorBrush(Color.FromRgb(100, 100, 100))
                         : t2RajaYli ? Brushes.OrangeRed : new SolidColorBrush(Color.FromRgb(244, 67, 54)),
                     StrokeThickness = 2.5,
-                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : new DoubleCollection()
+                    StrokeDashArray = !profKaytossa ? new DoubleCollection { 4, 3 } : null
                 });
                 var lbl = new TextBlock
                 {
