@@ -1740,7 +1740,27 @@ namespace SahanOhjausGUI
             var cLbl = new TextBlock { Text = "0", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(79, 195, 247)) };
             Canvas.SetLeft(cLbl, centerX + 3); Canvas.SetTop(cLbl, 4); canvas.Children.Add(cLbl);
 
-            var teraJarjestys = n switch { 3 => new[] { 1, 2 }, 4 => new[] { 1, 2, 4 }, 5 => new[] { 1, 3, 2, 4 }, 6 => new[] { 3, 1, 2, 4, 6 }, 7 => new[] { 5, 3, 1, 2, 4, 6 }, _ => Array.Empty<int>() };
+            int[] teraJarjestys;
+            if (OnYhdistettyTila())
+            {
+                teraJarjestys = n switch
+                {
+                    3 => new[] { 1, 2 },
+                    4 => new[] { 1, 2, 4 },
+                    5 => new[] { 1, 3, 2, 4 },
+                    6 => new[] { 3, 1, 2, 4, 6 },
+                    7 => new[] { 5, 3, 1, 2, 4, 6 },
+                    _ => Array.Empty<int>()
+                };
+            }
+            else if (OikeaSahaCheck?.IsChecked == true)
+            {
+                teraJarjestys = Enumerable.Range(0, n - 1).Select(i => (i + 1) * 2).ToArray();
+            }
+            else
+            {
+                teraJarjestys = Enumerable.Range(0, n - 1).Select(i => i * 2 + 1).ToArray();
+            }
             double RakoT(int num) => teraParametrit.TryGetValue(num, out var t) ? t.Rako : 4.0;
             double kokonaisLeveys = paksuudet.Sum() + teraJarjestys.Select(t => RakoT(t)).Sum();
             double curMm = -kokonaisLeveys / 2.0;
@@ -1975,21 +1995,24 @@ namespace SahanOhjausGUI
             }
 
             int n = paksuudet.Count;
-            double rako1 = n >= 2 ? GetProfilointiRako(2) : DefaultProfilointiRako;
-            double rako2 = n >= 3 ? GetProfilointiRako(4) : DefaultProfilointiRako;
-            double rako3 = n >= 4 ? GetProfilointiRako(6) : DefaultProfilointiRako;
-
-            double kokonaisLeveys = paksuudet.Sum()
-                + (n >= 2 ? rako1 : 0)
-                + (n >= 3 ? rako2 : 0)
-                + (n >= 4 ? rako3 : 0);
+            var teraJarjestys = n switch
+            {
+                3 => new[] { 1, 2 },
+                4 => new[] { 1, 2, 4 },
+                5 => new[] { 1, 3, 2, 4 },
+                6 => new[] { 3, 1, 2, 4, 6 },
+                7 => new[] { 5, 3, 1, 2, 4, 6 },
+                _ => Array.Empty<int>()
+            };
+            double[] raot = teraJarjestys.Select(t => GetProfilointiRako(t)).ToArray();
+            double kokonaisLeveys = paksuudet.Sum() + raot.Sum();
 
             double kl = kokonaisLeveys / 2.0;
 
             double[] leftEdge = new double[n];
             double[] rightEdge = new double[n];
             double cur = -kl;
-            double[] raot = new[] { rako1, rako2, rako3 };
+            
             for (int i = 0; i < n; i++)
             {
                 leftEdge[i] = cur;
@@ -1998,21 +2021,31 @@ namespace SahanOhjausGUI
                     cur += paksuudet[i] + (i < raot.Length ? raot[i] : DefaultProfilointiRako);
             }
 
-            int t1RefIdx = n >= 3 ? n - 2 : n - 1;
-            int t2RefIdx = n >= 3 ? 1 : 0;
+            int t1RefIdx = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= n)
+    ? _yhdistettyT1RefKappale - 1
+    : (n >= 3 ? n - 2 : n - 1);
+            int t2RefIdx = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= n)
+                ? _yhdistettyT2RefKappale - 1
+                : (n >= 3 ? 1 : 0);
             profT1 = rightEdge[t1RefIdx];
             profT2 = Math.Abs(leftEdge[t2RefIdx]);
 
             double maxLev = leveydet.Count > 0
                 ? leveydet.Where(v => v > 0).DefaultIfEmpty(DefaultProfilointiLeveys).Max()
                 : DefaultProfilointiLeveys;
-            double uloinLev = leveydet.Count >= 1 ? leveydet[0] : maxLev;
-            if (uloinLev <= 0) uloinLev = maxLev;
+            int oikeaNaapuri = Math.Min(t1RefIdx + 1, n - 1);
+            int vasenNaapuri = Math.Max(t2RefIdx - 1, 0);
+            double uloinLevOikea = (leveydet.Count > oikeaNaapuri && leveydet[oikeaNaapuri] > 0) ? leveydet[oikeaNaapuri] : maxLev;
+            double uloinLevVasen = (leveydet.Count > vasenNaapuri && leveydet[vasenNaapuri] > 0) ? leveydet[vasenNaapuri] : maxLev;
 
-            double offset = (maxLev - uloinLev) / 2.0;
-            profT3 = offset + uloinLev;
-            profT4 = offset;
-            profT5 = profT3;
+            double offset3 = (maxLev - uloinLevOikea) / 2.0;
+            profT3 = offset3 + uloinLevOikea;
+            profT4 = offset3;
+
+            double offset5 = (maxLev - uloinLevVasen) / 2.0;
+            profT5 = offset5 + uloinLevVasen;
+            profT6 = offset5;
+            
             profT6 = profT4;
 
             profT7 = rightEdge[n - 1] - profT1;
@@ -2048,12 +2081,12 @@ namespace SahanOhjausGUI
 
             if (_currentPaksuudet.Count == 0 || !profKaytossa)
             {
-                profT1 = profilointiRajat.TryGetValue("ProfT1", out var p1) ? p1.Lepopaikka : 0.0;
-                profT2 = profilointiRajat.TryGetValue("ProfT2", out var p2) ? p2.Lepopaikka : 0.0;
-                profT3 = profilointiRajat.TryGetValue("ProfT3", out var p3) ? p3.Lepopaikka : 0.0;
-                profT4 = profilointiRajat.TryGetValue("ProfT4", out var p4) ? p4.Lepopaikka : 0.0;
-                profT5 = profilointiRajat.TryGetValue("ProfT5", out var p5) ? p5.Lepopaikka : 0.0;
-                profT6 = profilointiRajat.TryGetValue("ProfT6", out var p6) ? p6.Lepopaikka : 0.0;
+                profT1 = profilointiRajat.TryGetValue("ProfT1", out var p1) ? p1.Lepopaikka : 230.0;
+                profT2 = profilointiRajat.TryGetValue("ProfT2", out var p2) ? p2.Lepopaikka : 230.0;
+                profT3 = profilointiRajat.TryGetValue("ProfT3", out var p3) ? p3.Lepopaikka : 260.0;
+                profT4 = profilointiRajat.TryGetValue("ProfT4", out var p4) ? p4.Lepopaikka : -10.0;
+                profT5 = profilointiRajat.TryGetValue("ProfT5", out var p5) ? p5.Lepopaikka : 260.0;
+                profT6 = profilointiRajat.TryGetValue("ProfT6", out var p6) ? p6.Lepopaikka : -10.0;
                 profT7 = profilointiRajat.TryGetValue("ProfT7", out var p7) ? p7.Lepopaikka : 0.0;
                 profT8 = profilointiRajat.TryGetValue("ProfT8", out var p8) ? p8.Lepopaikka : 0.0;
             }
@@ -2136,12 +2169,16 @@ namespace SahanOhjausGUI
             if (_currentPaksuudet.Count > 0)
             {
                 int n = _currentPaksuudet.Count;
-                double[] raot = new[]
+                var teraJarjestys = n switch
                 {
-                    n >= 2 ? GetProfilointiRako(2) : 0.0,
-                    n >= 3 ? GetProfilointiRako(4) : 0.0,
-                    n >= 4 ? GetProfilointiRako(6) : 0.0
+                    3 => new[] { 1, 2 },
+                    4 => new[] { 1, 2, 4 },
+                    5 => new[] { 1, 3, 2, 4 },
+                    6 => new[] { 3, 1, 2, 4, 6 },
+                    7 => new[] { 5, 3, 1, 2, 4, 6 },
+                    _ => Array.Empty<int>()
                 };
+                double[] raot = teraJarjestys.Select(t => GetProfilointiRako(t)).ToArray();
                 double totalPaksuus = _currentPaksuudet.Sum() + raot.Take(Math.Max(0, n - 1)).Sum();
                 double startMm = -totalPaksuus / 2.0;
                 for (int i = 0; i < _currentPaksuudet.Count; i++)
@@ -2160,6 +2197,20 @@ namespace SahanOhjausGUI
                         Stroke = new SolidColorBrush(PuuReuna),
                         StrokeThickness = 1
                     }.Also(r => { Canvas.SetLeft(r, pieceX); Canvas.SetTop(r, cy - pieceH / 2.0); }));
+                    int kNro = OnYhdistettyTila() ? i + 1
+     : OikeaSahaCheck?.IsChecked == true ? i + 5
+     : n - i;  // vasen saha — käänteinen: K4, K3, K2, K1
+                    var kLbl = new TextBlock
+                    {
+                        Text = $"K{kNro}",
+                        FontWeight = FontWeights.Bold,
+                        Foreground = new SolidColorBrush(Color.FromRgb(40, 25, 10)),
+                        TextAlignment = TextAlignment.Center,
+                        Width = Math.Max(1, pieceW)
+                    };
+                    Canvas.SetLeft(kLbl, pieceX);
+                    Canvas.SetTop(kLbl, cy - pieceH / 2.0 + 4);
+                    canvas.Children.Add(kLbl);
                     double palaRako = 0.0;
                     if (i < _currentPaksuudet.Count - 1)
                         palaRako = i < raot.Length ? raot[i] : DefaultProfilointiRako;
