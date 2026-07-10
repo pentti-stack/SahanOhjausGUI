@@ -1995,15 +1995,31 @@ namespace SahanOhjausGUI
             }
 
             int n = paksuudet.Count;
-            var teraJarjestys = n switch
+            int[] teraJarjestys;
+            if (OnYhdistettyTila())
             {
-                3 => new[] { 1, 2 },
-                4 => new[] { 1, 2, 4 },
-                5 => new[] { 1, 3, 2, 4 },
-                6 => new[] { 3, 1, 2, 4, 6 },
-                7 => new[] { 5, 3, 1, 2, 4, 6 },
-                _ => Array.Empty<int>()
-            };
+                teraJarjestys = n switch
+                {
+                    3 => new[] { 1, 2 },
+                    4 => new[] { 1, 2, 4 },
+                    5 => new[] { 1, 3, 2, 4 },
+                    6 => new[] { 3, 1, 2, 4, 6 },
+                    7 => new[] { 5, 3, 1, 2, 4, 6 },
+                    _ => Array.Empty<int>()
+                };
+            }
+            else if (OikeaSahaCheck?.IsChecked == true)
+            {
+                // Oikea: T2, T4, T6... järjestyksessä
+                teraJarjestys = Enumerable.Range(0, n - 1).Select(i => (i + 1) * 2).ToArray();
+            }
+            else
+            {
+                // Vasen: T5, T3, T1 — käänteinen järjestys 4kpl = [5,3,1]
+                teraJarjestys = Enumerable.Range(0, n - 1)
+                    .Select(i => (n - 1 - i) * 2 + 1)
+                    .ToArray();
+            }
             double[] raot = teraJarjestys.Select(t => GetProfilointiRako(t)).ToArray();
             double kokonaisLeveys = paksuudet.Sum() + raot.Sum();
 
@@ -2169,15 +2185,27 @@ namespace SahanOhjausGUI
             if (_currentPaksuudet.Count > 0)
             {
                 int n = _currentPaksuudet.Count;
-                var teraJarjestys = n switch
+                int[] teraJarjestys;
+                if (OnYhdistettyTila())
                 {
-                    3 => new[] { 1, 2 },
-                    4 => new[] { 1, 2, 4 },
-                    5 => new[] { 1, 3, 2, 4 },
-                    6 => new[] { 3, 1, 2, 4, 6 },
-                    7 => new[] { 5, 3, 1, 2, 4, 6 },
-                    _ => Array.Empty<int>()
-                };
+                    teraJarjestys = n switch
+                    {
+                        3 => new[] { 1, 2 },
+                        4 => new[] { 1, 2, 4 },
+                        5 => new[] { 1, 3, 2, 4 },
+                        6 => new[] { 3, 1, 2, 4, 6 },
+                        7 => new[] { 5, 3, 1, 2, 4, 6 },
+                        _ => Array.Empty<int>()
+                    };
+                }
+                else if (OikeaSahaCheck?.IsChecked == true)
+                {
+                    teraJarjestys = Enumerable.Range(0, n - 1).Select(i => (i + 1) * 2).ToArray();
+                }
+                else
+                {
+                    teraJarjestys = Enumerable.Range(0, n - 1).Select(i => (n - 1 - i) * 2 + 1).ToArray();
+                }
                 double[] raot = teraJarjestys.Select(t => GetProfilointiRako(t)).ToArray();
                 double totalPaksuus = _currentPaksuudet.Sum() + raot.Take(Math.Max(0, n - 1)).Sum();
                 double startMm = -totalPaksuus / 2.0;
