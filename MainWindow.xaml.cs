@@ -1429,8 +1429,8 @@ namespace SahanOhjausGUI
                         paksuudetYhd = GetThicknessValuesYhdistetty().Select(p => p * kuivausKerroin).ToList();
                         leveydetYhd = GetLeveysValuesYhdistetty().Select(l => l * kuivausKerroin).ToList();
                         if (paksuudetYhd.Count > 0)
-                            LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6,
-                                _yhdistettyT1RefKappale, _yhdistettyT2RefKappale);
+                           LaskeYhdistetty(paksuudetYhd, ref plc_T1, ref plc_T2, ref plc_T3, ref plc_T4, ref plc_T5, ref plc_T6,
+    0, 0);  // ← aina 0 = automaattinen, ei ref-valinnasta
                     }
                     else
                     {
@@ -1562,8 +1562,8 @@ namespace SahanOhjausGUI
                 double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4]) / 2.0;
                 plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3);
                 plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4);
-                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 2;
-                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 2;
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 1;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 3;
                 plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
                 plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
                 plc_T5 = VaistoT(5); plc_T6 = VaistoT(6); return;
@@ -1573,8 +1573,8 @@ namespace SahanOhjausGUI
                 double kl = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 + paksuudet[4] + r6 + paksuudet[5]) / 2.0;
                 plc_T3 = kl - (paksuudet[0] + r3 / 2.0) + OffsetT(3);
                 plc_T4 = (paksuudet[0] + r3 + paksuudet[1] + r1 + paksuudet[2] + r2 + paksuudet[3] + r4 / 2.0) - kl + OffsetT(4);
-                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 2;
-                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 2;
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 1;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 3;
                 plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
                 plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
                 plc_T5 = VaistoT(5); plc_T6 = LaskeUlkoTeraPlc(paksuudet[4], r6, r4, OffsetT(6), OffsetT(4)); return;
@@ -1584,8 +1584,8 @@ namespace SahanOhjausGUI
                 double kl = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 + paksuudet[5] + r6 + paksuudet[6]) / 2.0;
                 plc_T3 = kl - (paksuudet[0] + r5 + paksuudet[1] + r3 / 2.0) + OffsetT(3);
                 plc_T4 = (paksuudet[0] + r5 + paksuudet[1] + r3 + paksuudet[2] + r1 + paksuudet[3] + r2 + paksuudet[4] + r4 / 2.0) - kl + OffsetT(4);
-                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 3;
-                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 3;
+                int t1Idx = (t1RefKappale >= 1 && t1RefKappale <= n) ? t1RefKappale - 1 : 2;
+                int t2Idx = (t2RefKappale >= 1 && t2RefKappale <= n) ? t2RefKappale - 1 : 4;
                 plc_T1 = LaskeSivuTeraPlc(paksuudet[t1Idx], r1, r3, OffsetT(1), OffsetT(3));
                 plc_T2 = LaskeSivuTeraPlc(paksuudet[t2Idx], r2, r4, OffsetT(2), OffsetT(4));
                 plc_T5 = LaskeUlkoTeraPlc(paksuudet[1], r5, r3, OffsetT(5), OffsetT(3));
