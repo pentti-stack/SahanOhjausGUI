@@ -351,18 +351,46 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Automaattinen lähetys -->
+                        <Border Background="#1E1A17" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Automaattinen lähetys"
+                                           FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,10"/>
+                                <CheckBox x:Name="AutoLahetysCheck"
+                                          Content="Automaattinen lähetys WinCC:hen"
+                                          Margin="0,0,0,8"/>
+                                <TextBlock TextWrapping="Wrap" Foreground="#aaa" FontSize="11">
+                                    Kun päällä: SetPoint-arvot lähetetään WinCC-tageihin automaattisesti
+                                    aina kun MainWindow laskee uudet arvot (PiirraVisual kutsuu PaivitaSetPoints).
+                                    Kun pois: Arvot päivittyvät näytölle mutta lähetetään vasta
+                                    "Lähetä kuvio koneelle" -napista.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Hälytysbittien tekstit -->
                         <Border Background="#1E1A17" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                             <StackPanel>
                                 <TextBlock Text="Hälytysbittien tekstit (Alarm_Word, bitit 0–15)"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,6"/>
                                 <TextBlock Foreground="#aaa" FontSize="11" Margin="0,0,0,10"
-                                           Text="Tekstit tallennetaan asetustiedostoon (wincc_settings.json)."/>
-                                <ItemsControl x:Name="AlarmBitList">
+                                           Text="Muokkaa tekstikenttiin haluamasi nimet. Tallenna asetukset -nappi tallentaa muutokset."/>
+                                <ItemsControl x:Name="AlarmBitItemsControl">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Text}" Foreground="#aaa"
-                                                       FontSize="11" FontFamily="Consolas" Margin="0,1"/>
+                                            <Grid Margin="0,2">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="64"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Label}"
+                                                           Foreground="#aaa" FontFamily="Consolas"
+                                                           FontSize="11" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1"
+                                                         Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         FontFamily="Consolas" FontSize="11"
+                                                         Height="22" Padding="4,2"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -32,7 +33,9 @@ namespace SahanOhjausGUI
         public string TagPrefix { get; set; } = "Saha1_";
         public WinCCVersion Version { get; set; } = WinCCVersion.V7V8;
         public bool UseSimulator { get; set; } = true;
+        public bool AutoLahetys { get; set; } = false;
         public List<AlarmBitDefinition> AlarmBits { get; set; } = BuildDefaultAlarmBits();
+        public List<string> AlarmTexts { get; set; } = BuildDefaultAlarmTexts();
 
         public static List<AlarmBitDefinition> BuildDefaultAlarmBits() =>
         [
@@ -53,6 +56,38 @@ namespace SahanOhjausGUI
             new() { BitIndex = 14, Text = "Bit 14: PH-vika" },
             new() { BitIndex = 15, Text = "Bit 15: Yleinen varoitus" },
         ];
+
+        public static List<string> BuildDefaultAlarmTexts() =>
+        [
+            "Hätäseis", "Ylikuormitus", "Taajuusmuuttajavirhe", "Akselin positiovirhe",
+            "Turvapiirivirhe", "Paineilmavirhe", "Lämpötilavirhe", "Kommunikaatiokatko",
+            "Servovika (T1)", "Servovika (T2)", "Servovika (T3)", "Servovika (T4)",
+            "Servovika (T5)", "Servovika (T6)", "PH-vika", "Yleinen varoitus"
+        ];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // AlarmTextItem — muokattava hälytysbitti UI:ta varten
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    public class AlarmTextItem : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public int BitIndex { get; init; }
+        public string Label => $"Bit {BitIndex,2:D}:";
+        private string _text = "";
+        public string Text
+        {
+            get => _text;
+            set
+            {
+                if (_text != value)
+                {
+                    _text = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Text)));
+                }
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -384,6 +419,7 @@ namespace SahanOhjausGUI
 
         private readonly ObservableCollection<AxisStatus> _axes = [];
         private readonly double[] _setPoints = new double[AxisDefs.Length];
+        private readonly ObservableCollection<AlarmTextItem> _alarmItems = [];
 
         private Thread? _pollingThread;
         private volatile bool _polling;
@@ -450,21 +486,61 @@ namespace SahanOhjausGUI
             double profT1, double profT2, double profT3, double profT4,
             double profT5, double profT6, double profT7, double profT8)
         {
-            var values = new[]
-            {
-                t1, t2, t3, t4, t5, t6,
-                ph1V, ph1O, ph2V, ph2O,
-                profT1, profT2, profT3, profT4, profT5, profT6, profT7, profT8
-            };
+            // Päivitä _setPoints-taulukko (threadilta turvallinen kirjoitus)
+            _setPoints[0]  = t1;    _setPoints[1]  = t2;    _setPoints[2]  = t3;
+            _setPoints[3]  = t4;    _setPoints[4]  = t5;    _setPoints[5]  = t6;
+            _setPoints[6]  = ph1V;  _setPoints[7]  = ph1O;
+            _setPoints[8]  = ph2V;  _setPoints[9]  = ph2O;
+            _setPoints[10] = profT1; _setPoints[11] = profT2; _setPoints[12] = profT3;
+            _setPoints[13] = profT4; _setPoints[14] = profT5; _setPoints[15] = profT6;
+            _setPoints[16] = profT7; _setPoints[17] = profT8;
 
-            Dispatcher.InvokeIfRequired(() =>
-            {
-                for (int i = 0; i < values.Length && i < _setPoints.Length; i++)
-                    _setPoints[i] = values[i];
+            // Päivitä DataGrid UI:ssa
+            Dispatcher.InvokeAsync(() => PaivitaTaulukko());
 
-                for (int i = 0; i < values.Length && i < _axes.Count; i++)
-                    _axes[i].SetPoint = values[i];
-            });
+            // Jos automaattinen lähetys päällä ja yhdistetty → lähetä WinCC:hen
+            if (_settings.AutoLahetys && _connector?.IsConnected == true)
+                _ = LahetaSetPointitConnectorilleAsync();
+        }
+
+        private void PaivitaTaulukko()
+        {
+            for (int i = 0; i < _setPoints.Length && i < _axes.Count; i++)
+                _axes[i].SetPoint = _setPoints[i];
+        }
+
+        private volatile bool _autoLahetysKaynnissa;
+
+        private async Task LahetaSetPointitConnectorilleAsync()
+        {
+            if (_connector == null) return;
+            if (_autoLahetysKaynnissa) return; // ohita jos edellinen lähetys on kesken
+            _autoLahetysKaynnissa = true;
+            try
+            {
+                var prefix = _settings.TagPrefix;
+                var snapshot = _setPoints.ToArray();
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        for (int i = 0; i < snapshot.Length && i < AxisDefs.Length; i++)
+                            _connector?.WriteTag(prefix + AxisDefs[i].TagBase + "_SetPoint", snapshot[i]);
+                        _connector?.WriteTag(prefix + "New_Data_Ready", 1);
+                    }
+                    catch { /* yhteysongelma — ei kaadu */ }
+                });
+                await Task.Delay(500);
+                await Task.Run(() =>
+                {
+                    try { _connector?.WriteTag(prefix + "New_Data_Ready", 0); }
+                    catch { }
+                });
+            }
+            finally
+            {
+                _autoLahetysKaynnissa = false;
+            }
         }
 
         // Taginnimet muodostetaan dynaamisesti yhteys-/pollausoperaatioissa
@@ -489,6 +565,10 @@ namespace SahanOhjausGUI
                 }
             }
             catch { /* käytetään oletuksia */ }
+
+            // Varmista AlarmTexts on täynnä
+            if (_settings.AlarmTexts == null || _settings.AlarmTexts.Count < 16)
+                _settings.AlarmTexts = WinCCSettings.BuildDefaultAlarmTexts();
         }
 
         private void TallennaAsetuksetSisaisesti()
@@ -512,16 +592,31 @@ namespace SahanOhjausGUI
             VersionV7Radio.IsChecked      = _settings.Version == WinCCVersion.V7V8;
             VersionUnifiedRadio.IsChecked = _settings.Version == WinCCVersion.Unified;
             SimulatorCheck.IsChecked      = _settings.UseSimulator;
-            AlarmBitList.ItemsSource      = _settings.AlarmBits;
+            AutoLahetysCheck.IsChecked    = _settings.AutoLahetys;
+
+            // Täytä muokattavat hälytysbitti-rivit
+            _alarmItems.Clear();
+            for (int i = 0; i < 16; i++)
+            {
+                string text = i < _settings.AlarmTexts.Count ? _settings.AlarmTexts[i] : "";
+                _alarmItems.Add(new AlarmTextItem { BitIndex = i, Text = text });
+            }
+            AlarmBitItemsControl.ItemsSource = _alarmItems;
+
             PaivitaSimulaatioBadge();
         }
 
         private void LueAsetuksistUI()
         {
-            _settings.ServerName    = ServerNameBox.Text.Trim();
-            _settings.TagPrefix     = TagPrefixBox.Text.Trim();
-            _settings.Version       = VersionV7Radio.IsChecked == true ? WinCCVersion.V7V8 : WinCCVersion.Unified;
-            _settings.UseSimulator  = SimulatorCheck.IsChecked == true;
+            _settings.ServerName   = ServerNameBox.Text.Trim();
+            _settings.TagPrefix    = TagPrefixBox.Text.Trim();
+            _settings.Version      = VersionV7Radio.IsChecked == true ? WinCCVersion.V7V8 : WinCCVersion.Unified;
+            _settings.UseSimulator = SimulatorCheck.IsChecked == true;
+            _settings.AutoLahetys  = AutoLahetysCheck.IsChecked == true;
+
+            // Lue hälytysbittitekstit takaisin asetuksiin
+            _settings.AlarmTexts = _alarmItems.Select(item => item.Text).ToList();
+            while (_settings.AlarmTexts.Count < 16) _settings.AlarmTexts.Add("");
         }
 
         // ── Yhteyden hallinta ────────────────────────────────────────────────────
@@ -750,8 +845,10 @@ namespace SahanOhjausGUI
                 if ((alarmWord & (1 << bit)) == 0) continue;
                 anyActive = true;
 
-                var def = _settings.AlarmBits.FirstOrDefault(b => b.BitIndex == bit);
-                string text = def?.Text ?? $"Bit {bit}: Tuntematon hälytys";
+                string bitText = (bit < _settings.AlarmTexts.Count && !string.IsNullOrEmpty(_settings.AlarmTexts[bit]))
+                    ? _settings.AlarmTexts[bit]
+                    : $"Tuntematon hälytys";
+                string text = $"Bit {bit}: {bitText}";
 
                 var tb = new System.Windows.Controls.TextBlock
                 {
