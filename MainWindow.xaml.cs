@@ -118,6 +118,12 @@ namespace SahanOhjausGUI
         private List<double> _currentPaksuudet = new();
         private List<double> _currentLeveydet = new();
 
+        // Viimeisin laskettu PLC-arvo WinCC-ikkunaa varten
+        private double _lastPlcT1, _lastPlcT2, _lastPlcT3, _lastPlcT4, _lastPlcT5, _lastPlcT6;
+        private double _lastPh1V, _lastPh1O, _lastPh2V, _lastPh2O;
+        private double _lastProfT1, _lastProfT2, _lastProfT3, _lastProfT4;
+        private double _lastProfT5, _lastProfT6, _lastProfT7, _lastProfT8;
+
         private bool _profilointiOn = true;
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
@@ -986,6 +992,7 @@ namespace SahanOhjausGUI
             {
                 _winCCWindow = new WinCCIntegrationWindow { Owner = this };
                 _winCCWindow.Show();
+                KeraaKaikkiPlcArvot(); // Täytä arvot heti
             }
             else
             {
@@ -1515,6 +1522,12 @@ namespace SahanOhjausGUI
                 if (Ph2V_Value != null) Ph2V_Value.Text = $"PH2V: {showPh2V:F1}";
                 if (Ph2O_Value != null) Ph2O_Value.Text = $"PH2O: {showPh2O:F1}";
 
+                // Tallenna jakosaha- ja PH-arvot KeraaKaikkiPlcArvot()-metodia varten
+                _lastPlcT1 = plc_T1; _lastPlcT2 = plc_T2; _lastPlcT3 = plc_T3;
+                _lastPlcT4 = plc_T4; _lastPlcT5 = plc_T5; _lastPlcT6 = plc_T6;
+                _lastPh1V = showPh1V; _lastPh1O = showPh1O;
+                _lastPh2V = showPh2V; _lastPh2O = showPh2O;
+
                 if (YhteisCanvas != null)
                 {
                     if (jakosahaOn)
@@ -1570,20 +1583,37 @@ namespace SahanOhjausGUI
                     profT8 = profilointiRajat.TryGetValue("ProfT8", out var p8) ? p8.Lepopaikka : 0.0;
                 }
 
-                _winCCWindow?.PaivitaSetPoints(
-                    plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6,
-                    showPh1V, showPh1O, showPh2V, showPh2O,
-                    profKaytossa ? profT1 + _profOffsetT1 : profT1,
-                    profKaytossa ? profT2 + _profOffsetT2 : profT2,
-                    profKaytossa ? profT3 + _profOffsetT3 : profT3,
-                    profKaytossa ? profT4 + _profOffsetT4 : profT4,
-                    profKaytossa ? profT5 + _profOffsetT5 : profT5,
-                    profKaytossa ? profT6 + _profOffsetT6 : profT6,
-                    profKaytossa ? profT7 + _profOffsetT7 : profT7,
-                    profKaytossa ? profT8 + _profOffsetT8 : profT8);
+                // Tallenna profilointiarvot ja kerää kaikki WinCC:lle
+                _lastProfT1 = profKaytossa ? profT1 + _profOffsetT1 : profT1;
+                _lastProfT2 = profKaytossa ? profT2 + _profOffsetT2 : profT2;
+                _lastProfT3 = profKaytossa ? profT3 + _profOffsetT3 : profT3;
+                _lastProfT4 = profKaytossa ? profT4 + _profOffsetT4 : profT4;
+                _lastProfT5 = profKaytossa ? profT5 + _profOffsetT5 : profT5;
+                _lastProfT6 = profKaytossa ? profT6 + _profOffsetT6 : profT6;
+                _lastProfT7 = profKaytossa ? profT7 + _profOffsetT7 : profT7;
+                _lastProfT8 = profKaytossa ? profT8 + _profOffsetT8 : profT8;
+                KeraaKaikkiPlcArvot();
             }
             finally { _isPiirraVisualRunning = false; }
 
+        }
+
+        // ── KeraaKaikkiPlcArvot — lähettää kaikki 18 viimeisintä PLC-arvoa WinCC-ikkunaan ──
+        private double[] KeraaKaikkiPlcArvot()
+        {
+            var values = new[]
+            {
+                _lastPlcT1, _lastPlcT2, _lastPlcT3, _lastPlcT4, _lastPlcT5, _lastPlcT6,
+                _lastPh1V, _lastPh1O, _lastPh2V, _lastPh2O,
+                _lastProfT1, _lastProfT2, _lastProfT3, _lastProfT4,
+                _lastProfT5, _lastProfT6, _lastProfT7, _lastProfT8
+            };
+            _winCCWindow?.PaivitaSetPoints(
+                values[0], values[1], values[2], values[3], values[4], values[5],
+                values[6], values[7], values[8], values[9],
+                values[10], values[11], values[12], values[13],
+                values[14], values[15], values[16], values[17]);
+            return values;
         }
 
         // ── Yhdistetty laskenta ──────────────────────────────────────────────
@@ -2596,6 +2626,13 @@ namespace SahanOhjausGUI
             };
             Canvas.SetLeft(otsikko, cx - 80); Canvas.SetTop(otsikko, 4);
             canvas.Children.Add(otsikko);
+
+            // Tallenna profilointiarvot ja päivitä WinCC-ikkuna
+            _lastProfT1 = t1Pos; _lastProfT2 = t2Pos;
+            _lastProfT3 = profT3Y; _lastProfT4 = profT4Y;
+            _lastProfT5 = profT5Y; _lastProfT6 = profT6Y;
+            _lastProfT7 = t7PlcArvo; _lastProfT8 = t8PlcArvo;
+            KeraaKaikkiPlcArvot();
         }
 
         private void PiirraProfilointiHorizAsteikko(Canvas canvas, double W, double H,
