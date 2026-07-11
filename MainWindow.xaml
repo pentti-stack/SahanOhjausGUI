@@ -136,7 +136,7 @@
                         Background="#1b5e20" BorderBrush="#388e3c"/>
                 <Button Content="&#x26A1; Ter&#xe4;asetukset" Click="AvaaTerapAsetukset_Click" Margin="0,0,8,0"/>
                 <Button Content="&#x1F512; Terien rajat" Click="AvaaRajatAsetukset_Click" Margin="0,0,8,0"/>
-                <Button Content="&#x1F4E1; WinCC" Click="AvaaWinCC_Click"
+                <Button Content="&#x1F4E1; WinCC" Click="AvaaWinCCIntegration_Click"
                         Background="#1a237e" BorderBrush="#283593"/>
             </StackPanel>
         </Grid>

@@ -383,6 +383,7 @@ namespace SahanOhjausGUI
         private IWinCCConnector? _connector;
 
         private readonly ObservableCollection<AxisStatus> _axes = [];
+        private readonly double[] _setPoints = new double[AxisDefs.Length];
 
         private Thread? _pollingThread;
         private volatile bool _polling;
@@ -441,6 +442,29 @@ namespace SahanOhjausGUI
                     Actual      = 0.0,
                 });
             }
+        }
+
+        public void PaivitaSetPoints(
+            double t1, double t2, double t3, double t4, double t5, double t6,
+            double ph1V, double ph1O, double ph2V, double ph2O,
+            double profT1, double profT2, double profT3, double profT4,
+            double profT5, double profT6, double profT7, double profT8)
+        {
+            var values = new[]
+            {
+                t1, t2, t3, t4, t5, t6,
+                ph1V, ph1O, ph2V, ph2O,
+                profT1, profT2, profT3, profT4, profT5, profT6, profT7, profT8
+            };
+
+            Dispatcher.InvokeIfRequired(() =>
+            {
+                for (int i = 0; i < values.Length && i < _setPoints.Length; i++)
+                    _setPoints[i] = values[i];
+
+                for (int i = 0; i < values.Length && i < _axes.Count; i++)
+                    _axes[i].SetPoint = values[i];
+            });
         }
 
         // Taginnimet muodostetaan dynaamisesti yhteys-/pollausoperaatioissa
@@ -576,6 +600,11 @@ namespace SahanOhjausGUI
 
         // ── "Lähetä kuvio" ───────────────────────────────────────────────────────
         private void LahetaKuvio_Click(object sender, RoutedEventArgs e)
+        {
+            LahetaKuvioWinCC();
+        }
+
+        public void LahetaKuvioWinCC()
         {
             if (_connector == null) return;
 

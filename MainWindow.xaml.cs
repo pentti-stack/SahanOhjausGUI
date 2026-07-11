@@ -121,6 +121,7 @@ namespace SahanOhjausGUI
         private bool _profilointiOn = true;
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
+        private WinCCIntegrationWindow? _winCCWindow;
 
         private const double Vaisto_Sisaterä = -140.0;
         private const double Vaisto_Ulkoterä = 140.0;
@@ -891,6 +892,9 @@ namespace SahanOhjausGUI
                 return;
             }
             SetStatus("✓  Lähetetty logiikkaan", Colors.LightGreen);
+
+            // Lähetä myös WinCC:hen jos ikkuna on auki ja yhdistetty
+            _winCCWindow?.LahetaKuvioWinCC();
         }
 
         private void AvaaTerapAsetukset_Click(object sender, RoutedEventArgs e)
@@ -976,10 +980,17 @@ namespace SahanOhjausGUI
             }
         }
 
-        private void AvaaWinCC_Click(object sender, RoutedEventArgs e)
+        private void AvaaWinCCIntegration_Click(object sender, RoutedEventArgs e)
         {
-            var win = new WinCCIntegrationWindow { Owner = this };
-            win.Show();
+            if (_winCCWindow == null || !_winCCWindow.IsVisible)
+            {
+                _winCCWindow = new WinCCIntegrationWindow { Owner = this };
+                _winCCWindow.Show();
+            }
+            else
+            {
+                _winCCWindow.Activate();
+            }
         }
 
         // ── PH laskenta ──────────────────────────────────────────────────────
@@ -1539,6 +1550,37 @@ namespace SahanOhjausGUI
                     _currentLeveydet = new List<double>(leveydetOikea);
                 }
                 PiirraProfilointiCanvas();
+
+                bool profKaytossa = _profilointiOn;
+                LaskeProfilointiArvot(_currentPaksuudet, _currentLeveydet,
+                    out double profT1, out double profT2,
+                    out double profT3, out double profT4,
+                    out double profT5, out double profT6,
+                    out double profT7, out double profT8);
+
+                if (_currentPaksuudet.Count == 0 || !profKaytossa)
+                {
+                    profT1 = profilointiRajat.TryGetValue("ProfT1", out var p1) ? p1.Lepopaikka : 230.0;
+                    profT2 = profilointiRajat.TryGetValue("ProfT2", out var p2) ? p2.Lepopaikka : 230.0;
+                    profT3 = profilointiRajat.TryGetValue("ProfT3", out var p3) ? p3.Lepopaikka : 260.0;
+                    profT4 = profilointiRajat.TryGetValue("ProfT4", out var p4) ? p4.Lepopaikka : -10.0;
+                    profT5 = profilointiRajat.TryGetValue("ProfT5", out var p5) ? p5.Lepopaikka : 260.0;
+                    profT6 = profilointiRajat.TryGetValue("ProfT6", out var p6) ? p6.Lepopaikka : -10.0;
+                    profT7 = profilointiRajat.TryGetValue("ProfT7", out var p7) ? p7.Lepopaikka : 0.0;
+                    profT8 = profilointiRajat.TryGetValue("ProfT8", out var p8) ? p8.Lepopaikka : 0.0;
+                }
+
+                _winCCWindow?.PaivitaSetPoints(
+                    plc_T1, plc_T2, plc_T3, plc_T4, plc_T5, plc_T6,
+                    showPh1V, showPh1O, showPh2V, showPh2O,
+                    profKaytossa ? profT1 + _profOffsetT1 : profT1,
+                    profKaytossa ? profT2 + _profOffsetT2 : profT2,
+                    profKaytossa ? profT3 + _profOffsetT3 : profT3,
+                    profKaytossa ? profT4 + _profOffsetT4 : profT4,
+                    profKaytossa ? profT5 + _profOffsetT5 : profT5,
+                    profKaytossa ? profT6 + _profOffsetT6 : profT6,
+                    profKaytossa ? profT7 + _profOffsetT7 : profT7,
+                    profKaytossa ? profT8 + _profOffsetT8 : profT8);
             }
             finally { _isPiirraVisualRunning = false; }
 
@@ -2542,7 +2584,7 @@ namespace SahanOhjausGUI
             if (Prof_Value != null)
                 Prof_Value.Text = profKaytossa
                     ?  $"Profilointi T1:{t1Pos:F1}  T2:{t2Pos:F1}  T3:{profT3Y:F1}  T4:{profT4Y:F1}  T5:{profT5Y:F1}  T6:{profT6Y:F1}  T7:{profT7 + _profOffsetT7:F1}  T8:{profT8 + _profOffsetT8:F1}"
-                    : "Prof: ei käyt.";
+                    : $"Prof (lepo): T1:{(profilointiRajat.TryGetValue("ProfT1", out var lp1) ? lp1.Lepopaikka : 0):F1}  T2:{(profilointiRajat.TryGetValue("ProfT2", out var lp2) ? lp2.Lepopaikka : 0):F1}  T3:{(profilointiRajat.TryGetValue("ProfT3", out var lp3) ? lp3.Lepopaikka : 0):F1}  T4:{(profilointiRajat.TryGetValue("ProfT4", out var lp4) ? lp4.Lepopaikka : 0):F1}  T5:{(profilointiRajat.TryGetValue("ProfT5", out var lp5) ? lp5.Lepopaikka : 0):F1}  T6:{(profilointiRajat.TryGetValue("ProfT6", out var lp6) ? lp6.Lepopaikka : 0):F1}  T7:{(profilointiRajat.TryGetValue("ProfT7", out var lp7) ? lp7.Lepopaikka : 0):F1}  T8:{(profilointiRajat.TryGetValue("ProfT8", out var lp8) ? lp8.Lepopaikka : 0):F1}";
 
             // ── Title ─────────────────────────────────────────────────────────
             var otsikko = new TextBlock
