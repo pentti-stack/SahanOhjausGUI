@@ -1599,21 +1599,13 @@ namespace SahanOhjausGUI
         }
 
         // ── KeraaKaikkiPlcArvot — lähettää kaikki 18 viimeisintä PLC-arvoa WinCC-ikkunaan ──
-        private double[] KeraaKaikkiPlcArvot()
+        private void KeraaKaikkiPlcArvot()
         {
-            var values = new[]
-            {
+            _winCCWindow?.PaivitaSetPoints(
                 _lastPlcT1, _lastPlcT2, _lastPlcT3, _lastPlcT4, _lastPlcT5, _lastPlcT6,
                 _lastPh1V, _lastPh1O, _lastPh2V, _lastPh2O,
                 _lastProfT1, _lastProfT2, _lastProfT3, _lastProfT4,
-                _lastProfT5, _lastProfT6, _lastProfT7, _lastProfT8
-            };
-            _winCCWindow?.PaivitaSetPoints(
-                values[0], values[1], values[2], values[3], values[4], values[5],
-                values[6], values[7], values[8], values[9],
-                values[10], values[11], values[12], values[13],
-                values[14], values[15], values[16], values[17]);
-            return values;
+                _lastProfT5, _lastProfT6, _lastProfT7, _lastProfT8);
         }
 
         // ── Yhdistetty laskenta ──────────────────────────────────────────────

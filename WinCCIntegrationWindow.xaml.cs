@@ -500,7 +500,7 @@ namespace SahanOhjausGUI
 
             // Jos automaattinen lähetys päällä ja yhdistetty → lähetä WinCC:hen
             if (_settings.AutoLahetys && _connector?.IsConnected == true)
-                _ = Task.Run(() => LahetaSetPointitConnectorille());
+                _ = LahetaSetPointitConnectorilleAsync();
         }
 
         private void PaivitaTaulukko()
@@ -509,16 +509,38 @@ namespace SahanOhjausGUI
                 _axes[i].SetPoint = _setPoints[i];
         }
 
-        private void LahetaSetPointitConnectorille()
+        private volatile bool _autoLahetysKaynnissa;
+
+        private async Task LahetaSetPointitConnectorilleAsync()
         {
             if (_connector == null) return;
-            var prefix = _settings.TagPrefix;
-            var snapshot = _setPoints.ToArray();
-            for (int i = 0; i < snapshot.Length && i < AxisDefs.Length; i++)
-                _connector.WriteTag(prefix + AxisDefs[i].TagBase + "_SetPoint", snapshot[i]);
-            _connector.WriteTag(prefix + "New_Data_Ready", 1);
-            Thread.Sleep(500);
-            _connector.WriteTag(prefix + "New_Data_Ready", 0);
+            if (_autoLahetysKaynnissa) return; // ohita jos edellinen lähetys on kesken
+            _autoLahetysKaynnissa = true;
+            try
+            {
+                var prefix = _settings.TagPrefix;
+                var snapshot = _setPoints.ToArray();
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        for (int i = 0; i < snapshot.Length && i < AxisDefs.Length; i++)
+                            _connector?.WriteTag(prefix + AxisDefs[i].TagBase + "_SetPoint", snapshot[i]);
+                        _connector?.WriteTag(prefix + "New_Data_Ready", 1);
+                    }
+                    catch { /* yhteysongelma — ei kaadu */ }
+                });
+                await Task.Delay(500);
+                await Task.Run(() =>
+                {
+                    try { _connector?.WriteTag(prefix + "New_Data_Ready", 0); }
+                    catch { }
+                });
+            }
+            finally
+            {
+                _autoLahetysKaynnissa = false;
+            }
         }
 
         // Taginnimet muodostetaan dynaamisesti yhteys-/pollausoperaatioissa
