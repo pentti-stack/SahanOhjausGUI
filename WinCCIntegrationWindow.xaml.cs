@@ -623,10 +623,11 @@ namespace SahanOhjausGUI
         private IWinCCConnector LuoConnector()
         {
             if (_settings.UseSimulator) return new WinCCSimulator();
-            return _settings.Version == WinCCVersion.V7V8
-                ? new WinCCComConnector(_settings.ServerName)
-                : new WinCCUnifiedConnector(_settings.ServerName);
+
+            // S7-1516F → suora S7-yhteys PLC:hen
+            return new S7Connector(_settings.ServerName, rack: 0, slot: 1);
         }
+
 
         private void ConnectBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -910,9 +911,16 @@ namespace SahanOhjausGUI
         // ── Ikkunan sulkeminen ───────────────────────────────────────────────────
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            e.Cancel = true;
+            this.Hide();
+        }
+
+        public void SuljeYhteys()
+        {
             PysaytaPollaus();
             PysaytaSydamen();
             _connector?.Disconnect();
+            _connector = null;
         }
     }
 
