@@ -149,7 +149,18 @@ namespace SahanOhjausGUI
             InitializeComponent();
             InitializeUI();
             LataaTallennus();
-            Closing += (s, e) => TallennaTallennus();
+
+            // Koko ruutu
+            this.WindowStyle = WindowStyle.None;
+            this.WindowState = WindowState.Maximized;
+            this.ResizeMode = ResizeMode.NoResize;
+
+            // Estä sulkeminen — tallenna silti
+            Closing += (s, e) =>
+            {
+                //e.Cancel = true;        // ei sulkeudu koskaan
+                TallennaTallennus();    // tallentaa silti aina
+            };
         }
 
         private void InitializeUI()
