@@ -894,6 +894,9 @@ namespace SahanOhjausGUI
 
         private void YhdistettyKappale_Changed(object sender, SelectionChangedEventArgs e)
         {
+
+            _yhdistettyT1RefKappale = 0;  // ← lisää
+            _yhdistettyT2RefKappale = 0;  // ← lisää
             if (YhdistettyInfo != null) YhdistettyInfo.Text = $"{GetSelectedYhdistettyCount()} kpl";
             LuoParametriKontrollit();
             PaivitaProfRefPanel();
@@ -2107,7 +2110,7 @@ namespace SahanOhjausGUI
             double[] leftEdge = new double[n];
             double[] rightEdge = new double[n];
             double cur = -kl;
-            
+
             for (int i = 0; i < n; i++)
             {
                 leftEdge[i] = cur;
@@ -2116,14 +2119,21 @@ namespace SahanOhjausGUI
                     cur += paksuudet[i] + (i < raot.Length ? raot[i] : DefaultProfilointiRako);
             }
 
-            int t1RefIdx = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= n)
-    ? _yhdistettyT1RefKappale - 1
-    : (n >= 3 ? n - 2 : n - 1);
-            int t2RefIdx = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= n)
-                ? _yhdistettyT2RefKappale - 1
-                : (n >= 3 ? 1 : 0);
+            int t1RefIdx, t2RefIdx;
+            if (OnYhdistettyTila())
+            {
+                t1RefIdx = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= n)
+                    ? _yhdistettyT1RefKappale - 1 : (n >= 3 ? n - 2 : n - 1);
+                t2RefIdx = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= n)
+                    ? _yhdistettyT2RefKappale - 1 : (n >= 3 ? 1 : 0);
+            }
+            else
+            {
+                t1RefIdx = n >= 2 ? n - 2 : 0;
+                t2RefIdx = 1;
+            }
             profT1 = rightEdge[t1RefIdx];
-            profT2 = Math.Abs(leftEdge[t2RefIdx]);
+            profT2 = Math.Abs(leftEdge[t2RefIdx]);  // leftEdge molemmissa tiloissa
 
             double maxLev = leveydet.Count > 0
                 ? leveydet.Where(v => v > 0).DefaultIfEmpty(DefaultProfilointiLeveys).Max()
@@ -2140,8 +2150,8 @@ namespace SahanOhjausGUI
             double offset5 = (maxLev - uloinLevVasen) / 2.0;
             profT5 = offset5 + uloinLevVasen;
             profT6 = offset5;
-            
-            profT6 = profT4;
+
+
 
             profT7 = rightEdge[n - 1] - profT1;
             profT8 = Math.Abs(leftEdge[0]) - profT2;
