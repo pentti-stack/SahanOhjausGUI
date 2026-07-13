@@ -21,13 +21,15 @@ namespace SahanOhjausGUI
 
             if (!omistaja)
             {
-                // Ohjelma jo käynnissä — tuo etualalle
+                // Ohjelma jo käynnissä — hae prosessi ja tuo ikkuna esiin
                 var existing = Process.GetProcessesByName("SahanOhjausGUI")
                     .FirstOrDefault();
                 if (existing != null)
                 {
-                    ShowWindow(existing.MainWindowHandle, 9);
-                    SetForegroundWindow(existing.MainWindowHandle);
+                    IntPtr hWnd = existing.MainWindowHandle;
+                    ShowWindow(hWnd, 9);   // SW_RESTORE — näyttää myös piilotetun
+                    ShowWindow(hWnd, 3);   // SW_MAXIMIZE — maksimoi
+                    SetForegroundWindow(hWnd);
                 }
                 Current.Shutdown();
                 return;
