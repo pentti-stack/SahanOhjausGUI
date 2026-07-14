@@ -144,6 +144,10 @@ namespace SahanOhjausGUI
         private const double Vaisto_Ulkoterä = 140.0;
         private const double DefaultProfilointiRako = 4.0;
         private const double DefaultProfilointiLeveys = 100.0;
+        private const double VahimmaisTeraLisa = 12.0;
+        private const double VahimmaisTeraPerusHalkaisija = 208.0;
+        private static readonly Color TukkiInfoVari = Color.FromRgb(210, 170, 100);
+        private static readonly Color VahimmaisInfoVari = Color.FromRgb(79, 195, 247);
 
         private double GetProfilointiRako(int teraNumero) =>
             teraParametrit.TryGetValue(teraNumero, out var t) ? t.Rako : DefaultProfilointiRako;
@@ -263,10 +267,10 @@ namespace SahanOhjausGUI
         {
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
             bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
-            bool naytaHalkaisuPanel = GetSelectedPieceCount() == 2 && vasenOn != oikeaOn;
+            bool showHalkaisuPanel = GetSelectedPieceCount() == 2 && vasenOn != oikeaOn;
 
             if (HalkaisuPanel != null)
-                HalkaisuPanel.Visibility = naytaHalkaisuPanel ? Visibility.Visible : Visibility.Collapsed;
+                HalkaisuPanel.Visibility = showHalkaisuPanel ? Visibility.Visible : Visibility.Collapsed;
             if (HalkaisuOikeaContainer != null)
                 HalkaisuOikeaContainer.Visibility = oikeaOn && !vasenOn ? Visibility.Visible : Visibility.Collapsed;
             if (HalkaisuVasenContainer != null)
@@ -316,6 +320,9 @@ namespace SahanOhjausGUI
 
         private void TallennaDimensio(string key, string nimi, Dictionary<int, string> paksuudet, Dictionary<int, string> leveydet)
         {
+            if (string.IsNullOrWhiteSpace(nimi))
+                return;
+
             if (!tallennetutDimensiot.TryGetValue(key, out var lista))
             {
                 lista = new List<DimensioAsete>();
@@ -359,14 +366,14 @@ namespace SahanOhjausGUI
             if (combo == null)
                 return;
 
-            string? aiempiValinta = combo.SelectedItem as string;
+            string? previousSelection = combo.SelectedItem as string;
             var nimet = tallennetutDimensiot.TryGetValue(key, out var lista)
                 ? lista.OrderBy(x => x.Nimi, StringComparer.CurrentCultureIgnoreCase).Select(x => x.Nimi).ToList()
                 : new List<string>();
 
             combo.ItemsSource = nimet;
-            combo.SelectedItem = aiempiValinta != null && nimet.Contains(aiempiValinta)
-                ? aiempiValinta
+            combo.SelectedItem = previousSelection != null && nimet.Contains(previousSelection)
+                ? previousSelection
                 : nimet.FirstOrDefault();
         }
 
@@ -2136,7 +2143,7 @@ namespace SahanOhjausGUI
                     NumberStyles.Float, CultureInfo.InvariantCulture, out levinKappale);
             }
 
-            return (levinKappale + 12.0) * 2.0 + 208.0;
+            return (levinKappale + VahimmaisTeraLisa) * 2.0 + VahimmaisTeraPerusHalkaisija;
         }
 
         private static Border LuoCanvasInfoLaatikko(string otsikko, string arvo, Color korostus)
@@ -2184,10 +2191,10 @@ namespace SahanOhjausGUI
         {
             double top = 8;
 
-            var tukkiBorder = LuoCanvasInfoLaatikko("Tukki \u2300", $"{_tukkiHalkaisija:F0} mm", Color.FromRgb(210, 170, 100));
+            var tukkiBorder = LuoCanvasInfoLaatikko("Tukki \u2300", $"{_tukkiHalkaisija:F0} mm", TukkiInfoVari);
             top = LisaaCanvasInfoLaatikko(canvas, tukkiBorder, canvasWidth, top);
 
-            var vahimmaisBorder = LuoCanvasInfoLaatikko("Vähimmäis \u2300", $"{LaskeVahimmaisTeraHalkaisija():F0} mm", Color.FromRgb(79, 195, 247));
+            var vahimmaisBorder = LuoCanvasInfoLaatikko("Vähimmäis \u2300", $"{LaskeVahimmaisTeraHalkaisija():F0} mm", VahimmaisInfoVari);
             LisaaCanvasInfoLaatikko(canvas, vahimmaisBorder, canvasWidth, top);
         }
 
