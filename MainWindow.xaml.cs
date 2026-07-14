@@ -263,7 +263,7 @@ namespace SahanOhjausGUI
         {
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
             bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
-            bool naytaHalkaisuPanel = GetSelectedPieceCount() == 2 && (vasenOn || oikeaOn) && !(vasenOn && oikeaOn);
+            bool naytaHalkaisuPanel = GetSelectedPieceCount() == 2 && vasenOn != oikeaOn;
 
             if (HalkaisuPanel != null)
                 HalkaisuPanel.Visibility = naytaHalkaisuPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -323,21 +323,22 @@ namespace SahanOhjausGUI
             }
 
             var olemassaOleva = lista.FirstOrDefault(x => string.Equals(x.Nimi, nimi, StringComparison.OrdinalIgnoreCase));
-            var uusi = new DimensioAsete
-            {
-                Nimi = nimi,
-                Paksuudet = paksuudet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
-                Leveydet = leveydet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-            };
+            var paksuusArvot = paksuudet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var leveysArvot = leveydet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             if (olemassaOleva != null)
             {
-                olemassaOleva.Paksuudet = uusi.Paksuudet;
-                olemassaOleva.Leveydet = uusi.Leveydet;
+                olemassaOleva.Paksuudet = paksuusArvot;
+                olemassaOleva.Leveydet = leveysArvot;
             }
             else
             {
-                lista.Add(uusi);
+                lista.Add(new DimensioAsete
+                {
+                    Nimi = nimi,
+                    Paksuudet = paksuusArvot,
+                    Leveydet = leveysArvot
+                });
             }
 
             tallennetutDimensiot[key] = lista.OrderBy(x => x.Nimi, StringComparer.CurrentCultureIgnoreCase).ToList();
@@ -2183,7 +2184,7 @@ namespace SahanOhjausGUI
         {
             double top = 8;
 
-            var tukkiBorder = LuoCanvasInfoLaatikko("Tukki \u2205", $"{_tukkiHalkaisija:F0} mm", Color.FromRgb(210, 170, 100));
+            var tukkiBorder = LuoCanvasInfoLaatikko("Tukki \u2300", $"{_tukkiHalkaisija:F0} mm", Color.FromRgb(210, 170, 100));
             top = LisaaCanvasInfoLaatikko(canvas, tukkiBorder, canvasWidth, top);
 
             var vahimmaisBorder = LuoCanvasInfoLaatikko("Vähimmäis \u2300", $"{LaskeVahimmaisTeraHalkaisija():F0} mm", Color.FromRgb(79, 195, 247));
