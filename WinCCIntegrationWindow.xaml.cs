@@ -507,11 +507,19 @@ namespace SahanOhjausGUI
 
         public double? GetAxisActual(string tagBase)
         {
-            string actualTag = tagBase + "_Actual";
-            var axis = _axes.FirstOrDefault(a =>
-                a.ActualTag.Equals(actualTag, StringComparison.OrdinalIgnoreCase) ||
-                a.ActualTag.EndsWith(actualTag, StringComparison.OrdinalIgnoreCase) ||
-                actualTag.EndsWith(a.ActualTag, StringComparison.OrdinalIgnoreCase));
+            static string NormalizeTagBase(string rawTagBase)
+            {
+                foreach (var marker in new[] { "Jakosaha_", "PH1_", "PH2_", "Prof_" })
+                {
+                    int index = rawTagBase.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                    if (index >= 0)
+                        return rawTagBase[index..];
+                }
+                return rawTagBase;
+            }
+
+            string actualTag = NormalizeTagBase(tagBase) + "_Actual";
+            var axis = _axes.FirstOrDefault(a => a.ActualTag.Equals(actualTag, StringComparison.OrdinalIgnoreCase));
             return axis?.Actual;
         }
 
