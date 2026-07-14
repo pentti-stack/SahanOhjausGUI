@@ -462,6 +462,8 @@ namespace SahanOhjausGUI
             AxisGrid.ItemsSource = _axes;
         }
 
+        public bool IsConnected => _connector?.IsConnected == true;
+
         // ── Akseli-tietorakenteiden luonti ──────────────────────────────────────
         private void BuildAxes()
         {
@@ -501,6 +503,16 @@ namespace SahanOhjausGUI
             // Jos automaattinen lähetys päällä ja yhdistetty → lähetä WinCC:hen
             if (_settings.AutoLahetys && _connector?.IsConnected == true)
                 _ = LahetaSetPointitConnectorilleAsync();
+        }
+
+        public double? GetAxisActual(string tagBase)
+        {
+            string actualTag = tagBase + "_Actual";
+            var axis = _axes.FirstOrDefault(a =>
+                a.ActualTag.Equals(actualTag, StringComparison.OrdinalIgnoreCase) ||
+                a.ActualTag.EndsWith(actualTag, StringComparison.OrdinalIgnoreCase) ||
+                actualTag.EndsWith(a.ActualTag, StringComparison.OrdinalIgnoreCase));
+            return axis?.Actual;
         }
 
         private void PaivitaTaulukko()
