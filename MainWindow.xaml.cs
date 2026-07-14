@@ -1006,7 +1006,7 @@ namespace SahanOhjausGUI
             {
                 _winCCWindow = new WinCCIntegrationWindow { Owner = this };
                 _winCCWindow.Show();
-                KeraaKaikkiPlcArvot(); // Täytä arvot heti
+                KeraaKaikkiPlcArvot(); 
             }
             else
             {
