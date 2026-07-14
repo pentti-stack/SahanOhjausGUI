@@ -1002,15 +1002,16 @@ namespace SahanOhjausGUI
 
         private void AvaaWinCCIntegration_Click(object sender, RoutedEventArgs e)
         {
-            if (_winCCWindow == null || !_winCCWindow.IsVisible)
+            if (_winCCWindow == null)
             {
                 _winCCWindow = new WinCCIntegrationWindow { Owner = this };
                 _winCCWindow.Show();
-                KeraaKaikkiPlcArvot(); // Täytä arvot heti
+                KeraaKaikkiPlcArvot();
             }
             else
             {
-                _winCCWindow.Activate();
+                _winCCWindow.Show();      // näytä uudelleen jos piilotettu
+                _winCCWindow.Activate();  // tuo etualalle
             }
         }
 
@@ -2121,13 +2122,14 @@ namespace SahanOhjausGUI
 
             int t1RefIdx, t2RefIdx;
             if (OnYhdistettyTila())
-            {
-                t1RefIdx = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= n)
-                    ? _yhdistettyT1RefKappale - 1 : (n >= 3 ? n - 2 : n - 1);
-                t2RefIdx = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= n)
-                    ? _yhdistettyT2RefKappale - 1 : (n >= 3 ? 1 : 0);
-            }
-            else
+                
+                {
+                    t1RefIdx = (_yhdistettyT1RefKappale >= 1 && _yhdistettyT1RefKappale <= n)
+                        ? _yhdistettyT1RefKappale - 1 : (n >= 3 ? n - 2 : n - 1);
+                    t2RefIdx = (_yhdistettyT2RefKappale >= 1 && _yhdistettyT2RefKappale <= n)
+                        ? _yhdistettyT2RefKappale - 1 : (n >= 3 ? n - 2 : 0);  // ← n-2 eikä 1
+                }
+                else
             {
                 t1RefIdx = n >= 2 ? n - 2 : 0;
                 t2RefIdx = 1;
@@ -2140,8 +2142,8 @@ namespace SahanOhjausGUI
                 : DefaultProfilointiLeveys;
             int oikeaNaapuri = Math.Min(t1RefIdx + 1, n - 1);
             int vasenNaapuri = Math.Max(t2RefIdx - 1, 0);
-            double uloinLevOikea = (leveydet.Count > n - 1 && leveydet[n - 1] > 0) ? leveydet[n - 1] : maxLev;
-            double uloinLevVasen = (leveydet.Count > 0 && leveydet[0] > 0) ? leveydet[0] : maxLev;
+            double uloinLevOikea = (leveydet.Count > oikeaNaapuri && leveydet[oikeaNaapuri] > 0) ? leveydet[oikeaNaapuri] : maxLev;
+            double uloinLevVasen = (leveydet.Count > vasenNaapuri && leveydet[vasenNaapuri] > 0) ? leveydet[vasenNaapuri] : maxLev;
 
             double offset3 = (maxLev - uloinLevOikea) / 2.0;
             profT3 = offset3 + uloinLevOikea;
