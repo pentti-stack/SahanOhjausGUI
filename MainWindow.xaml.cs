@@ -144,7 +144,14 @@ namespace SahanOhjausGUI
         private const double Vaisto_Ulkoterä = 140.0;
         private const double DefaultProfilointiRako = 4.0;
         private const double DefaultProfilointiLeveys = 100.0;
+        private const string YhdistettyDimensioPrefix = "yhdistetty_";
+        private const string VasenDimensioPrefix = "vasen_";
+        private const string OikeaDimensioPrefix = "oikea_";
+        private const string Ph1DimensioKey = "ph1";
+        private const string Ph2DimensioKey = "ph2";
+        // Millimetreinä: kappaleleveyden kummallekin puolelle lisättävä terävara.
         private const double VahimmaisTeraLisa = 12.0;
+        // Millimetreinä: halkaisijalaskennan kiinteä konekohtainen peruslisä.
         private const double VahimmaisTeraPerusHalkaisija = 208.0;
         private static readonly Color TukkiInfoVari = Color.FromRgb(210, 170, 100);
         private static readonly Color VahimmaisInfoVari = Color.FromRgb(79, 195, 247);
@@ -240,6 +247,7 @@ namespace SahanOhjausGUI
             Ph1Check?.IsChecked == true && Ph2Check?.IsChecked == true;
 
         private static DimensioAsete KopioiDimensioAsete(DimensioAsete asete) =>
+            // Sanakirjojen arvot ovat merkkijonoja, joten uusi sanakirja riittää erottamaan instanssit toisistaan.
             new DimensioAsete
             {
                 Nimi = asete.Nimi,
@@ -267,7 +275,8 @@ namespace SahanOhjausGUI
         {
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
             bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
-            bool showHalkaisuPanel = GetSelectedPieceCount() == 2 && vasenOn != oikeaOn;
+            bool exactlyOneBladeActive = vasenOn != oikeaOn;
+            bool showHalkaisuPanel = GetSelectedPieceCount() == 2 && exactlyOneBladeActive;
 
             if (HalkaisuPanel != null)
                 HalkaisuPanel.Visibility = showHalkaisuPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -380,22 +389,22 @@ namespace SahanOhjausGUI
         private string? HaeAktiivinenJakosahaDimensioKey()
         {
             if (OnYhdistettyTila())
-                return $"yhdistetty_{GetSelectedYhdistettyCount()}kpl";
+                return $"{YhdistettyDimensioPrefix}{GetSelectedYhdistettyCount()}kpl";
             if (VasenSahaCheck?.IsChecked == true && OikeaSahaCheck?.IsChecked == false)
-                return $"vasen_{GetSelectedPieceCount()}kpl";
+                return $"{VasenDimensioPrefix}{GetSelectedPieceCount()}kpl";
             if (OikeaSahaCheck?.IsChecked == true && VasenSahaCheck?.IsChecked == false)
-                return $"oikea_{GetSelectedPieceCount()}kpl";
+                return $"{OikeaDimensioPrefix}{GetSelectedPieceCount()}kpl";
             return null;
         }
 
         private string HaeJakosahaDimensioOtsikko(string key)
         {
-            if (key.StartsWith("yhdistetty_", StringComparison.Ordinal))
-                return $"Yhdistetty {key["yhdistetty_".Length..]}";
-            if (key.StartsWith("vasen_", StringComparison.Ordinal))
-                return $"Vasen {key["vasen_".Length..]}";
-            if (key.StartsWith("oikea_", StringComparison.Ordinal))
-                return $"Oikea {key["oikea_".Length..]}";
+            if (key.StartsWith(YhdistettyDimensioPrefix, StringComparison.Ordinal))
+                return $"Yhdistetty {key[YhdistettyDimensioPrefix.Length..]}";
+            if (key.StartsWith(VasenDimensioPrefix, StringComparison.Ordinal))
+                return $"Vasen {key[VasenDimensioPrefix.Length..]}";
+            if (key.StartsWith(OikeaDimensioPrefix, StringComparison.Ordinal))
+                return $"Oikea {key[OikeaDimensioPrefix.Length..]}";
             return "Dimensiot";
         }
 
@@ -442,8 +451,8 @@ namespace SahanOhjausGUI
             if (Ph2DimensioPanel != null)
                 Ph2DimensioPanel.Visibility = Ph2Check?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
-            PaivitaDimensioCombo(Ph1DimensioCombo, "ph1");
-            PaivitaDimensioCombo(Ph2DimensioCombo, "ph2");
+            PaivitaDimensioCombo(Ph1DimensioCombo, Ph1DimensioKey);
+            PaivitaDimensioCombo(Ph2DimensioCombo, Ph2DimensioKey);
         }
 
         private void TallennaAktiivinenJakosahaDimensio()
@@ -1171,12 +1180,12 @@ namespace SahanOhjausGUI
         private void TallennaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => TallennaAktiivinenJakosahaDimensio();
         private void LataaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => LataaAktiivinenJakosahaDimensio();
         private void PoistaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => PoistaAktiivinenJakosahaDimensio();
-        private void TallennaPh1Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio("ph1", Ph1DimensioNimiBox, Ph1DimensioCombo);
-        private void LataaPh1Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio("ph1", Ph1DimensioCombo);
-        private void PoistaPh1Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio("ph1", Ph1DimensioCombo);
-        private void TallennaPh2Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio("ph2", Ph2DimensioNimiBox, Ph2DimensioCombo);
-        private void LataaPh2Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio("ph2", Ph2DimensioCombo);
-        private void PoistaPh2Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio("ph2", Ph2DimensioCombo);
+        private void TallennaPh1Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio(Ph1DimensioKey, Ph1DimensioNimiBox, Ph1DimensioCombo);
+        private void LataaPh1Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio(Ph1DimensioKey, Ph1DimensioCombo);
+        private void PoistaPh1Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio(Ph1DimensioKey, Ph1DimensioCombo);
+        private void TallennaPh2Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio(Ph2DimensioKey, Ph2DimensioNimiBox, Ph2DimensioCombo);
+        private void LataaPh2Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio(Ph2DimensioKey, Ph2DimensioCombo);
+        private void PoistaPh2Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio(Ph2DimensioKey, Ph2DimensioCombo);
 
         private void SahaValinta_Changed(object sender, RoutedEventArgs e)
         {
