@@ -55,6 +55,15 @@ namespace SahanOhjausGUI
         public double ProfOffsetT8 { get; set; } = 0.0;
         public int YhdistettyT1RefKappale { get; set; } = 0;  // 0 = automaattinen default
         public int YhdistettyT2RefKappale { get; set; } = 0;  // 0 = automaattinen default
+        public bool KokoRuutuTila { get; set; } = true;
+        public Dictionary<string, List<DimensioAsete>> TallennetutDimensiot { get; set; } = new();
+    }
+
+    public class DimensioAsete
+    {
+        public string Nimi { get; set; } = "";
+        public Dictionary<int, string> Paksuudet { get; set; } = new();
+        public Dictionary<int, string> Leveydet { get; set; } = new();
     }
 
     public class TeraParametritDto
@@ -98,10 +107,12 @@ namespace SahanOhjausGUI
         private readonly Dictionary<int, TeraRajat> teraRajat = new();
         private readonly Dictionary<string, ProfilointiRaja> profilointiRajat = new();
         private readonly Dictionary<string, PhRajat> phRajat = new();
+        private readonly Dictionary<string, List<DimensioAsete>> tallennetutDimensiot = new();
 
         private double _ph1Offset = 0.0;
         private double _ph2Offset = 0.0;
         private double _tukkiHalkaisija = 200.0;
+        private bool _kokoRuutuTila = true;
 
         private double _offsetT1 = 0.0, _offsetT2 = 0.0, _offsetT3 = 0.0;
         private double _offsetT4 = 0.0, _offsetT5 = 0.0, _offsetT6 = 0.0;
@@ -149,11 +160,7 @@ namespace SahanOhjausGUI
             InitializeComponent();
             InitializeUI();
             LataaTallennus();
-
-            // Koko ruutu
-            this.WindowStyle = WindowStyle.None;
-            this.WindowState = WindowState.Maximized;
-            this.ResizeMode = ResizeMode.NoResize;
+            PaivitaKokoRuutuTila();
 
             // Estä sulkeminen — tallenna silti
             Closing += (s, e) =>
@@ -228,9 +235,49 @@ namespace SahanOhjausGUI
         private bool OnPhKaytossa() =>
             Ph1Check?.IsChecked == true && Ph2Check?.IsChecked == true;
 
+        private static DimensioAsete KopioiDimensioAsete(DimensioAsete asete) =>
+            new DimensioAsete
+            {
+                Nimi = asete.Nimi,
+                Paksuudet = asete.Paksuudet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                Leveydet = asete.Leveydet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            };
+
+        private void PaivitaKokoRuutuTila()
+        {
+            if (_kokoRuutuTila)
+            {
+                WindowStyle = WindowStyle.None;
+                WindowState = WindowState.Maximized;
+                ResizeMode = ResizeMode.NoResize;
+            }
+            else
+            {
+                WindowStyle = WindowStyle.SingleBorderWindow;
+                ResizeMode = ResizeMode.CanResize;
+                WindowState = WindowState.Normal;
+            }
+        }
+
+        private void PaivitaHalkaisuNakyvyys()
+        {
+            bool vasenOn = VasenSahaCheck?.IsChecked == true;
+            bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
+            bool naytaHalkaisuPanel = GetSelectedPieceCount() == 2 && (vasenOn || oikeaOn) && !(vasenOn && oikeaOn);
+
+            if (HalkaisuPanel != null)
+                HalkaisuPanel.Visibility = naytaHalkaisuPanel ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuOikeaContainer != null)
+                HalkaisuOikeaContainer.Visibility = oikeaOn && !vasenOn ? Visibility.Visible : Visibility.Collapsed;
+            if (HalkaisuVasenContainer != null)
+                HalkaisuVasenContainer.Visibility = vasenOn && !oikeaOn ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private void PaivitaNakymat()
         {
             LuoParametriKontrollit();
+            PaivitaHalkaisuNakyvyys();
+            PaivitaDimensioUi();
             PaivitaPhLukitus();
             PiirraVisual();
         }
@@ -255,6 +302,233 @@ namespace SahanOhjausGUI
                 Ph1LukittuLabel.Visibility = jakosahaOn ? Visibility.Visible : Visibility.Collapsed;
             if (Ph2LukittuLabel != null)
                 Ph2LukittuLabel.Visibility = jakosahaOn ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private static Dictionary<int, string> HaeTextArvot(Dictionary<int, TextBox> textBoxes) =>
+            textBoxes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Text);
+
+        private static void AsetaTextArvot(Dictionary<int, TextBox> textBoxes, Dictionary<int, string> arvot)
+        {
+            foreach (var kvp in arvot)
+                if (textBoxes.TryGetValue(kvp.Key, out var tb))
+                    tb.Text = kvp.Value;
+        }
+
+        private void TallennaDimensio(string key, string nimi, Dictionary<int, string> paksuudet, Dictionary<int, string> leveydet)
+        {
+            if (!tallennetutDimensiot.TryGetValue(key, out var lista))
+            {
+                lista = new List<DimensioAsete>();
+                tallennetutDimensiot[key] = lista;
+            }
+
+            var olemassaOleva = lista.FirstOrDefault(x => string.Equals(x.Nimi, nimi, StringComparison.OrdinalIgnoreCase));
+            var uusi = new DimensioAsete
+            {
+                Nimi = nimi,
+                Paksuudet = paksuudet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                Leveydet = leveydet.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            };
+
+            if (olemassaOleva != null)
+            {
+                olemassaOleva.Paksuudet = uusi.Paksuudet;
+                olemassaOleva.Leveydet = uusi.Leveydet;
+            }
+            else
+            {
+                lista.Add(uusi);
+            }
+
+            tallennetutDimensiot[key] = lista.OrderBy(x => x.Nimi, StringComparer.CurrentCultureIgnoreCase).ToList();
+            TallennaTallennus();
+            PaivitaDimensioUi();
+        }
+
+        private DimensioAsete? HaeValittuDimensio(string key, ComboBox? combo)
+        {
+            if (combo?.SelectedItem is not string nimi || !tallennetutDimensiot.TryGetValue(key, out var lista))
+                return null;
+
+            return lista.FirstOrDefault(x => string.Equals(x.Nimi, nimi, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void PaivitaDimensioCombo(ComboBox? combo, string key)
+        {
+            if (combo == null)
+                return;
+
+            string? aiempiValinta = combo.SelectedItem as string;
+            var nimet = tallennetutDimensiot.TryGetValue(key, out var lista)
+                ? lista.OrderBy(x => x.Nimi, StringComparer.CurrentCultureIgnoreCase).Select(x => x.Nimi).ToList()
+                : new List<string>();
+
+            combo.ItemsSource = nimet;
+            combo.SelectedItem = aiempiValinta != null && nimet.Contains(aiempiValinta)
+                ? aiempiValinta
+                : nimet.FirstOrDefault();
+        }
+
+        private string? HaeAktiivinenJakosahaDimensioKey()
+        {
+            if (OnYhdistettyTila())
+                return $"yhdistetty_{GetSelectedYhdistettyCount()}kpl";
+            if (VasenSahaCheck?.IsChecked == true && OikeaSahaCheck?.IsChecked == false)
+                return $"vasen_{GetSelectedPieceCount()}kpl";
+            if (OikeaSahaCheck?.IsChecked == true && VasenSahaCheck?.IsChecked == false)
+                return $"oikea_{GetSelectedPieceCount()}kpl";
+            return null;
+        }
+
+        private string HaeJakosahaDimensioOtsikko(string key)
+        {
+            if (key.StartsWith("yhdistetty_", StringComparison.Ordinal))
+                return $"Yhdistetty {key["yhdistetty_".Length..]}";
+            if (key.StartsWith("vasen_", StringComparison.Ordinal))
+                return $"Vasen {key["vasen_".Length..]}";
+            if (key.StartsWith("oikea_", StringComparison.Ordinal))
+                return $"Oikea {key["oikea_".Length..]}";
+            return "Dimensiot";
+        }
+
+        private bool TryHaeAktiivisetJakosahaKentat(out Dictionary<int, TextBox> paksuudet, out Dictionary<int, TextBox> leveydet)
+        {
+            if (OnYhdistettyTila())
+            {
+                paksuudet = paksuusTextBoxesYhdistetty;
+                leveydet = leveysTextBoxesYhdistetty;
+                return true;
+            }
+
+            if (VasenSahaCheck?.IsChecked == true && OikeaSahaCheck?.IsChecked == false)
+            {
+                paksuudet = paksuusTextBoxesVasen;
+                leveydet = leveysTextBoxesVasen;
+                return true;
+            }
+
+            if (OikeaSahaCheck?.IsChecked == true && VasenSahaCheck?.IsChecked == false)
+            {
+                paksuudet = paksuusTextBoxesOikea;
+                leveydet = leveysTextBoxesOikea;
+                return true;
+            }
+
+            paksuudet = new Dictionary<int, TextBox>();
+            leveydet = new Dictionary<int, TextBox>();
+            return false;
+        }
+
+        private void PaivitaDimensioUi()
+        {
+            string? jakosahaKey = HaeAktiivinenJakosahaDimensioKey();
+            if (JakosahaDimensioPanel != null)
+                JakosahaDimensioPanel.Visibility = jakosahaKey != null ? Visibility.Visible : Visibility.Collapsed;
+            if (JakosahaDimensioTitle != null)
+                JakosahaDimensioTitle.Text = jakosahaKey != null ? $"{HaeJakosahaDimensioOtsikko(jakosahaKey)} dimensiot" : "Dimensiot";
+            if (jakosahaKey != null)
+                PaivitaDimensioCombo(JakosahaDimensioCombo, jakosahaKey);
+
+            if (Ph1DimensioPanel != null)
+                Ph1DimensioPanel.Visibility = Ph1Check?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            if (Ph2DimensioPanel != null)
+                Ph2DimensioPanel.Visibility = Ph2Check?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+            PaivitaDimensioCombo(Ph1DimensioCombo, "ph1");
+            PaivitaDimensioCombo(Ph2DimensioCombo, "ph2");
+        }
+
+        private void TallennaAktiivinenJakosahaDimensio()
+        {
+            string nimi = JakosahaDimensioNimiBox?.Text?.Trim() ?? "";
+            string? key = HaeAktiivinenJakosahaDimensioKey();
+            if (string.IsNullOrWhiteSpace(nimi) || key == null || !TryHaeAktiivisetJakosahaKentat(out var paksuudet, out var leveydet))
+                return;
+
+            TallennaDimensio(key, nimi, HaeTextArvot(paksuudet), HaeTextArvot(leveydet));
+            if (JakosahaDimensioCombo != null)
+                JakosahaDimensioCombo.SelectedItem = nimi;
+        }
+
+        private void LataaAktiivinenJakosahaDimensio()
+        {
+            string? key = HaeAktiivinenJakosahaDimensioKey();
+            if (key == null || !TryHaeAktiivisetJakosahaKentat(out var paksuudet, out var leveydet))
+                return;
+
+            var asete = HaeValittuDimensio(key, JakosahaDimensioCombo);
+            if (asete == null)
+                return;
+
+            AsetaTextArvot(paksuudet, asete.Paksuudet);
+            AsetaTextArvot(leveydet, asete.Leveydet);
+            PiirraVisual();
+        }
+
+        private void PoistaAktiivinenJakosahaDimensio()
+        {
+            string? key = HaeAktiivinenJakosahaDimensioKey();
+            var asete = key != null ? HaeValittuDimensio(key, JakosahaDimensioCombo) : null;
+            if (key == null || asete == null || !tallennetutDimensiot.TryGetValue(key, out var lista))
+                return;
+
+            lista.RemoveAll(x => string.Equals(x.Nimi, asete.Nimi, StringComparison.OrdinalIgnoreCase));
+            if (lista.Count == 0)
+                tallennetutDimensiot.Remove(key);
+            else
+                tallennetutDimensiot[key] = lista;
+
+            TallennaTallennus();
+            PaivitaDimensioUi();
+        }
+
+        private void TallennaPhDimensio(string key, TextBox? nimiTextBox, ComboBox? combo)
+        {
+            string nimi = nimiTextBox?.Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(nimi))
+                return;
+
+            TallennaDimensio(key, nimi, new Dictionary<int, string>
+            {
+                [1] = PhLevinKappaleBox?.Text ?? "",
+                [2] = PhKokonaisLeveysBox?.Text ?? "",
+                [3] = PhKuivausBox?.Text ?? ""
+            }, new Dictionary<int, string>());
+
+            if (combo != null)
+                combo.SelectedItem = nimi;
+        }
+
+        private void LataaPhDimensio(string key, ComboBox? combo)
+        {
+            var asete = HaeValittuDimensio(key, combo);
+            if (asete == null)
+                return;
+
+            if (PhLevinKappaleBox != null && asete.Paksuudet.TryGetValue(1, out var levin))
+                PhLevinKappaleBox.Text = levin;
+            if (PhKokonaisLeveysBox != null && asete.Paksuudet.TryGetValue(2, out var kokonais))
+                PhKokonaisLeveysBox.Text = kokonais;
+            if (PhKuivausBox != null && asete.Paksuudet.TryGetValue(3, out var kuivaus))
+                PhKuivausBox.Text = kuivaus;
+
+            PiirraVisual();
+        }
+
+        private void PoistaPhDimensio(string key, ComboBox? combo)
+        {
+            var asete = HaeValittuDimensio(key, combo);
+            if (asete == null || !tallennetutDimensiot.TryGetValue(key, out var lista))
+                return;
+
+            lista.RemoveAll(x => string.Equals(x.Nimi, asete.Nimi, StringComparison.OrdinalIgnoreCase));
+            if (lista.Count == 0)
+                tallennetutDimensiot.Remove(key);
+            else
+                tallennetutDimensiot[key] = lista;
+
+            TallennaTallennus();
+            PaivitaDimensioUi();
         }
 
         // ── Tallennus ────────────────────────────────────────────────────────
@@ -310,6 +584,10 @@ namespace SahanOhjausGUI
                     TurvaEtaisyys = turvaEtaisyys,
                     YhdistettyT1RefKappale = _yhdistettyT1RefKappale,
                     YhdistettyT2RefKappale = _yhdistettyT2RefKappale,
+                    KokoRuutuTila = _kokoRuutuTila,
+                    TallennetutDimensiot = tallennetutDimensiot.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Select(KopioiDimensioAsete).ToList()),
                     TeraRajat = teraRajat.ToDictionary(kvp => kvp.Key, kvp => new TeraRajatDto
                     {
                         Min = kvp.Value.Min,
@@ -379,6 +657,7 @@ namespace SahanOhjausGUI
                 _yhdistettyT2RefKappale = data.YhdistettyT2RefKappale;
                 _ph1Offset = data.Ph1Offset;
                 _ph2Offset = data.Ph2Offset;
+                _kokoRuutuTila = data.KokoRuutuTila;
                 _offsetT1 = data.OffsetT1; _offsetT2 = data.OffsetT2; _offsetT3 = data.OffsetT3;
                 _offsetT4 = data.OffsetT4; _offsetT5 = data.OffsetT5; _offsetT6 = data.OffsetT6;
                 _profOffsetT1 = data.ProfOffsetT1; _profOffsetT2 = data.ProfOffsetT2;
@@ -415,6 +694,11 @@ namespace SahanOhjausGUI
                 if (PhLevinKappaleBox != null) PhLevinKappaleBox.Text = data.PhLevinKappale;
                 if (PhKokonaisLeveysBox != null) PhKokonaisLeveysBox.Text = data.PhKokonaisLeveys;
                 if (PhKuivausBox != null) PhKuivausBox.Text = data.PhKuivaus;
+                if (KokoRuutuCheck != null) KokoRuutuCheck.IsChecked = _kokoRuutuTila;
+
+                tallennetutDimensiot.Clear();
+                foreach (var kvp in data.TallennetutDimensiot)
+                    tallennetutDimensiot[kvp.Key] = kvp.Value.Select(KopioiDimensioAsete).ToList();
 
                 KappaleCombo.SelectionChanged += Kappale_Changed;
                 YhdistettyCombo.SelectionChanged += YhdistettyKappale_Changed;
@@ -425,6 +709,8 @@ namespace SahanOhjausGUI
 
                 PaivitaNakymat();
                 LuoParametriKontrollit();
+                PaivitaDimensioUi();
+                PaivitaKokoRuutuTila();
 
                 Dispatcher.InvokeAsync(() =>
                 {
@@ -455,6 +741,13 @@ namespace SahanOhjausGUI
             while (PaksuusPanel.Children.Count > 4)
                 PaksuusPanel.Children.RemoveAt(PaksuusPanel.Children.Count - 1);
 
+            paksuusTextBoxesVasen.Clear();
+            paksuusTextBoxesOikea.Clear();
+            paksuusTextBoxesYhdistetty.Clear();
+            leveysTextBoxesVasen.Clear();
+            leveysTextBoxesOikea.Clear();
+            leveysTextBoxesYhdistetty.Clear();
+
             bool vasenOn = VasenSahaCheck?.IsChecked == true;
             bool oikeaOn = OikeaSahaCheck?.IsChecked == true;
 
@@ -462,9 +755,9 @@ namespace SahanOhjausGUI
                 ErillinenPanel.Visibility = (!vasenOn && !oikeaOn) ? Visibility.Collapsed
                     : OnYhdistettyTila() ? Visibility.Collapsed : Visibility.Visible;
             if (YhdistettyPanel != null) YhdistettyPanel.Visibility = OnYhdistettyTila() ? Visibility.Visible : Visibility.Collapsed;
-            if (HalkaisuPanel != null) HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2 ? Visibility.Visible : Visibility.Collapsed;
             if (HalkaisuVasenPanel != null) HalkaisuVasenPanel.Visibility = vasenOn ? Visibility.Visible : Visibility.Collapsed;
             if (HalkaisuOikeaPanel != null) HalkaisuOikeaPanel.Visibility = oikeaOn ? Visibility.Visible : Visibility.Collapsed;
+            PaivitaHalkaisuNakyvyys();
 
             if (!vasenOn && !oikeaOn)
             {
@@ -476,6 +769,7 @@ namespace SahanOhjausGUI
             else LuoErillisetKontrollit();
 
             PaivitaProfRefPanel();
+            PaivitaDimensioUi();
         }
 
         private void LuoErillisetKontrollit()
@@ -849,6 +1143,7 @@ namespace SahanOhjausGUI
         private void PhValinta_Changed(object sender, RoutedEventArgs e)
         {
             PaivitaPhLukitus();
+            PaivitaDimensioUi();
             PiirraVisual();
             PiirraPhCanvasit();
         }
@@ -859,14 +1154,30 @@ namespace SahanOhjausGUI
             PiirraProfilointiCanvas();
         }
 
+        private void KokoRuutuTila_Changed(object sender, RoutedEventArgs e)
+        {
+            _kokoRuutuTila = KokoRuutuCheck?.IsChecked != false;
+            PaivitaKokoRuutuTila();
+        }
+
+        private void TallennaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => TallennaAktiivinenJakosahaDimensio();
+        private void LataaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => LataaAktiivinenJakosahaDimensio();
+        private void PoistaJakosahaDimensio_Click(object sender, RoutedEventArgs e) => PoistaAktiivinenJakosahaDimensio();
+        private void TallennaPh1Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio("ph1", Ph1DimensioNimiBox, Ph1DimensioCombo);
+        private void LataaPh1Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio("ph1", Ph1DimensioCombo);
+        private void PoistaPh1Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio("ph1", Ph1DimensioCombo);
+        private void TallennaPh2Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio("ph2", Ph2DimensioNimiBox, Ph2DimensioCombo);
+        private void LataaPh2Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio("ph2", Ph2DimensioCombo);
+        private void PoistaPh2Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio("ph2", Ph2DimensioCombo);
+
         private void SahaValinta_Changed(object sender, RoutedEventArgs e)
         {
             if (HalkaisuVasenPanel != null)
                 HalkaisuVasenPanel.Visibility = VasenSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             if (HalkaisuOikeaPanel != null)
                 HalkaisuOikeaPanel.Visibility = OikeaSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PaivitaHalkaisuNakyvyys();
             PaivitaNakymat();
-            LuoParametriKontrollit();
             PaivitaProfRefPanel();
             PaivitaPhLukitus();
             PiirraVisual();
@@ -885,10 +1196,9 @@ namespace SahanOhjausGUI
         private void Kappale_Changed(object sender, SelectionChangedEventArgs e)
         {
             UpdateKappaleInfo();
-            if (HalkaisuPanel != null) HalkaisuPanel.Visibility = GetSelectedPieceCount() == 2 ? Visibility.Visible : Visibility.Collapsed;
-            if (HalkaisuVasenPanel != null) HalkaisuVasenPanel.Visibility = VasenSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-            if (HalkaisuOikeaPanel != null) HalkaisuOikeaPanel.Visibility = OikeaSahaCheck?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            PaivitaHalkaisuNakyvyys();
             LuoParametriKontrollit();
+            PaivitaDimensioUi();
             PiirraVisual();
         }
 
@@ -899,6 +1209,7 @@ namespace SahanOhjausGUI
             _yhdistettyT2RefKappale = 0;  // ← lisää
             if (YhdistettyInfo != null) YhdistettyInfo.Text = $"{GetSelectedYhdistettyCount()} kpl";
             LuoParametriKontrollit();
+            PaivitaDimensioUi();
             PaivitaProfRefPanel();
             PiirraVisual();
         }
@@ -1806,6 +2117,79 @@ namespace SahanOhjausGUI
             return rectHeight;
         }
 
+        private double LaskeVahimmaisTeraHalkaisija()
+        {
+            double levinKappale = 0;
+
+            if (OnJakosahaKaytossa())
+            {
+                double.TryParse(KuivausTextBox?.Text.Replace(",", ".") ?? "0",
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out double kuivaus);
+                double kerroin = 1.0 + kuivaus / 100.0;
+                var leveydet = GetLeveysValues();
+                levinKappale = leveydet.Count > 0 ? leveydet.Max() * kerroin : 0;
+            }
+            else
+            {
+                double.TryParse(PhLevinKappaleBox?.Text.Replace(",", ".") ?? "0",
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out levinKappale);
+            }
+
+            return (levinKappale + 12.0) * 2.0 + 208.0;
+        }
+
+        private static Border LuoCanvasInfoLaatikko(string otsikko, string arvo, Color korostus)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(10, 6, 10, 6),
+                BorderBrush = new SolidColorBrush(korostus),
+                BorderThickness = new Thickness(1)
+            };
+
+            var stack = new StackPanel();
+            stack.Children.Add(new TextBlock
+            {
+                Text = otsikko,
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)),
+                TextAlignment = TextAlignment.Center
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = arvo,
+                FontSize = 15,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(korostus),
+                TextAlignment = TextAlignment.Center
+            });
+            border.Child = stack;
+            return border;
+        }
+
+        private static double LisaaCanvasInfoLaatikko(Canvas canvas, Border border, double canvasWidth, double top)
+        {
+            border.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetTop(border, top);
+            Canvas.SetLeft(border, canvasWidth - border.DesiredSize.Width - 8);
+            canvas.Children.Add(border);
+            return top + border.DesiredSize.Height + 8;
+        }
+
+        private void LisaaJakosahaInfoLaatikot(Canvas canvas, double canvasWidth)
+        {
+            double top = 8;
+
+            var tukkiBorder = LuoCanvasInfoLaatikko("Tukki \u2205", $"{_tukkiHalkaisija:F0} mm", Color.FromRgb(210, 170, 100));
+            top = LisaaCanvasInfoLaatikko(canvas, tukkiBorder, canvasWidth, top);
+
+            var vahimmaisBorder = LuoCanvasInfoLaatikko("Vähimmäis \u2300", $"{LaskeVahimmaisTeraHalkaisija():F0} mm", Color.FromRgb(79, 195, 247));
+            LisaaCanvasInfoLaatikko(canvas, vahimmaisBorder, canvasWidth, top);
+        }
+
         private void PiirraYhteisCanvasYhdistetty(Canvas canvas, List<double> paksuudet,
             List<double> leveydet, double plc_T1, double plc_T2, double plc_T3,
             double plc_T4, double plc_T5, double plc_T6)
@@ -1868,35 +2252,20 @@ namespace SahanOhjausGUI
                     double rako = RakoT(teraJarjestys[i]);
                     curMm += rako;
                 }
-                if (_tukkiHalkaisija > 0)
+            }
+
+            if (_tukkiHalkaisija > 0)
+            {
+                double tukkiR = _tukkiHalkaisija / 2.0 * pixelsPerMm;
+                canvas.Children.Add(new Ellipse
                 {
-                    double tukkiR = _tukkiHalkaisija / 2.0 * pixelsPerMm;
-                    canvas.Children.Add(new Ellipse
-                    {
-                        Width = tukkiR * 2,
-                        Height = tukkiR * 2,
-                        Fill = Brushes.Transparent,
-                        Stroke = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
-                        StrokeThickness = 1.5,
-                        StrokeDashArray = new DoubleCollection { 6, 3 }
-                    }.Also(e => { Canvas.SetLeft(e, centerX - tukkiR); Canvas.SetTop(e, centerY - tukkiR); }));
-                }
-                var tukkiBorder2 = new Border
-                {
-                    Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(10, 6, 10, 6),
-                    BorderBrush = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
-                    BorderThickness = new Thickness(1)
-                };
-                var tukkiSp2 = new StackPanel();
-                tukkiSp2.Children.Add(new TextBlock { Text = "Tukki \u2205", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)), TextAlignment = TextAlignment.Center });
-                tukkiSp2.Children.Add(new TextBlock { Text = $"{_tukkiHalkaisija:F0} mm", FontSize = 15, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(210, 170, 100)), TextAlignment = TextAlignment.Center });
-                tukkiBorder2.Child = tukkiSp2;
-                Canvas.SetTop(tukkiBorder2, 8);
-                tukkiBorder2.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                Canvas.SetLeft(tukkiBorder2, canvasWidth - tukkiBorder2.DesiredSize.Width - 8);
-                canvas.Children.Add(tukkiBorder2);
+                    Width = tukkiR * 2,
+                    Height = tukkiR * 2,
+                    Fill = Brushes.Transparent,
+                    Stroke = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
+                    StrokeThickness = 1.5,
+                    StrokeDashArray = new DoubleCollection { 6, 3 }
+                }.Also(e => { Canvas.SetLeft(e, centerX - tukkiR); Canvas.SetTop(e, centerY - tukkiR); }));
             }
 
             double totalStartX = centerX - kokonaisLeveys / 2.0 * pixelsPerMm;
@@ -1930,6 +2299,7 @@ namespace SahanOhjausGUI
 
             var otsikko = new TextBlock { Text = $"\U0001f500 Yhdistetty sahaus \u2014 {n} kpl", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(255, 217, 61)) };
             Canvas.SetLeft(otsikko, centerX - 100); Canvas.SetTop(otsikko, 6); canvas.Children.Add(otsikko);
+            LisaaJakosahaInfoLaatikot(canvas, canvasWidth);
         }
 
         private void PiirraYhteisCanvas(Canvas canvas,
@@ -2045,22 +2415,7 @@ namespace SahanOhjausGUI
                     StrokeDashArray = new DoubleCollection { 6, 3 }
                 }.Also(e => { Canvas.SetLeft(e, centerX - tukkiR); Canvas.SetTop(e, centerY - tukkiR); }));
             }
-            var tukkiBorder = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(210, 25, 25, 25)),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 6, 10, 6),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(180, 140, 60)),
-                BorderThickness = new Thickness(1)
-            };
-            var tukkiSp = new StackPanel();
-            tukkiSp.Children.Add(new TextBlock { Text = "Tukki \u2205", FontSize = 10, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(190, 190, 190)), TextAlignment = TextAlignment.Center });
-            tukkiSp.Children.Add(new TextBlock { Text = $"{_tukkiHalkaisija:F0} mm", FontSize = 15, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(Color.FromRgb(210, 170, 100)), TextAlignment = TextAlignment.Center });
-            tukkiBorder.Child = tukkiSp;
-            Canvas.SetTop(tukkiBorder, 8);
-            tukkiBorder.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(tukkiBorder, canvasWidth - tukkiBorder.DesiredSize.Width - 8);
-            canvas.Children.Add(tukkiBorder);
+            LisaaJakosahaInfoLaatikot(canvas, canvasWidth);
         }
 
         // ── Profilointi laskenta ───────────────────────────────────────────────
@@ -2972,6 +3327,7 @@ namespace SahanOhjausGUI
             };
             Canvas.SetLeft(lepoTitle, centerX - 40); Canvas.SetTop(lepoTitle, 6);
             canvas.Children.Add(lepoTitle);
+            LisaaJakosahaInfoLaatikot(canvas, canvasWidth);
         }
         private void PiirraPhLepopaikkaCanvas(Canvas canvas,
     double lepoV, double lepoO, bool isPh1)
