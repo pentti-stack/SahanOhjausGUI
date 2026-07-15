@@ -1327,16 +1327,13 @@ namespace SahanOhjausGUI
 
         private void AvaaWinCCIntegration_Click(object sender, RoutedEventArgs e)
         {
-            if (_winCCWindow == null || !_winCCWindow.IsVisible)
+            if (_winCCWindow == null)
             {
                 _winCCWindow = new WinCCIntegrationWindow { Owner = this };
-                _winCCWindow.Show();
                 KeraaKaikkiPlcArvot();
             }
-            else
-            {
-                _winCCWindow.Activate();
-            }
+            _winCCWindow.Show();
+            _winCCWindow.Activate();
         }
 
         // ── PH laskenta ──────────────────────────────────────────────────────
@@ -1946,7 +1943,11 @@ namespace SahanOhjausGUI
                 _lastProfT1, _lastProfT2, _lastProfT3, _lastProfT4,
                 _lastProfT5, _lastProfT6, _lastProfT7, _lastProfT8);
         }
-
+        private double? HaeActualArvo(string tagBase)
+        {
+            if (_winCCWindow?.IsConnected != true) return null;
+            return _winCCWindow.GetAxisActual(tagBase);
+        }
         // ── Yhdistetty laskenta ──────────────────────────────────────────────
         private void LaskeYhdistetty(List<double> paksuudet,
                    ref double plc_T1, ref double plc_T2, ref double plc_T3,
@@ -2098,10 +2099,23 @@ namespace SahanOhjausGUI
                     return new SolidColorBrush(Colors.OrangeRed);
             return new SolidColorBrush(normaali);
         }
+        private const double ActualToleranceMm = 0.5;
 
+        private static bool OnkoActualOk(double setPoint, double? actual) =>
+            actual.HasValue && Math.Abs(setPoint - actual.Value) < ActualToleranceMm;
+
+        private static double? LaskeActualX(double centerX, double pixelsPerMm, double? actual, bool vasenPuoli) =>
+            actual is double value ? centerX + (vasenPuoli ? -value : value) * pixelsPerMm : null;
+
+        private static double? LaskeActualX(double centerX, double pixelsPerMm, double? paaActual, double? sivuActual, bool vasenPuoli)
+        {
+            if (paaActual is not double paa || sivuActual is not double sivu) return null;
+            return centerX + (vasenPuoli ? -(paa + sivu) : (paa + sivu)) * pixelsPerMm;
+        }
         private static void PiirraTeraViiva(Canvas canvas, double bladeX,
-            double rectY, double rectHeight, double canvasWidth,
-            Brush brush, string label, bool sahaa, bool labelRight)
+    double rectY, double rectHeight, double canvasWidth,
+    Brush brush, string label, bool sahaa, bool labelRight,
+    double? actualX = null, bool actualOk = false, double? actualValue = null)
         {
             if (bladeX < -50 || bladeX > canvasWidth + 50) return;
             var line = new Line { X1 = bladeX, Y1 = rectY - 20, X2 = bladeX, Y2 = rectY + rectHeight + 20, Stroke = brush, StrokeThickness = sahaa ? 3 : 1.5 };
@@ -2114,6 +2128,34 @@ namespace SahanOhjausGUI
             if (parts.Length > 1) tb.Inlines.Add(new Run(parts[1]));
             Canvas.SetLeft(tb, labelX); Canvas.SetTop(tb, rectY - 38);
             canvas.Children.Add(tb);
+
+            if (actualX.HasValue && actualValue.HasValue && actualX.Value > 0 && actualX.Value < canvasWidth)
+            {
+                var arrowBrush = new SolidColorBrush(actualOk ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                var arrow = new Polygon
+                {
+                    Points = new PointCollection
+        {
+            new Point(actualX.Value - 5, rectY - 14),
+            new Point(actualX.Value + 5, rectY - 14),
+            new Point(actualX.Value,     rectY - 6)
+        },
+                    Fill = arrowBrush
+                };
+                canvas.Children.Add(arrow);
+
+                var actualLabel = new TextBlock
+                {
+                    Text = $"{actualValue.Value:F1}",
+                    FontSize = 8,
+                    Foreground = arrowBrush,
+                    TextAlignment = TextAlignment.Center,
+                    Width = 36
+                };
+                Canvas.SetLeft(actualLabel, Math.Max(0, Math.Min(actualX.Value - 18, canvasWidth - 36)));
+                Canvas.SetTop(actualLabel, rectY - 4);
+                canvas.Children.Add(actualLabel);
+            }
         }
 
         private static readonly Color[] PuuVarit =
@@ -2295,6 +2337,19 @@ namespace SahanOhjausGUI
             double t3X = centerX - plc_T3 * pixelsPerMm, t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
             double t4X = centerX + plc_T4 * pixelsPerMm, t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
             double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm, t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm;
+
+            double? actT1 = HaeActualArvo("Jakosaha_T1");
+            double? actT2 = HaeActualArvo("Jakosaha_T2");
+            double? actT3 = HaeActualArvo("Jakosaha_T3");
+            double? actT4 = HaeActualArvo("Jakosaha_T4");
+            double? actT5 = HaeActualArvo("Jakosaha_T5");
+            double? actT6 = HaeActualArvo("Jakosaha_T6");
+            double? actT3X = LaskeActualX(centerX, pixelsPerMm, actT3, vasenPuoli: true);
+            double? actT1X = LaskeActualX(centerX, pixelsPerMm, actT3, actT1, vasenPuoli: true);
+            double? actT5X = LaskeActualX(centerX, pixelsPerMm, actT3, actT5, vasenPuoli: true);
+            double? actT4X = LaskeActualX(centerX, pixelsPerMm, actT4, vasenPuoli: false);
+            double? actT2X = LaskeActualX(centerX, pixelsPerMm, actT4, actT2, vasenPuoli: false);
+            double? actT6X = LaskeActualX(centerX, pixelsPerMm, actT4, actT6, vasenPuoli: false);
             bool t3Sahaa = n != 3, t4Sahaa = n != 3, t5Sahaa = n == 7, t6Sahaa = n >= 6;
             Color normO = Color.FromRgb(107, 203, 119), normV = Color.FromRgb(255, 107, 107), lepo = Color.FromRgb(100, 100, 100);
 
