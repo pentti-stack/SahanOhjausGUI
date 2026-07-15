@@ -1605,33 +1605,10 @@ namespace SahanOhjausGUI
             double? actPh1V = HaeActualArvo("PH1_Vasen");
             double? actPh1O = HaeActualArvo("PH1_Oikea");
             if (actPh1V.HasValue)
-            {
-                double actVX = cx - actPh1V.Value * scale;
-                bool ok = Math.Abs(ph1V - actPh1V.Value) < 0.5;
-                var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                canvas.Children.Add(new Polygon
-                {
-                    Points = new PointCollection { new Point(actVX - 5, pelkkaY - 14), new Point(actVX + 5, pelkkaY - 14), new Point(actVX, pelkkaY - 6) },
-                    Fill = brush
-                });
-                var lbl = new TextBlock { Text = $"{actPh1V.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                Canvas.SetLeft(lbl, Math.Max(0, actVX - 18)); Canvas.SetTop(lbl, pelkkaY - 28);
-                canvas.Children.Add(lbl);
-            }
+                PiirraActualNuoli(canvas, cx - actPh1V.Value * scale, pelkkaY, ph1V, actPh1V.Value, W);
             if (actPh1O.HasValue)
-            {
-                double actOX = cx + actPh1O.Value * scale;
-                bool ok = Math.Abs(ph1O - actPh1O.Value) < 0.5;
-                var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                canvas.Children.Add(new Polygon
-                {
-                    Points = new PointCollection { new Point(actOX - 5, pelkkaY - 14), new Point(actOX + 5, pelkkaY - 14), new Point(actOX, pelkkaY - 6) },
-                    Fill = brush
-                });
-                var lbl = new TextBlock { Text = $"{actPh1O.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                Canvas.SetLeft(lbl, Math.Max(0, actOX - 18)); Canvas.SetTop(lbl, pelkkaY - 28);
-                canvas.Children.Add(lbl);
-            }            Canvas.SetLeft(mittaLbl, cx - mittaLbl.Width / 2.0);
+                PiirraActualNuoli(canvas, cx + actPh1O.Value * scale, pelkkaY, ph1O, actPh1O.Value, W);
+            Canvas.SetLeft(mittaLbl, cx - mittaLbl.Width / 2.0);
             Canvas.SetTop(mittaLbl, arrowY + 5);
             canvas.Children.Add(mittaLbl);
             var otsikko = new TextBlock
@@ -1751,33 +1728,9 @@ namespace SahanOhjausGUI
             double? actPh2V = HaeActualArvo("PH2_Vasen");
             double? actPh2O = HaeActualArvo("PH2_Oikea");
             if (actPh2V.HasValue)
-            {
-                double actVX = cx - actPh2V.Value * scale;
-                bool ok = Math.Abs(ph2V - actPh2V.Value) < 0.5;
-                var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                canvas.Children.Add(new Polygon
-                {
-                    Points = new PointCollection { new Point(actVX - 5, pelkkaY - 14), new Point(actVX + 5, pelkkaY - 14), new Point(actVX, pelkkaY - 6) },
-                    Fill = brush
-                });
-                var lbl = new TextBlock { Text = $"{actPh2V.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                Canvas.SetLeft(lbl, Math.Max(0, actVX - 18)); Canvas.SetTop(lbl, pelkkaY - 28);
-                canvas.Children.Add(lbl);
-            }
+                PiirraActualNuoli(canvas, cx - actPh2V.Value * scale, pelkkaY, ph2V, actPh2V.Value, W);
             if (actPh2O.HasValue)
-            {
-                double actOX = cx + actPh2O.Value * scale;
-                bool ok = Math.Abs(ph2O - actPh2O.Value) < 0.5;
-                var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                canvas.Children.Add(new Polygon
-                {
-                    Points = new PointCollection { new Point(actOX - 5, pelkkaY - 14), new Point(actOX + 5, pelkkaY - 14), new Point(actOX, pelkkaY - 6) },
-                    Fill = brush
-                });
-                var lbl = new TextBlock { Text = $"{actPh2O.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                Canvas.SetLeft(lbl, Math.Max(0, actOX - 18)); Canvas.SetTop(lbl, pelkkaY - 28);
-                canvas.Children.Add(lbl);
-            }
+                PiirraActualNuoli(canvas, cx + actPh2O.Value * scale, pelkkaY, ph2O, actPh2O.Value, W);
             Canvas.SetLeft(ph2MittaLbl, cx - ph2MittaLbl.Width / 2.0);
             Canvas.SetTop(ph2MittaLbl, arrowY + 5);
             canvas.Children.Add(ph2MittaLbl);
@@ -2173,6 +2126,22 @@ namespace SahanOhjausGUI
         {
             if (paaActual is not double paa || sivuActual is not double sivu) return null;
             return centerX + (vasenPuoli ? -(paa + sivu) : (paa + sivu)) * pixelsPerMm;
+        }
+
+        private static void PiirraActualNuoli(Canvas canvas, double actX, double refY, double setPoint, double actualValue, double canvasWidth)
+        {
+            if (actX < 0 || actX > canvasWidth) return;
+            bool ok = Math.Abs(setPoint - actualValue) < ActualToleranceMm;
+            var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+            canvas.Children.Add(new Polygon
+            {
+                Points = new PointCollection { new Point(actX - 5, refY - 14), new Point(actX + 5, refY - 14), new Point(actX, refY - 6) },
+                Fill = brush
+            });
+            var lbl = new TextBlock { Text = $"{actualValue:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+            Canvas.SetLeft(lbl, Math.Max(0, Math.Min(actX - 18, canvasWidth - 36)));
+            Canvas.SetTop(lbl, refY - 28);
+            canvas.Children.Add(lbl);
         }
         private static void PiirraTeraViiva(Canvas canvas, double bladeX,
     double rectY, double rectHeight, double canvasWidth,
@@ -3102,39 +3071,9 @@ namespace SahanOhjausGUI
             double? actProfT1 = HaeActualArvo("Prof_T1");
             double? actProfT2 = HaeActualArvo("Prof_T2");
             if (actProfT1.HasValue && profKaytossa)
-            {
-                double actX = cx + actProfT1.Value * scale;
-                if (actX > 10 && actX < W - 10)
-                {
-                    bool ok = Math.Abs(t1Pos - actProfT1.Value) < 0.5;
-                    var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                    canvas.Children.Add(new Polygon
-                    {
-                        Points = new PointCollection { new Point(actX - 5, zeroY - 14), new Point(actX + 5, zeroY - 14), new Point(actX, zeroY - 6) },
-                        Fill = brush
-                    });
-                    var lbl = new TextBlock { Text = $"{actProfT1.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                    Canvas.SetLeft(lbl, Math.Max(0, actX - 18)); Canvas.SetTop(lbl, zeroY - 28);
-                    canvas.Children.Add(lbl);
-                }
-            }
+                PiirraActualNuoli(canvas, cx + actProfT1.Value * scale, zeroY, t1Pos, actProfT1.Value, W);
             if (actProfT2.HasValue && profKaytossa)
-            {
-                double actX = cx - actProfT2.Value * scale;
-                if (actX > 10 && actX < W - 10)
-                {
-                    bool ok = Math.Abs(t2Pos - actProfT2.Value) < 0.5;
-                    var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
-                    canvas.Children.Add(new Polygon
-                    {
-                        Points = new PointCollection { new Point(actX - 5, zeroY - 14), new Point(actX + 5, zeroY - 14), new Point(actX, zeroY - 6) },
-                        Fill = brush
-                    });
-                    var lbl = new TextBlock { Text = $"{actProfT2.Value:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
-                    Canvas.SetLeft(lbl, Math.Max(0, actX - 18)); Canvas.SetTop(lbl, zeroY - 28);
-                    canvas.Children.Add(lbl);
-                }
-            }
+                PiirraActualNuoli(canvas, cx - actProfT2.Value * scale, zeroY, t2Pos, actProfT2.Value, W);
             if (profKaytossa)
             {
                 var profVaroitukset = new List<string>();
