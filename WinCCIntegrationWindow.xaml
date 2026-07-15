@@ -1,7 +1,7 @@
 <Window x:Class="SahanOhjausGUI.WinCCIntegrationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="WinCC-integraatio" Height="700" Width="960"
+        Title="PLC-integraatio" Height="700" Width="960"
         Background="#120F0C"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing">
@@ -91,7 +91,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="WinCC-integraatio" FontSize="15" FontWeight="Bold" Foreground="#4fc3f7"/>
+                    <TextBlock Text="PLC-integraatio" FontSize="15" FontWeight="Bold" Foreground="#4fc3f7"/>
                     <TextBlock x:Name="SimulationBadge"
                                Text="  ⚠ SIMULAATIOTILA"
                                FontSize="13" FontWeight="Bold" Foreground="#FF4444"
@@ -120,7 +120,7 @@
                         <!-- Yhteyskortti -->
                         <Border Background="#1E1A17" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                             <StackPanel>
-                                <TextBlock Text="Yhteys WinCC-järjestelmään"
+                                <TextBlock Text="Yhteys PLC-järjestelmään"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,10"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                     <Button x:Name="ConnectBtn" Content="Yhdistä"
@@ -132,7 +132,7 @@
                                 </StackPanel>
                                 <Border Background="#2A2420" CornerRadius="6" Padding="12,8">
                                     <TextBlock x:Name="ConnectionDetailText"
-                                               Text="Ei yhteyttä WinCC-järjestelmään. Tarkista asetukset ja paina Yhdistä."
+                                               Text="Ei yhteyttä PLC-järjestelmään. Tarkista asetukset ja paina Yhdistä."
                                                TextWrapping="Wrap" Foreground="#aaa" FontSize="12"/>
                                 </Border>
                             </StackPanel>
@@ -144,7 +144,7 @@
                                 <TextBlock Text="Kuvion lähetys koneelle"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,6"/>
                                 <TextBlock TextWrapping="Wrap" Foreground="#aaa" FontSize="12" Margin="0,0,0,10">
-                                    Painamalla nappia kirjoitetaan kaikki 18 SetPoint-tagia WinCC:hen,
+                                    Painamalla nappia kirjoitetaan kaikki 18 SetPoint-tagia PLC:hen,
                                     minkä jälkeen nostetaan hetkellisesti {Prefix}New_Data_Ready -bitti
                                     (1 → odota 500 ms → 0).
                                 </TextBlock>
@@ -307,7 +307,7 @@
                         <!-- Palvelinkortti -->
                         <Border Background="#1E1A17" CornerRadius="8" Padding="16" Margin="0,0,0,12">
                             <StackPanel>
-                                <TextBlock Text="WinCC-palvelin"
+                                <TextBlock Text="PLC-palvelin"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,10"/>
                                 <TextBlock Text="Palvelimen nimi tai verkkopolku:"
                                            Foreground="#aaa" FontSize="12" Margin="0,0,0,4"/>
@@ -342,7 +342,7 @@
                                 <TextBlock Text="Simulaattori"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,10"/>
                                 <CheckBox x:Name="SimulatorCheck"
-                                          Content="Käytä simulaattoria (ohittaa WinCC-rajapinnan)"
+                                          Content="Käytä simulaattoria (ohittaa PLC-rajapinnan)"
                                           Margin="0,0,0,6"/>
                                 <TextBlock TextWrapping="Wrap" Foreground="#aaa" FontSize="11">
                                     Simulaattoritilassa Actual-arvot liukuvat kohti SetPoint-arvoja
@@ -357,10 +357,10 @@
                                 <TextBlock Text="Automaattinen lähetys"
                                            FontSize="14" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,10"/>
                                 <CheckBox x:Name="AutoLahetysCheck"
-                                          Content="Automaattinen lähetys WinCC:hen"
+                                          Content="Automaattinen lähetys PLC:hen"
                                           Margin="0,0,0,8"/>
                                 <TextBlock TextWrapping="Wrap" Foreground="#aaa" FontSize="11">
-                                    Kun päällä: SetPoint-arvot lähetetään WinCC-tageihin automaattisesti
+                                    Kun päällä: SetPoint-arvot lähetetään PLC-tageihin automaattisesti
                                     aina kun MainWindow laskee uudet arvot (PiirraVisual kutsuu PaivitaSetPoints).
                                     Kun pois: Arvot päivittyvät näytölle mutta lähetetään vasta
                                     "Lähetä kuvio koneelle" -napista.

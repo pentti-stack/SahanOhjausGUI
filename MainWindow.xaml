@@ -131,12 +131,16 @@
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                <CheckBox x:Name="KokoRuutuCheck" Content="Kokoruutu" Margin="0,0,12,0"
+                          IsChecked="True"
+                          Checked="KokoRuutuTila_Changed"
+                          Unchecked="KokoRuutuTila_Changed"/>
                 <Button x:Name="LahetaBtn" Content="&#x26A1; L&#xe4;het&#xe4; logiikkaan"
                         Click="Laheta_Click" Margin="0,0,8,0"
                         Background="#1b5e20" BorderBrush="#388e3c"/>
                 <Button Content="&#x26A1; Ter&#xe4;asetukset" Click="AvaaTerapAsetukset_Click" Margin="0,0,8,0"/>
                 <Button Content="&#x1F512; Terien rajat" Click="AvaaRajatAsetukset_Click" Margin="0,0,8,0"/>
-                <Button Content="&#x1F4E1; WinCC" Click="AvaaWinCCIntegration_Click"
+                <Button Content="&#x1F4E1; PLC" Click="AvaaWinCCIntegration_Click"
                         Background="#1a237e" BorderBrush="#283593"/>
             </StackPanel>
         </Grid>
@@ -248,6 +252,23 @@
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
+
+                            <Border x:Name="Ph1DimensioPanel" Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="PH asetteet" FontWeight="Bold" Foreground="#FFC850" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="Ph1DimensioNimiBox" Height="28" Margin="0,0,0,6"
+                                             Background="#3d3d3d" Foreground="White" BorderBrush="#555"
+                                             Padding="6,0" VerticalContentAlignment="Center"/>
+                                    <Button Content="Tallenna asete" Click="TallennaPh1Dimensio_Click" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="Ph1DimensioCombo" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Lataa" Click="LataaPh1Dimensio_Click" Margin="0,0,6,0"/>
+                                        <Button Content="Poista" Click="PoistaPh1Dimensio_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            
 
                         </StackPanel>
                     </ScrollViewer>
@@ -468,7 +489,7 @@
                                                     <ColumnDefinition/>
                                                     <ColumnDefinition/>
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                                <StackPanel x:Name="HalkaisuOikeaContainer" Grid.Column="0" Margin="0,0,4,0">
                                                     <TextBlock Text="Oikea:" FontSize="11" Foreground="#aaa"/>
                                                     <ComboBox x:Name="HalkaisuOikeaCombo"
                                                   SelectionChanged="Halkaisu_Changed">
@@ -476,7 +497,7 @@
                                                         <ComboBoxItem Content="T2 &#x2014; sivu"/>
                                                     </ComboBox>
                                                 </StackPanel>
-                                                <StackPanel Grid.Column="1">
+                                                <StackPanel x:Name="HalkaisuVasenContainer" Grid.Column="1">
                                                     <TextBlock Text="Vasen:" FontSize="11" Foreground="#aaa"/>
                                                     <ComboBox x:Name="HalkaisuVasenCombo"
                                                   SelectionChanged="Halkaisu_Changed">
@@ -530,6 +551,21 @@
 
                             </StackPanel>
                             <!-- ↑ PaksuusPanel päättyy -->
+
+                            <Border x:Name="JakosahaDimensioPanel" Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8" Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock x:Name="JakosahaDimensioTitle" Text="Asetteet" FontWeight="Bold" Foreground="#4fc3f7" Margin="0,0,0,6"/>
+                                    <TextBox x:Name="JakosahaDimensioNimiBox" Height="28" Margin="0,0,0,6"
+                                             Background="#3d3d3d" Foreground="White" BorderBrush="#555"
+                                             Padding="6,0" VerticalContentAlignment="Center"/>
+                                    <Button Content="Tallenna asete" Click="TallennaJakosahaDimensio_Click" Margin="0,0,0,6"/>
+                                    <ComboBox x:Name="JakosahaDimensioCombo" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Lataa" Click="LataaJakosahaDimensio_Click" Margin="0,0,6,0"/>
+                                        <Button Content="Poista" Click="PoistaJakosahaDimensio_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
 
                             <!-- Teräoffsetit — PaksuusPanel ULKOPUOLELLA -->
                             <Border Background="#2d2d2d" CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
