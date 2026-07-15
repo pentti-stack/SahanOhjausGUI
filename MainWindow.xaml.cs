@@ -1504,7 +1504,7 @@ namespace SahanOhjausGUI
                     PiirraPhLepopaikkaCanvas(Ph2Canvas, use2V, use2O, false);
             }
         }
-        private static void PiirraPh1Canvas(Canvas canvas,
+        private void PiirraPh1Canvas(Canvas canvas,
     double ph1V, double ph1O, double ph2Leveys,
     double halkaisija, double scale, double kuivaLeveys, double tuoreLeveysIlmanOffset)
         {
@@ -1601,7 +1601,13 @@ namespace SahanOhjausGUI
                 Width = Math.Max(120, pelkkaW + 20)
             };
 
-
+            // Actual-nuolet PH1 terille
+            double? actPh1V = HaeActualArvo("PH1_Vasen");
+            double? actPh1O = HaeActualArvo("PH1_Oikea");
+            if (actPh1V.HasValue)
+                PiirraActualNuoli(canvas, cx - actPh1V.Value * scale, pelkkaY, ph1V, actPh1V.Value, W);
+            if (actPh1O.HasValue)
+                PiirraActualNuoli(canvas, cx + actPh1O.Value * scale, pelkkaY, ph1O, actPh1O.Value, W);
             Canvas.SetLeft(mittaLbl, cx - mittaLbl.Width / 2.0);
             Canvas.SetTop(mittaLbl, arrowY + 5);
             canvas.Children.Add(mittaLbl);
@@ -1717,6 +1723,14 @@ namespace SahanOhjausGUI
                 TextAlignment = TextAlignment.Center,
                 Width = Math.Max(120, pelkkaW)
             };
+
+            // Actual-nuolet PH2 terille
+            double? actPh2V = HaeActualArvo("PH2_Vasen");
+            double? actPh2O = HaeActualArvo("PH2_Oikea");
+            if (actPh2V.HasValue)
+                PiirraActualNuoli(canvas, cx - actPh2V.Value * scale, pelkkaY, ph2V, actPh2V.Value, W);
+            if (actPh2O.HasValue)
+                PiirraActualNuoli(canvas, cx + actPh2O.Value * scale, pelkkaY, ph2O, actPh2O.Value, W);
             Canvas.SetLeft(ph2MittaLbl, cx - ph2MittaLbl.Width / 2.0);
             Canvas.SetTop(ph2MittaLbl, arrowY + 5);
             canvas.Children.Add(ph2MittaLbl);
@@ -2113,13 +2127,29 @@ namespace SahanOhjausGUI
             if (paaActual is not double paa || sivuActual is not double sivu) return null;
             return centerX + (vasenPuoli ? -(paa + sivu) : (paa + sivu)) * pixelsPerMm;
         }
+
+        private static void PiirraActualNuoli(Canvas canvas, double actX, double refY, double setPoint, double actualValue, double canvasWidth)
+        {
+            if (actX < 0 || actX > canvasWidth) return;
+            bool ok = Math.Abs(setPoint - actualValue) < ActualToleranceMm;
+            var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+            canvas.Children.Add(new Polygon
+            {
+                Points = new PointCollection { new Point(actX - 5, refY - 14), new Point(actX + 5, refY - 14), new Point(actX, refY - 6) },
+                Fill = brush
+            });
+            var lbl = new TextBlock { Text = $"{actualValue:F1}", FontSize = 8, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+            Canvas.SetLeft(lbl, Math.Max(0, Math.Min(actX - 18, canvasWidth - 36)));
+            Canvas.SetTop(lbl, refY - 28);
+            canvas.Children.Add(lbl);
+        }
         private static void PiirraTeraViiva(Canvas canvas, double bladeX,
     double rectY, double rectHeight, double canvasWidth,
     Brush brush, string label, bool sahaa, bool labelRight,
     double? actualX = null, bool actualOk = false, double? actualValue = null)
         {
             if (bladeX < -50 || bladeX > canvasWidth + 50) return;
-            var line = new Line { X1 = bladeX, Y1 = rectY - 20, X2 = bladeX, Y2 = rectY + rectHeight + 20, Stroke = brush, StrokeThickness = sahaa ? 3 : 1.5 };
+            var line = new Line { X1 = bladeX, Y1 = rectY - 6, X2 = bladeX, Y2 = rectY + rectHeight + 20, Stroke = brush, StrokeThickness = sahaa ? 3 : 1.5 };
             if (!sahaa) line.StrokeDashArray = new DoubleCollection { 4, 3 };
             canvas.Children.Add(line);
             double labelX = labelRight ? Math.Min(bladeX + 4, canvasWidth - 50) : Math.Max(bladeX - 44, 4);
@@ -2127,7 +2157,7 @@ namespace SahanOhjausGUI
             var tb = new TextBlock { Foreground = brush, FontSize = 10, FontWeight = sahaa ? FontWeights.Bold : FontWeights.Normal, TextAlignment = labelRight ? TextAlignment.Left : TextAlignment.Right };
             tb.Inlines.Add(new Run(parts[0] + "\n"));
             if (parts.Length > 1) tb.Inlines.Add(new Run(parts[1]));
-            Canvas.SetLeft(tb, labelX); Canvas.SetTop(tb, rectY - 38);
+            Canvas.SetLeft(tb, labelX); Canvas.SetTop(tb, rectY - 22);
             canvas.Children.Add(tb);
 
             if (actualX.HasValue && actualValue.HasValue && actualX.Value > 0 && actualX.Value < canvasWidth)
@@ -2154,7 +2184,7 @@ namespace SahanOhjausGUI
                     Width = 36
                 };
                 Canvas.SetLeft(actualLabel, Math.Max(0, Math.Min(actualX.Value - 18, canvasWidth - 36)));
-                Canvas.SetTop(actualLabel, rectY - 4);
+                Canvas.SetTop(actualLabel, rectY - 38);
                 canvas.Children.Add(actualLabel);
             }
         }
@@ -3037,6 +3067,13 @@ namespace SahanOhjausGUI
                 canvas.Children.Add(lbl);
             }
 
+            // ── Actual-nuolet T1 ja T2 pystyviivoille ────────────────────────
+            double? actProfT1 = HaeActualArvo("Prof_T1");
+            double? actProfT2 = HaeActualArvo("Prof_T2");
+            if (actProfT1.HasValue && profKaytossa)
+                PiirraActualNuoli(canvas, cx + actProfT1.Value * scale, zeroY, t1Pos, actProfT1.Value, W);
+            if (actProfT2.HasValue && profKaytossa)
+                PiirraActualNuoli(canvas, cx - actProfT2.Value * scale, zeroY, t2Pos, actProfT2.Value, W);
             if (profKaytossa)
             {
                 var profVaroitukset = new List<string>();
