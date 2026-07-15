@@ -128,7 +128,13 @@ namespace SahanOhjausGUI
                 if (tagName.EndsWith("Alarm_Word") || tagName.EndsWith("HB_Counter"))
                     return Convert.ToDouble(_plc.Read($"DB{DbNumber}.DBW{offset}"));
                 else
-                    return Convert.ToDouble(_plc.Read($"DB{DbNumber}.DBD{offset}"));
+                {
+                    // DBD palauttaa uint — täytyy muuntaa float-bittien kautta
+                    var raw = _plc.Read($"DB{DbNumber}.DBD{offset}");
+                    uint bits = Convert.ToUInt32(raw);
+                    float f = BitConverter.ToSingle(BitConverter.GetBytes(bits), 0);
+                    return (double)f;
+                }
             }
             catch { return null; }
         }

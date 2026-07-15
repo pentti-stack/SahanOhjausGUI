@@ -1,15 +1,16 @@
-﻿using System;
+﻿using S7.Net.Types;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using IO = System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using System.Windows.Media.Animation;
+using System.Windows.Shapes;
+using IO = System.IO;
 
 namespace SahanOhjausGUI
 {
@@ -2353,12 +2354,12 @@ namespace SahanOhjausGUI
             bool t3Sahaa = n != 3, t4Sahaa = n != 3, t5Sahaa = n == 7, t6Sahaa = n >= 6;
             Color normO = Color.FromRgb(107, 203, 119), normV = Color.FromRgb(255, 107, 107), lepo = Color.FromRgb(100, 100, 100);
 
-            PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, t5Sahaa ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepo), $"T5\n{plc_T5:F1}", t5Sahaa, true);
-            PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, t3Sahaa ? TeraViivaBrush(plc_T3, 3, normV) : new SolidColorBrush(lepo), $"T3\n{plc_T3:F1}", t3Sahaa, false);
-            PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, t6Sahaa ? TeraViivaBrush(plc_T6, 6, normO) : new SolidColorBrush(lepo), $"T6\n{plc_T6:F1}", t6Sahaa, true);
-            PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, t4Sahaa ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepo), $"T4\n{plc_T4:F1}", t4Sahaa, true);
-            PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T1, 1, normV), $"T1\n{plc_T1:F1}", true, false);
-            PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T2, 2, normO), $"T2\n{plc_T2:F1}", true, true);
+            PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, t5Sahaa ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepo), $"T5\n{plc_T5:F1}", t5Sahaa, true, actT5X, OnkoActualOk(plc_T5, actT5), actT5);
+            PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, t3Sahaa ? TeraViivaBrush(plc_T3, 3, normV) : new SolidColorBrush(lepo), $"T3\n{plc_T3:F1}", t3Sahaa, false, actT3X, OnkoActualOk(plc_T3, actT3), actT3);
+            PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, t6Sahaa ? TeraViivaBrush(plc_T6, 6, normO) : new SolidColorBrush(lepo), $"T6\n{plc_T6:F1}", t6Sahaa, true, actT6X, OnkoActualOk(plc_T6, actT6), actT6);
+            PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, t4Sahaa ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepo), $"T4\n{plc_T4:F1}", t4Sahaa, true, actT4X, OnkoActualOk(plc_T4, actT4), actT4);
+            PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T1, 1, normV), $"T1\n{plc_T1:F1}", true, false, actT1X, OnkoActualOk(plc_T1, actT1), actT1);
+            PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth, TeraViivaBrush(plc_T2, 2, normO), $"T2\n{plc_T2:F1}", true, true, actT2X, OnkoActualOk(plc_T2, actT2), actT2);
 
             double valiMm = Math.Abs((t2X - centerX) / pixelsPerMm - (t1X - centerX) / pixelsPerMm);
             double tvStartX = Math.Min(t1X, t2X);
@@ -2454,9 +2455,15 @@ namespace SahanOhjausGUI
                 Color normO = oikeaOn ? Color.FromRgb(107, 203, 119) : Color.FromRgb(50, 90, 50); Color lepo = Color.FromRgb(100, 100, 100);
                 bool t2S = oikeaOn && paksuudetOikea.Count >= 1, t4S = oikeaOn && paksuudetOikea.Count >= 2, t6S = oikeaOn && paksuudetOikea.Count >= 3;
                 double t6X = centerX + (plc_T4 + plc_T6) * pixelsPerMm, t4X = centerX + plc_T4 * pixelsPerMm, t2X = centerX + (plc_T4 + plc_T2) * pixelsPerMm;
-                PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, t6S ? TeraViivaBrush(plc_T6, 6, normO) : new SolidColorBrush(lepo), $"T6\n{plc_T6:F1}", t6S, true);
-                PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, t4S ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepo), $"T4\n{plc_T4:F1}", t4S, true);
-                PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth, t2S ? TeraViivaBrush(plc_T2, 2, normO) : new SolidColorBrush(lepo), $"T2\n{plc_T2:F1}", t2S, false);
+                double? actT2 = HaeActualArvo("Jakosaha_T2");
+                double? actT4 = HaeActualArvo("Jakosaha_T4");
+                double? actT6 = HaeActualArvo("Jakosaha_T6");
+                double? actT4X = LaskeActualX(centerX, pixelsPerMm, actT4, vasenPuoli: false);
+                double? actT2X = LaskeActualX(centerX, pixelsPerMm, actT4, actT2, vasenPuoli: false);
+                double? actT6X = LaskeActualX(centerX, pixelsPerMm, actT4, actT6, vasenPuoli: false);
+                PiirraTeraViiva(canvas, t6X, rectY, rectHeight, canvasWidth, t6S ? TeraViivaBrush(plc_T6, 6, normO) : new SolidColorBrush(lepo), $"T6\n{plc_T6:F1}", t6S, true, actT6X, OnkoActualOk(plc_T6, actT6), actT6);
+                PiirraTeraViiva(canvas, t4X, rectY, rectHeight, canvasWidth, t4S ? TeraViivaBrush(plc_T4, 4, normO) : new SolidColorBrush(lepo), $"T4\n{plc_T4:F1}", t4S, true, actT4X, OnkoActualOk(plc_T4, actT4), actT4);
+                PiirraTeraViiva(canvas, t2X, rectY, rectHeight, canvasWidth, t2S ? TeraViivaBrush(plc_T2, 2, normO) : new SolidColorBrush(lepo), $"T2\n{plc_T2:F1}", t2S, false, actT2X, OnkoActualOk(plc_T2, actT2), actT2);
                 var ol = new TextBlock { Text = "Oikea saha \u25b6", Foreground = new SolidColorBrush(normO), FontSize = 11, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(ol, canvasWidth - 140); Canvas.SetTop(ol, 6); canvas.Children.Add(ol);
             }
@@ -2465,9 +2472,15 @@ namespace SahanOhjausGUI
                 Color normV = vasenOn ? Color.FromRgb(255, 107, 107) : Color.FromRgb(90, 50, 50); Color lepo = Color.FromRgb(100, 100, 100);
                 bool t1S = vasenOn && paksuudetVasen.Count >= 1, t3S = vasenOn && paksuudetVasen.Count >= 2, t5S = vasenOn && paksuudetVasen.Count >= 3;
                 double t5X = centerX - (plc_T3 + plc_T5) * pixelsPerMm, t3X = centerX - plc_T3 * pixelsPerMm, t1X = centerX - (plc_T3 + plc_T1) * pixelsPerMm;
-                PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, t5S ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepo), $"T5\n{plc_T5:F1}", t5S, false);
-                PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, t3S ? TeraViivaBrush(plc_T3, 3, normV) : new SolidColorBrush(lepo), $"T3\n{plc_T3:F1}", t3S, false);
-                PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, t1S ? TeraViivaBrush(plc_T1, 1, normV) : new SolidColorBrush(lepo), $"T1\n{plc_T1:F1}", t1S, false);
+                double? actT1 = HaeActualArvo("Jakosaha_T1");
+                double? actT3 = HaeActualArvo("Jakosaha_T3");
+                double? actT5 = HaeActualArvo("Jakosaha_T5");
+                double? actT3X = LaskeActualX(centerX, pixelsPerMm, actT3, vasenPuoli: true);
+                double? actT1X = LaskeActualX(centerX, pixelsPerMm, actT3, actT1, vasenPuoli: true);
+                double? actT5X = LaskeActualX(centerX, pixelsPerMm, actT3, actT5, vasenPuoli: true);
+                PiirraTeraViiva(canvas, t5X, rectY, rectHeight, canvasWidth, t5S ? TeraViivaBrush(plc_T5, 5, normV) : new SolidColorBrush(lepo), $"T5\n{plc_T5:F1}", t5S, false, actT5X, OnkoActualOk(plc_T5, actT5), actT5);
+                PiirraTeraViiva(canvas, t3X, rectY, rectHeight, canvasWidth, t3S ? TeraViivaBrush(plc_T3, 3, normV) : new SolidColorBrush(lepo), $"T3\n{plc_T3:F1}", t3S, false, actT3X, OnkoActualOk(plc_T3, actT3), actT3);
+                PiirraTeraViiva(canvas, t1X, rectY, rectHeight, canvasWidth, t1S ? TeraViivaBrush(plc_T1, 1, normV) : new SolidColorBrush(lepo), $"T1\n{plc_T1:F1}", t1S, false, actT1X, OnkoActualOk(plc_T1, actT1), actT1);
                 var vl = new TextBlock { Text = "\u25c4 Vasen saha", Foreground = new SolidColorBrush(normV), FontSize = 11, FontWeight = FontWeights.Bold };
                 Canvas.SetLeft(vl, 6); Canvas.SetTop(vl, 6); canvas.Children.Add(vl);
             }
