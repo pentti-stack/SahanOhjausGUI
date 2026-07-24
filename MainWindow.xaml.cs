@@ -140,6 +140,7 @@ namespace SahanOhjausGUI
         private double turvaEtaisyys = 15.0;
         private volatile bool _isPiirraVisualRunning = false;
         private WinCCIntegrationWindow? _winCCWindow;
+        private System.Windows.Threading.DispatcherTimer? _actualPaivitysTimer;
 
         private const double Vaisto_Sisaterä = -140.0;
         private const double Vaisto_Ulkoterä = 140.0;
@@ -173,6 +174,16 @@ namespace SahanOhjausGUI
             InitializeUI();
             LataaTallennus();
             PaivitaKokoRuutuTila();
+
+            // Actual-arvojen automaattinen päivitys WinCC-yhteydessä
+            _actualPaivitysTimer = new System.Windows.Threading.DispatcherTimer();
+            _actualPaivitysTimer.Interval = TimeSpan.FromMilliseconds(200);
+            _actualPaivitysTimer.Tick += (s, e) =>
+            {
+                if (_winCCWindow?.IsConnected == true)
+                    PiirraVisual();
+            };
+            _actualPaivitysTimer.Start();
 
             // Estä sulkeminen — tallenna silti
             Closing += (s, e) =>
@@ -449,10 +460,10 @@ namespace SahanOhjausGUI
 
             if (Ph1DimensioPanel != null)
                 Ph1DimensioPanel.Visibility = Ph1Check?.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-           
+
 
             PaivitaDimensioCombo(Ph1DimensioCombo, Ph1DimensioKey);
-           
+
         }
 
         private void TallennaAktiivinenJakosahaDimensio()
@@ -1183,7 +1194,7 @@ namespace SahanOhjausGUI
         private void TallennaPh1Dimensio_Click(object sender, RoutedEventArgs e) => TallennaPhDimensio(Ph1DimensioKey, Ph1DimensioNimiBox, Ph1DimensioCombo);
         private void LataaPh1Dimensio_Click(object sender, RoutedEventArgs e) => LataaPhDimensio(Ph1DimensioKey, Ph1DimensioCombo);
         private void PoistaPh1Dimensio_Click(object sender, RoutedEventArgs e) => PoistaPhDimensio(Ph1DimensioKey, Ph1DimensioCombo);
-        
+
 
         private void SahaValinta_Changed(object sender, RoutedEventArgs e)
         {
@@ -2137,9 +2148,9 @@ namespace SahanOhjausGUI
                 {
                     Points = new PointCollection
         {
-            new Point(actualX.Value - 5, rectY - 14),
-            new Point(actualX.Value + 5, rectY - 14),
-            new Point(actualX.Value,     rectY - 6)
+            new Point(actualX.Value - 5, rectY - 54),
+            new Point(actualX.Value + 5, rectY - 54),
+            new Point(actualX.Value,     rectY - 46)
         },
                     Fill = arrowBrush
                 };
@@ -2148,13 +2159,13 @@ namespace SahanOhjausGUI
                 var actualLabel = new TextBlock
                 {
                     Text = $"{actualValue.Value:F1}",
-                    FontSize = 8,
+                    FontSize = 10,
                     Foreground = arrowBrush,
                     TextAlignment = TextAlignment.Center,
                     Width = 36
                 };
                 Canvas.SetLeft(actualLabel, Math.Max(0, Math.Min(actualX.Value - 18, canvasWidth - 36)));
-                Canvas.SetTop(actualLabel, rectY - 4);
+                Canvas.SetTop(actualLabel, rectY - 70);
                 canvas.Children.Add(actualLabel);
             }
         }
@@ -2641,6 +2652,15 @@ namespace SahanOhjausGUI
             double profT5Y = profKaytossa ? profT5 + _profOffsetT5 : profT5;
             double profT6Y = profKaytossa ? profT6 + _profOffsetT6 : profT6;
 
+            double? actProfT1 = HaeActualArvo("Prof_T1");
+            double? actProfT2 = HaeActualArvo("Prof_T2");
+            double? actProfT3 = HaeActualArvo("Prof_T3");
+            double? actProfT4 = HaeActualArvo("Prof_T4");
+            double? actProfT5 = HaeActualArvo("Prof_T5");
+            double? actProfT6 = HaeActualArvo("Prof_T6");
+            double? actProfT7 = HaeActualArvo("Prof_T7");
+            double? actProfT8 = HaeActualArvo("Prof_T8");
+
             double korkeus = _currentLeveydet.Count > 0
                 ? _currentLeveydet.Where(v => v > 0).DefaultIfEmpty(100.0).Max()
                 : 100.0;
@@ -2827,6 +2847,30 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(t7Lbl, t7X + 2);
                 Canvas.SetTop(t7Lbl, cy - guideH / 2.0 - 22);
                 canvas.Children.Add(t7Lbl);
+
+                if (actProfT7.HasValue && profKaytossa)
+                {
+                    double actT7X = cx + (t1Pos + actProfT7.Value) * scale;
+                    if (actT7X > 10 && actT7X < W - 10)
+                    {
+                        bool ok = Math.Abs(t7PlcArvo - actProfT7.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Polygon
+                        {
+                            Points = new PointCollection
+                            {
+                                new Point(actT7X - 5, cy - guideH / 2.0 - 44),
+                                new Point(actT7X + 5, cy - guideH / 2.0 - 44),
+                                new Point(actT7X, cy - guideH / 2.0 - 36)
+                            },
+                            Fill = brush
+                        });
+                        var lbl = new TextBlock { Text = $"{actProfT7.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+                        Canvas.SetLeft(lbl, Math.Max(0, actT7X - 18));
+                        Canvas.SetTop(lbl, cy - guideH / 2.0 - 58);
+                        canvas.Children.Add(lbl);
+                    }
+                }
             }
 
             // ── T8 guide (left, gray rectangle 25mm wide × 50mm tall) ────────
@@ -2870,6 +2914,30 @@ namespace SahanOhjausGUI
                 Canvas.SetLeft(t8Lbl, t8X - guideW - 44);
                 Canvas.SetTop(t8Lbl, cy - guideH / 2.0 - 22);
                 canvas.Children.Add(t8Lbl);
+
+                if (actProfT8.HasValue && profKaytossa)
+                {
+                    double actT8X = cx - (t2Pos + actProfT8.Value) * scale;
+                    if (actT8X > 10 && actT8X < W - 10)
+                    {
+                        bool ok = Math.Abs(t8PlcArvo - actProfT8.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Polygon
+                        {
+                            Points = new PointCollection
+                            {
+                                new Point(actT8X - 5, cy - guideH / 2.0 - 44),
+                                new Point(actT8X + 5, cy - guideH / 2.0 - 44),
+                                new Point(actT8X, cy - guideH / 2.0 - 36)
+                            },
+                            Fill = brush
+                        });
+                        var lbl = new TextBlock { Text = $"{actProfT8.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+                        Canvas.SetLeft(lbl, Math.Max(0, actT8X - 18));
+                        Canvas.SetTop(lbl, cy - guideH / 2.0 - 58);
+                        canvas.Children.Add(lbl);
+                    }
+                }
             }
 
             // ── T3 (right top, blue horizontal line from T1 to right) ─────────
@@ -2907,6 +2975,20 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t3Y - 16);
                 canvas.Children.Add(lbl);
+
+                if (actProfT3.HasValue && profKaytossa)
+                {
+                    double actY = zeroY - actProfT3.Value * scale;
+                    if (actY > 10 && actY < H - 10)
+                    {
+                        bool ok = Math.Abs(profT3Y - actProfT3.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Line { X1 = t1X, Y1 = actY, X2 = t1X + 30, Y2 = actY, Stroke = brush, StrokeThickness = 1.5 });
+                        var actLbl = new TextBlock { Text = $"{actProfT3.Value:F1}", FontSize = 10, Foreground = brush };
+                        Canvas.SetLeft(actLbl, t1X + 32); Canvas.SetTop(actLbl, actY - 15);
+                        canvas.Children.Add(actLbl);
+                    }
+                }
             }
 
             // ── T4 (right bottom, cyan horizontal line from T1 to right) ──────
@@ -2935,6 +3017,20 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t1X + 120); Canvas.SetTop(lbl, t4Y + 4);
                 canvas.Children.Add(lbl);
+
+                if (actProfT4.HasValue && profKaytossa)
+                {
+                    double actY = zeroY - actProfT4.Value * scale;
+                    if (actY > 10 && actY < H - 10)
+                    {
+                        bool ok = Math.Abs(profT4Y - actProfT4.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Line { X1 = t1X, Y1 = actY, X2 = t1X + 30, Y2 = actY, Stroke = brush, StrokeThickness = 1.5 });
+                        var actLbl = new TextBlock { Text = $"{actProfT4.Value:F1}", FontSize = 10, Foreground = brush };
+                        Canvas.SetLeft(actLbl, t1X + 32); Canvas.SetTop(actLbl, actY - -5);
+                        canvas.Children.Add(actLbl);
+                    }
+                }
             }
 
             // ── T5 (left top, yellow horizontal line from left to T2) ─────────
@@ -2963,6 +3059,20 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t5Y - 16);
                 canvas.Children.Add(lbl);
+
+                if (actProfT5.HasValue && profKaytossa)
+                {
+                    double actY = zeroY - actProfT5.Value * scale;
+                    if (actY > 10 && actY < H - 10)
+                    {
+                        bool ok = Math.Abs(profT5Y - actProfT5.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Line { X1 = t2X - 30, Y1 = actY, X2 = t2X, Y2 = actY, Stroke = brush, StrokeThickness = 1.5 });
+                        var actLbl = new TextBlock { Text = $"{actProfT5.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Right, Width = 34 };
+                        Canvas.SetLeft(actLbl, t2X - 66); Canvas.SetTop(actLbl, actY - 15);
+                        canvas.Children.Add(actLbl);
+                    }
+                }
             }
 
             // ── T6 (left bottom, light gray horizontal line from left to T2) ──
@@ -2991,6 +3101,20 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t2X - 160); Canvas.SetTop(lbl, t6Y + 4);
                 canvas.Children.Add(lbl);
+
+                if (actProfT6.HasValue && profKaytossa)
+                {
+                    double actY = zeroY - actProfT6.Value * scale;
+                    if (actY > 10 && actY < H - 10)
+                    {
+                        bool ok = Math.Abs(profT6Y - actProfT6.Value) < 0.5;
+                        var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                        canvas.Children.Add(new Line { X1 = t2X - 30, Y1 = actY, X2 = t2X, Y2 = actY, Stroke = brush, StrokeThickness = 1.5 });
+                        var actLbl = new TextBlock { Text = $"{actProfT6.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Right, Width = 34 };
+                        Canvas.SetLeft(actLbl, t2X - 66); Canvas.SetTop(actLbl, actY - -5);
+                        canvas.Children.Add(actLbl);
+                    }
+                }
             }
 
             // ── T1 (right, green vertical line) ──────────────────────────────
@@ -3012,6 +3136,27 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t1X + 4); Canvas.SetTop(lbl, t3Y - 160);
                 canvas.Children.Add(lbl);
+
+                if (actProfT1.HasValue && profKaytossa)
+                {
+                    double actX = cx + actProfT1.Value * scale;
+                    bool ok = Math.Abs(t1Pos - actProfT1.Value) < 0.5;
+                    var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                    canvas.Children.Add(new Polygon
+                    {
+                        Points = new PointCollection
+                        {
+                            new Point(actX - 5, 215),
+                            new Point(actX + 5, 215),
+                            new Point(actX, 225)
+                        },
+                        Fill = brush
+                    });
+                    var actLbl = new TextBlock { Text = $"{actProfT1.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+                    Canvas.SetLeft(actLbl, Math.Max(0, actX - 18));
+                    Canvas.SetTop(actLbl, 196);
+                    canvas.Children.Add(actLbl);
+                }
             }
 
             // ── T2 (left, red vertical line) ──────────────────────────────────
@@ -3035,6 +3180,27 @@ namespace SahanOhjausGUI
                 };
                 Canvas.SetLeft(lbl, t2X - 44); Canvas.SetTop(lbl, t5Y - 160);
                 canvas.Children.Add(lbl);
+
+                if (actProfT2.HasValue && profKaytossa)
+                {
+                    double actX = cx - actProfT2.Value * scale;
+                    bool ok = Math.Abs(t2Pos - actProfT2.Value) < 0.5;
+                    var brush = new SolidColorBrush(ok ? Color.FromRgb(76, 175, 80) : Color.FromRgb(244, 67, 54));
+                    canvas.Children.Add(new Polygon
+                    {
+                        Points = new PointCollection
+                        {
+                            new Point(actX - 5, 215),
+                            new Point(actX + 5, 215),
+                            new Point(actX, 225)
+                        },
+                        Fill = brush
+                    });
+                    var actLbl = new TextBlock { Text = $"{actProfT2.Value:F1}", FontSize = 10, Foreground = brush, TextAlignment = TextAlignment.Center, Width = 36 };
+                    Canvas.SetLeft(actLbl, Math.Max(0, actX - 18));
+                    Canvas.SetTop(actLbl, 196);
+                    canvas.Children.Add(actLbl);
+                }
             }
 
             if (profKaytossa)
